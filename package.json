@@ -1,11 +1,23 @@
 {
+	"name": "uust-telegram-bot",
+	"description": "",
+	"author": {
+		"name": "FOCKUSTY",
+		"email": "viserd.yt@gmail.com",
+		"url": "https://fockusty.vercel.app"
+	},
+	"scripts": {
+		"build": "tsc"
+	},
 	"dependencies": {
 		"@google-cloud/local-auth": "2.1.0",
+		"fenviee": "^0.1.1",
 		"google-auth-library": "^10.6.2",
 		"googleapis": "^105.0.0"
 	},
 	"devDependencies": {
 		"@types/node": "^25.6.0",
+		"dotenv": "^17.4.2",
 		"typescript": "^6.0.2"
 	}
 }

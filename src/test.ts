@@ -1,10 +1,12 @@
+import { env } from "./env";
+
 import { DriveReader } from "./drive.reader";
 import { extractIdFromUrl } from "./utils";
 
 (async () => {
   const reader = new DriveReader();
 
-  const id = extractIdFromUrl("https://drive.google.com/drive/folders/1lt1vchyAWuJUdxXS-htNrKsnd_IstWD0");
+  const id = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL);
   if (!id) {
     throw new Error("Bad URL");
   }

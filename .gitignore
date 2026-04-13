@@ -3,5 +3,6 @@ node_modules/
 
 credentials.json
 
-!.env.example
+.env
 .env.*
+!.env.example
