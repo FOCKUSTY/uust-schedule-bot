@@ -109,3 +109,38 @@ function removeTrailingSegments(id: string, segmentsToRemove: string[]): string 
 
   return result;
 }
+
+export function rangeToA1(
+  startRow: number,
+  startCol: number,
+  endRow?: number,
+  endCol?: number
+): string {
+  if (startRow <= 0 || startCol <= 0) {
+    throw new Error('Индексы строк и колонок должны быть >= 1');
+  }
+  if (endRow !== undefined && endRow <= 0) {
+    throw new Error('Конечная строка должна быть >= 1');
+  }
+  if (endCol !== undefined && endCol <= 0) {
+    throw new Error('Конечная колонка должна быть >= 1');
+  }
+
+  const startCell = `${columnIndexToLetter(startCol)}${startRow}`;
+  if (endRow === undefined || endCol === undefined) {
+    return startCell;
+  }
+  const endCell = `${columnIndexToLetter(endCol)}${endRow}`;
+  return `${startCell}:${endCell}`;
+}
+
+function columnIndexToLetter(index: number): string {
+  let letter = '';
+  let temp = index;
+  while (temp > 0) {
+    const remainder = (temp - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    temp = Math.floor((temp - 1) / 26);
+  }
+  return letter;
+}

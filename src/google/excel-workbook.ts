@@ -1,5 +1,15 @@
 import * as XLSX from 'xlsx';
-import type { ExcelSheetInfo } from './types';
+import type { ExcelSheetInfo, SheetRange } from './types';
+import { rangeToA1 } from './utils';
+
+export interface SheetDimensions {
+  startRow: number;
+  endRow: number;
+  startCol: number;
+  endCol: number;
+  rowCount: number;
+  columnCount: number;
+}
 
 /**
  * Представляет открытую книгу Excel.
@@ -16,24 +26,48 @@ export class ExcelWorkbook {
    */
   public listSheets(): ExcelSheetInfo[] {
     return this.workbook.SheetNames.map((name, index) => {
-      const sheet = this.workbook.Sheets[name];
-      const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+      const dimensions = this.getSheetDimensions(name);
       return {
         name,
         index,
-        rowCount: range.e.r - range.s.r + 1,
-        columnCount: range.e.c - range.s.c + 1,
+        rowCount: dimensions.rowCount,
+        columnCount: dimensions.columnCount,
       };
     });
   }
 
   /**
-   * Возвращает данные листа в виде двумерного массива строк.
+   * Возвращает размеры используемой области листа.
    * @param sheetNameOrIndex Название или индекс листа
    */
-  public getSheetData(sheetNameOrIndex: string | number): string[][] {
+  public getSheetDimensions(sheetNameOrIndex: string | number): SheetDimensions {
     const sheet = this.getSheet(sheetNameOrIndex);
-    return XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][];
+    const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+    return {
+      startRow: range.s.r,
+      endRow: range.e.r,
+      startCol: range.s.c,
+      endCol: range.e.c,
+      rowCount: range.e.r - range.s.r + 1,
+      columnCount: range.e.c - range.s.c + 1,
+    };
+  }
+
+  /**
+   * Возвращает данные листа в виде двумерного массива строк.
+   * @param sheetNameOrIndex Название или индекс листа
+   * @param range Опциональный диапазон в формате A1 (например, 'A1:C10')
+   */
+  public getSheetData(
+    sheetNameOrIndex: string | number,
+    range?: string
+  ): string[][] {
+    const sheet = this.getSheet(sheetNameOrIndex);
+    const options: XLSX.Sheet2JSONOpts = { header: 1 };
+    if (range) {
+      options.range = range;
+    }
+    return XLSX.utils.sheet_to_json(sheet, options) as string[][];
   }
 
   /**
@@ -47,6 +81,23 @@ export class ExcelWorkbook {
     return result;
   }
 
+  /**
+   * Возвращает данные листа по заданному диапазону (1-based индексы).
+   * @param sheetNameOrIndex Название или индекс листа
+   * @param range Объект с границами диапазона
+   */
+  public getSheetDataByRange(
+    sheetNameOrIndex: string | number,
+    range: SheetRange
+  ): string[][] {
+    const { startRow, startCol, endRow, endCol } = range;
+    if (endRow === undefined || endCol === undefined) {
+      return this.getSheetData(sheetNameOrIndex);
+    }
+    const a1Range = rangeToA1(startRow, startCol, endRow, endCol);
+    return this.getSheetData(sheetNameOrIndex, a1Range);
+  }
+  
   private getSheet(sheetNameOrIndex: string | number): XLSX.WorkSheet {
     let sheetName: string;
     if (typeof sheetNameOrIndex === 'number') {

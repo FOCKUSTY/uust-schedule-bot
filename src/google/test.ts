@@ -4,6 +4,8 @@ import { DriveReader } from "./drive.reader";
 import { ExcelReader } from "./excel.reader";
 
 import { extractIdFromUrl } from "./utils";
+import { writeFileSync } from "node:fs";
+import { ScheduleFormatter } from "../formatter";
 
 /* (async () => {
   const reader = new DriveReader();
@@ -21,6 +23,7 @@ import { extractIdFromUrl } from "./utils";
 async function main() {
   const driveReader = new DriveReader();
   const excelReader = new ExcelReader(driveReader);
+  const formatter = new ScheduleFormatter();
 
   const fileUrl = "https://drive.google.com/file/d/17ICYlOQsiNCFTwDkIfC4T5e-0878_5Sn/view";
   const fileId = extractIdFromUrl(fileUrl);
@@ -34,8 +37,16 @@ async function main() {
   console.log('Листы:', workbook.listSheets());
 
   // Данные первого листа
-  // const firstSheetData = workbook.getSheetData(0);
+  const dims = workbook.getSheetDimensions(0);
+  const firstSheetData = workbook.getSheetDataByRange(0, {
+    ...dims,
+    startRow: 1,
+    startCol: 1
+  });
   // console.log('Данные первого листа:', firstSheetData);
+  const schedule = formatter.format(firstSheetData);
+
+  writeFileSync("./.txt", JSON.stringify(schedule, undefined, 2), "utf-8");
 
   // Все листы сразу
   // const allData = workbook.getAllSheetsData();

@@ -58,3 +58,14 @@ export interface ExcelWorkbookData {
   /** Сырой объект workbook из библиотеки xlsx */
   raw: unknown;
 }
+
+export interface SheetRange {
+  /** Начальная строка (1-based) */
+  startRow: number;
+  /** Начальная колонка (1-based) */
+  startCol: number;
+  /** Конечная строка (1-based, опционально) */
+  endRow?: number;
+  /** Конечная колонка (1-based, опционально) */
+  endCol?: number;
+}
