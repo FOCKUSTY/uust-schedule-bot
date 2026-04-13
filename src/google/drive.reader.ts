@@ -10,11 +10,11 @@ import type {
 import { google } from 'googleapis';
 
 import {
-  DEFAULT_READONLY_SCOPES,
+  DRIVE_API_VERSION,
+  DRIVE_READONLY_SCOPES,
   DEFAULT_PAGE_SIZE,
   DEFAULT_FIELDS,
   TRASHED_FILTER,
-  GOOGLE_DRIVE_API_VERSION,
   FOLDER_MIME_TYPE,
   DOWNLOAD_ALT_MEDIA,
   STREAM_RESPONSE_TYPE,
@@ -33,14 +33,13 @@ export class DriveReader {
    * @param config Конфигурация с путём к ключу сервисного аккаунта
    */
   public constructor(config?: Partial<DriveReaderConfig>) {
-    const scopes = config?.scopes ?? DEFAULT_READONLY_SCOPES;
-
+    const scopes = config?.scopes ?? DRIVE_READONLY_SCOPES;
     const auth = new google.auth.GoogleAuth({
       keyFile: config?.keyFilePath || defaultCredentials(),
       scopes,
     });
 
-    this.drive = google.drive({ version: GOOGLE_DRIVE_API_VERSION, auth });
+    this.drive = google.drive({ version: DRIVE_API_VERSION, auth });
   }
 
   /**

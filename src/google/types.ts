@@ -40,3 +40,21 @@ export interface ListFolderResult {
   nextPageToken?: string | null;
   incompleteSearch: boolean;
 }
+
+export interface ExcelSheetInfo {
+  /** Название листа */
+  name: string;
+  /** Индекс листа (начиная с 0) */
+  index: number;
+  /** Количество строк (приблизительное) */
+  rowCount: number;
+  /** Количество колонок (приблизительное) */
+  columnCount: number;
+}
+
+export interface ExcelWorkbookData {
+  /** Список листов */
+  sheets: ExcelSheetInfo[];
+  /** Сырой объект workbook из библиотеки xlsx */
+  raw: unknown;
+}
