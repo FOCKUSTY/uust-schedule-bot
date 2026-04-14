@@ -16,8 +16,11 @@
 		"xlsx": "^0.18.5"
 	},
 	"devDependencies": {
+		"@prisma/adapter-pg": "^7.7.0",
+		"@prisma/client": "^7.7.0",
 		"@types/node": "^25.6.0",
 		"dotenv": "^17.4.2",
+		"prisma": "^7.7.0",
 		"typescript": "^6.0.2"
 	}
 }

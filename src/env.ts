@@ -4,7 +4,7 @@ import { Env } from "fenviee";
 
 export const env = Env.create(process.env)({
   partial: [],
-  required: ["GOOGLE_DRIVE_FOLDER_URL"],
+  required: ["GOOGLE_DRIVE_FOLDER_URL", "DATABASE_URL"],
   unique: {
     "START_DATE": (value?: string) => {
       if (!value) {

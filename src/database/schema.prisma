@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client"
+  output = "./generated"
+  moduleFormat = "cjs"
+  generatedFileExtension = "ts"
+  compilerBuild = "fast"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Config {
+  id Int @id @default(autoincrement())
+  
+  course         String
+  specialization String
+  group          String
+
+  users User[]
+}
+
+model User {
+  id         Int @id @default(autoincrement())
+  telegramId Int @unique
+
+  configs Config[]
+}
