@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       fenviee:
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.1.2
+        version: 0.1.2
       googleapis:
         specifier: ^105.0.0
         version: 105.0.0
@@ -113,8 +113,8 @@ packages:
   fast-text-encoding@1.0.6:
     resolution: {integrity: sha512-VhXlQgj9ioXCqGstD37E/HBeqEGV/qOD/kmbVG8h5xKBYvM1L3lR1Zn4555cQ8GkYbJa8aJSipLPndE1k6zK2w==}
 
-  fenviee@0.1.1:
-    resolution: {integrity: sha512-yMVQ4VrthLqJSQdPbDsEr392tET/dOjQnyb/lMLZpu2pnupidLXb4TeoJOtz/B2Jrs89bUC2j9wfU819c8GZQg==}
+  fenviee@0.1.2:
+    resolution: {integrity: sha512-Fwd/7mxkMs/9xpg6k2ORSzIQNx//EkGjLM+ZzbGO0quZecEpMTgw618Udkw00ji5U/+d9lC8icjPoLbogbjvuw==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
 
   frac@1.1.2:
@@ -355,7 +355,7 @@ snapshots:
 
   fast-text-encoding@1.0.6: {}
 
-  fenviee@0.1.1: {}
+  fenviee@0.1.2: {}
 
   frac@1.1.2: {}
 

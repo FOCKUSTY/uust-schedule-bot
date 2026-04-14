@@ -6,3 +6,6 @@ credentials.json
 .env
 .env.*
 !.env.example
+
+/.txt
+/.cache

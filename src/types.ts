@@ -8,7 +8,33 @@ export interface ScheduleWeek {
   days: Record<string, ScheduleDay>;
 }
 
+export type ScheduleWeeks = Record<string, ScheduleWeek>;
+
 export interface FormattedSchedule {
   groupName: string;
-  weeks: Record<number, ScheduleWeek>;
+  weeks: ScheduleWeeks;
+}
+
+export interface GroupInformation {
+  course: string;
+  specialization: string;
+  group: string;
+}
+
+export interface FileData {
+  folderId: string;
+  name: string;
+  extension?: string;
+}
+
+export type CacheType = {
+  [course: string]: {
+    [specialization: string]: {
+      [group: string]: {
+        weeks: ScheduleWeeks,
+        /** ISO date string */
+        expiresAt: string;
+      }
+    }
+  }
 }

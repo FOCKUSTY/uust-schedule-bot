@@ -1,5 +1,7 @@
-import * as XLSX from 'xlsx';
 import type { ExcelSheetInfo, SheetRange } from './types';
+
+import * as XLSX from 'xlsx';
+
 import { rangeToA1 } from './utils';
 
 export interface SheetDimensions {
