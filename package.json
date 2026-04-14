@@ -8,11 +8,13 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"test": "tsc && node ./dist/test.js"
+		"test": "tsc && node ./dist/test.js",
+		"start": "tsc && node ./dist/telegram/bot.js"
 	},
 	"dependencies": {
 		"fenviee": "^0.1.2",
 		"googleapis": "^105.0.0",
+		"grammy": "^1.42.0",
 		"xlsx": "^0.18.5"
 	},
 	"devDependencies": {

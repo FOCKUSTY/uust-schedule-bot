@@ -21,10 +21,22 @@ export class Cache {
     return json;
   }
 
-  private _data: CacheType = {};
+  private _data: CacheType = {
+    default: {},
+    other: {}
+  };
 
   public constructor() {
     this._data = Cache.readFileSync();
+  }
+
+  public set<T>(prefix: string, data: T) {
+    this._data.other[prefix] = data;
+    this.writeFile();
+  }
+
+  public get<T = unknown>(prefix: string): T {
+    return this._data.other[prefix] as T;
   }
 
   public execute(group: GroupInformation, weeks: ScheduleWeeks) {
@@ -32,13 +44,13 @@ export class Cache {
     return this.writeFile();
   }
 
-  public get(group: GroupInformation): ScheduleWeeks|undefined {
-    return this._data?.[group.course]?.[group.specialization]?.[group.group]?.weeks;
+  public getWeeks(group: GroupInformation): ScheduleWeeks|undefined {
+    return this._data?.default?.[group.course]?.[group.specialization]?.[group.group]?.weeks;
   }
 
   private addLocal(group: GroupInformation, weeks: ScheduleWeeks) {
     if (this.expiresDateReached(group)) {
-      return this._data?.[group.course]?.[group.specialization]?.[group.group];
+      return this._data.default?.[group.course]?.[group.specialization]?.[group.group];
     }
 
     const data = this.createGroup(group, weeks);
@@ -51,22 +63,22 @@ export class Cache {
       expiresAt: getExpiresAtTimeForCache()
     };
 
-    this._data = {
+    this._data["default"] = {
       [group.course]: {
         [group.specialization]: {
           [group.group]: data,
-          ...this._data?.[group.course]?.[group.specialization],
+          ...this._data?.["default"]?.[group.course]?.[group.specialization],
         },
-        ...this._data?.[group.course],
+        ...this._data?.["default"]?.[group.course],
       },
-      ...this._data,
+      ...this._data?.["default"],
     }
 
     return data;
   }
 
   private expiresDateReached(group: GroupInformation) {
-    const data = this._data?.[group.course]?.[group.specialization]?.[group.group];
+    const data = this._data?.["default"]?.[group.course]?.[group.specialization]?.[group.group];
     if (!data) {
       return false;
     }

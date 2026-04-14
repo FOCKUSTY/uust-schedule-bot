@@ -1,3 +1,5 @@
+import type { FileInfo } from "./google";
+
 export interface ScheduleDay {
   dayName: string;
   pairs: Record<number, string | null>;
@@ -28,13 +30,22 @@ export interface FileData {
 }
 
 export type CacheType = {
-  [course: string]: {
-    [specialization: string]: {
-      [group: string]: {
-        weeks: ScheduleWeeks,
-        /** ISO date string */
-        expiresAt: string;
+  default: {
+    [course: string]: {
+      [specialization: string]: {
+        [group: string]: {
+          weeks: ScheduleWeeks,
+          /** ISO date string */
+          expiresAt: string;
+        }
       }
     }
+  },
+  other: {
+    [prefix: string]: unknown,
   }
+}
+
+export type Specializations = {
+  [course: string]: FileInfo[];
 }
