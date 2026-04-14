@@ -1,3 +1,3 @@
-export class Timesheet {
+export class Schedule {
   public constructor() {}
 }
