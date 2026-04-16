@@ -11,18 +11,29 @@ datasource db {
 }
 
 model Config {
-  id Int @id @default(autoincrement())
-  
+  id             Int           @id @default(autoincrement())
   course         String
   specialization String
   group          String
-
-  users User[]
+  userConfigs    UserConfig[]
 }
 
 model User {
-  id         Int @id @default(autoincrement())
-  telegramId Int @unique
+  id          Int           @id @default(autoincrement())
+  telegramId  String        @unique
+  userConfigs UserConfig[]
+}
 
-  configs Config[]
+model UserConfig {
+  userId    Int
+  configId  Int
+  
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  config    Config @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  isActived  Boolean  @default(true)
+
+  assignedAt DateTime @default(now())
+
+  @@id([userId, configId])
 }

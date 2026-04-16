@@ -16,6 +16,10 @@ export const defaultCredentials = () => {
   return join(process.cwd(), CREDENTIALS_JSON_FILE);
 }
 
+export const getCredentialsPath = (): string => {
+  return process.env.GOOGLE_APPLICATION_CREDENTIALS || defaultCredentials();
+};
+
 /**
  * Извлекает ID папки или файла из ссылки Google Drive.
  * @param url URL страницы папки или файла на Google Drive

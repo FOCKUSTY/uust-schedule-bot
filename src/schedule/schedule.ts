@@ -19,7 +19,7 @@ export class Schedule {
   public static async getCourses() {
     const cachedCourses = cache.get("courses");
     if (cachedCourses) {
-      return cachedCourses;
+      return cachedCourses as FileInfo[];
     }
 
     const drive = new DriveReader();
@@ -63,7 +63,6 @@ export class Schedule {
     const file = await Schedule.getFileFromFolder(drive, {
       name: specialization,
       folderId: courseFolder.id,
-      extension: "xlsx"
     });
 
     const excel = new ExcelReader(drive);
@@ -123,7 +122,6 @@ export class Schedule {
     const file = await Schedule.getFileFromFolder(drive, {
       name: this._config.specialization,
       folderId: courseFolder.id,
-      extension: "xlsx"
     });
 
     const excel = new ExcelReader(drive);
@@ -131,7 +129,7 @@ export class Schedule {
     const lists = wordbook.listSheets();
     const list = lists.filter(list => list.name === this._config.group)[0];
     if (!list) {
-      throw new Error("Groud not found.");
+      throw new Error("Group not found.");
     }
 
     const dimensions = wordbook.getSheetDimensions(list.name);

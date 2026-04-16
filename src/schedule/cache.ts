@@ -1,30 +1,29 @@
 import type { CacheType, GroupInformation, ScheduleWeeks } from "./types";
-
 import { getExpiresAtTimeForCache } from "./utils";
 import { CACHE_FILE } from "./constants";
-
 import { join } from "path";
-
 import { writeFile } from "fs/promises";
 import { existsSync, readFileSync } from "fs";
 
 export class Cache {
-  private static readFileSync() {
+  private static readFileSync(): CacheType {
     const path = join(process.cwd(), CACHE_FILE);
-    
     if (!existsSync(path)) {
-      return {};
-    };
-
-    const file = readFileSync(path, "utf-8");
-    const json = JSON.parse(file);
-    return json;
+      return { default: {}, other: {} };
+    }
+    try {
+      const file = readFileSync(path, "utf-8");
+      const json = JSON.parse(file);
+      return {
+        default: json.default || {},
+        other: json.other || {},
+      };
+    } catch {
+      return { default: {}, other: {} };
+    }
   }
 
-  private _data: CacheType = {
-    default: {},
-    other: {}
-  };
+  private _data: CacheType = { default: {}, other: {} };
 
   public constructor() {
     this._data = Cache.readFileSync();
@@ -44,15 +43,14 @@ export class Cache {
     return this.writeFile();
   }
 
-  public getWeeks(group: GroupInformation): ScheduleWeeks|undefined {
+  public getWeeks(group: GroupInformation): ScheduleWeeks | undefined {
     return this._data?.default?.[group.course]?.[group.specialization]?.[group.group]?.weeks;
   }
 
   private addLocal(group: GroupInformation, weeks: ScheduleWeeks) {
-    if (this.expiresDateReached(group)) {
+    if (!this.expiresDateReached(group)) {
       return this._data.default?.[group.course]?.[group.specialization]?.[group.group];
     }
-
     const data = this.createGroup(group, weeks);
     return data;
   }
@@ -60,37 +58,35 @@ export class Cache {
   private createGroup(group: GroupInformation, weeks: ScheduleWeeks) {
     const data = {
       weeks,
-      expiresAt: getExpiresAtTimeForCache()
+      expiresAt: getExpiresAtTimeForCache(),
     };
 
-    this._data["default"] = {
+    this._data.default = {
+      ...this._data.default,
       [group.course]: {
+        ...this._data.default?.[group.course],
         [group.specialization]: {
+          ...this._data.default?.[group.course]?.[group.specialization],
           [group.group]: data,
-          ...this._data?.["default"]?.[group.course]?.[group.specialization],
         },
-        ...this._data?.["default"]?.[group.course],
       },
-      ...this._data?.["default"],
-    }
+    };
 
     return data;
   }
 
   private expiresDateReached(group: GroupInformation) {
-    const data = this._data?.["default"]?.[group.course]?.[group.specialization]?.[group.group];
+    const data = this._data.default?.[group.course]?.[group.specialization]?.[group.group];
     if (!data) {
-      return false;
+      return true;
     }
-
     const expiresAt = new Date(data.expiresAt).getTime();
-    const now = new Date().getTime();
-
+    const now = Date.now();
     return now >= expiresAt;
   }
 
   private writeFile() {
     const file = join(process.cwd(), CACHE_FILE);
-    return writeFile(file, JSON.stringify(this._data, undefined, 0), "utf-8");
+    return writeFile(file, JSON.stringify(this._data, null, 0), "utf-8");
   }
 }
