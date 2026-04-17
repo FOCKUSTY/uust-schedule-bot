@@ -1,10 +1,10 @@
+// src/telegram/handlers/registration.ts
 import { Conversation } from '@grammyjs/conversations';
 import { InlineKeyboard } from 'grammy';
 import { Context } from '../bot';
 import { ScheduleService } from '../../services/schedule.service';
 import { UserService } from '../../services/user.service';
 import { mainMenuKeyboard } from '../keyboards';
-import { sendOrEditMessage } from '../utils/messageHelper';
 
 const scheduleService = new ScheduleService();
 const userService = new UserService();
@@ -15,100 +15,106 @@ export async function registrationConversation(
 ) {
   const telegramId = ctx.from!.id;
 
+  let course: string | undefined;
+  let specialization: string | undefined;
+  let group: string | undefined;
+
   // Шаг 1: курс
   const courses = await scheduleService.getCourses();
   const courseNames = courses.map(c => c.name);
+  
+  while (!course) {
+    const keyboard = new InlineKeyboard();
+    courseNames.forEach((name, idx) => keyboard.text(name, `reg:course:${idx}`).row());
+    keyboard.text('❌ Отмена', 'reg:cancel');
 
-  await sendOrEditMessage(
-    ctx,
-    '📚 Шаг 1/3: выберите курс.',
-    buildKeyboard(courseNames, 'course')
-  );
+    await ctx.reply('📚 Шаг 1/3: выберите курс.', { reply_markup: keyboard });
 
-  const courseCtx = await conversation.waitForCallbackQuery(/^reg:course:/);
-  const courseIdx = parseInt(courseCtx.callbackQuery.data.split(':')[2]);
-  const course = courseNames[courseIdx];
-  await courseCtx.answerCallbackQuery({ text: `Выбран курс: ${course}` });
+    const courseCtx = await conversation.waitForCallbackQuery(/^reg:course:/);
+    const data = courseCtx.callbackQuery.data;
+    if (data === 'reg:cancel') {
+      await courseCtx.answerCallbackQuery();
+      await ctx.reply('❌ Регистрация отменена.');
+      return;
+    }
+    const idx = parseInt(data.split(':')[2]);
+    course = courseNames[idx];
+    await courseCtx.answerCallbackQuery({ text: `Выбран курс: ${course}` });
+  }
 
   // Шаг 2: специальность
-  const specs = await scheduleService.getSpecializations(course);
-  const specNames = specs.map(s => s.name);
+  const specializations = await scheduleService.getSpecializations(course);
+  const specNames = specializations.map(s => s.name);
+  
+  while (!specialization) {
+    const keyboard = new InlineKeyboard();
+    specNames.forEach((name, idx) => keyboard.text(name, `reg:spec:${idx}`).row());
+    keyboard.text('🔙 Назад', 'reg:back_to_course');
+    keyboard.text('❌ Отмена', 'reg:cancel');
 
-  await sendOrEditMessage(
-    ctx,
-    `📖 Курс: ${course}\nШаг 2/3: выберите специальность.`,
-    buildKeyboard(specNames, 'spec', { back: 'course' })
-  );
+    await ctx.reply(`📖 Курс: ${course}\nШаг 2/3: выберите специальность.`, { reply_markup: keyboard });
 
-  const specCtx = await conversation.waitForCallbackQuery([/^reg:spec:/, 'reg:back_to_course', 'reg:cancel']);
-  const specData = specCtx.callbackQuery.data;
+    const specCtx = await conversation.waitForCallbackQuery([
+      /^reg:spec:/,
+      'reg:back_to_course',
+      'reg:cancel',
+    ]);
+    const data = specCtx.callbackQuery.data;
 
-  if (specData === 'reg:back_to_course') {
-    await specCtx.answerCallbackQuery();
-    return await registrationConversation(conversation, ctx);
+    if (data === 'reg:back_to_course') {
+      course = undefined;
+      await specCtx.answerCallbackQuery();
+      return await registrationConversation(conversation, ctx);
+    } else if (data === 'reg:cancel') {
+      await specCtx.answerCallbackQuery();
+      await ctx.reply('❌ Регистрация отменена.');
+      return;
+    } else {
+      const idx = parseInt(data.split(':')[2]);
+      specialization = specNames[idx];
+      await specCtx.answerCallbackQuery({ text: `Выбрана специальность: ${specialization}` });
+    }
   }
-  if (specData === 'reg:cancel') {
-    await specCtx.answerCallbackQuery();
-    await sendOrEditMessage(ctx, '❌ Регистрация отменена.');
-    return;
-  }
-
-  const specIdx = parseInt(specData.split(':')[2]);
-  const specialization = specNames[specIdx];
-  await specCtx.answerCallbackQuery({ text: `Выбрана специальность: ${specialization}` });
 
   // Шаг 3: группа
   const groups = await scheduleService.getGroups(course, specialization);
   const groupNames = groups.map(g => g.name);
+  
+  while (!group) {
+    const keyboard = new InlineKeyboard();
+    groupNames.forEach((name, idx) => keyboard.text(name, `reg:group:${idx}`).row());
+    keyboard.text('🔙 Назад', 'reg:back_to_spec');
+    keyboard.text('❌ Отмена', 'reg:cancel');
 
-  await sendOrEditMessage(
-    ctx,
-    `📌 Курс: ${course}\nСпециальность: ${specialization}\nШаг 3/3: выберите группу.`,
-    buildKeyboard(groupNames, 'group', { back: 'spec' })
-  );
+    await ctx.reply(`📌 Курс: ${course}, специальность: ${specialization}\nШаг 3/3: выберите группу.`, {
+      reply_markup: keyboard,
+    });
 
-  const groupCtx = await conversation.waitForCallbackQuery([/^reg:group:/, 'reg:back_to_spec', 'reg:cancel']);
-  const groupData = groupCtx.callbackQuery.data;
+    const groupCtx = await conversation.waitForCallbackQuery([
+      /^reg:group:/,
+      'reg:back_to_spec',
+      'reg:cancel',
+    ]);
+    const data = groupCtx.callbackQuery.data;
 
-  if (groupData === 'reg:back_to_spec') {
-    await groupCtx.answerCallbackQuery();
-    // Сохраняем курс в сессии для быстрого возврата
-    //@ts-ignore
-    conversation.session.registration = { step: 'specialization', course };
-    return await registrationConversation(conversation, ctx);
+    if (data === 'reg:back_to_spec') {
+      specialization = undefined;
+      await groupCtx.answerCallbackQuery();
+      return await registrationConversation(conversation, ctx);
+    } else if (data === 'reg:cancel') {
+      await groupCtx.answerCallbackQuery();
+      await ctx.reply('❌ Регистрация отменена.');
+      return;
+    } else {
+      const idx = parseInt(data.split(':')[2]);
+      group = groupNames[idx];
+      await groupCtx.answerCallbackQuery({ text: `Выбрана группа: ${group}` });
+    }
   }
-  if (groupData === 'reg:cancel') {
-    await groupCtx.answerCallbackQuery();
-    await sendOrEditMessage(ctx, '❌ Регистрация отменена.');
-    return;
-  }
-
-  const groupIdx = parseInt(groupData.split(':')[2]);
-  const group = groupNames[groupIdx];
-  await groupCtx.answerCallbackQuery({ text: `Выбрана группа: ${group}` });
 
   await userService.addConfig(`${telegramId}`, { course, specialization, group }, true);
 
-  await sendOrEditMessage(
-    ctx,
-    `✅ Группа «${group}» сохранена и выбрана как активная!`,
-    mainMenuKeyboard()
-  );
-}
-
-function buildKeyboard(
-  items: string[],
-  prefix: string,
-  options?: { back?: 'course' | 'spec' }
-): InlineKeyboard {
-  const keyboard = new InlineKeyboard();
-  items.forEach((item, index) => {
-    keyboard.text(item, `reg:${prefix}:${index}`).row();
+  await ctx.reply(`✅ Группа «${group}» сохранена и выбрана как активная!`, {
+    reply_markup: mainMenuKeyboard(),
   });
-  if (options?.back) {
-    const backData = options.back === 'course' ? 'reg:back_to_course' : 'reg:back_to_spec';
-    keyboard.text('🔙 Назад', backData);
-  }
-  keyboard.text('❌ Отмена', 'reg:cancel');
-  return keyboard;
 }

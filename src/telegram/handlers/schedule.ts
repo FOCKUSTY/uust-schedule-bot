@@ -1,18 +1,15 @@
-// src/telegram/handlers/schedule.ts
 import { Context } from '../bot';
 import { ScheduleService } from '../../services/schedule.service';
 import { UserService } from '../../services/user.service';
 import { formatDay, formatWeek } from '../../utils/formatSchedule';
 import { getCurrentWeek } from '../../schedule/utils';
 import { InlineKeyboard } from 'grammy';
-import { sendOrEditMessage } from '../utils/messageHelper';
 
 const scheduleService = new ScheduleService();
 const userService = new UserService();
 
 const DAY_NAMES_RU = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 
-// Приведение дня недели (0 = понедельник)
 function getDayIndexForToday(): number {
   const day = new Date().getDay();
   return day === 0 ? 6 : day - 1;
@@ -100,7 +97,7 @@ export async function handleWeek(ctx: Context) {
     .row()
     .text('🔙 В меню', 'menu:back');
 
-  await sendOrEditMessage(ctx, text, keyboard);
+  await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard });
 }
 
 export async function handlePrevWeek(ctx: Context) {

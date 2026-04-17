@@ -2,7 +2,6 @@ import { Context } from '../bot';
 import { UserService } from '../../services/user.service';
 import { configSelectionKeyboard, mainMenuKeyboard } from '../keyboards';
 import { handleToday, handleTomorrow, handleWeek } from './schedule';
-import { sendOrEditMessage } from '../utils/messageHelper';
 
 const userService = new UserService();
 
@@ -30,21 +29,21 @@ export async function menuCallbackHandler(ctx: Context) {
       await ctx.conversation.enter('registration');
       await ctx.answerCallbackQuery();
       break;
+    case 'menu:back':
+      await ctx.reply('Главное меню', { reply_markup: mainMenuKeyboard() });
+      await ctx.answerCallbackQuery();
+      break;
     case 'menu:switch_group': {
       const configs = await userService.getUserConfigs(`${telegramId}`);
       if (configs.length === 0) {
-        await sendOrEditMessage(ctx, 'У вас нет сохранённых групп. Начните регистрацию: /start');
+        await ctx.reply('У вас нет сохранённых групп. Начните регистрацию: /start');
         return;
       }
       const keyboard = configSelectionKeyboard(configs);
-      await sendOrEditMessage(ctx, 'Выберите группу для активации или добавьте новую:', keyboard);
+      await ctx.reply('Выберите группу для активации или добавьте новую:', { reply_markup: keyboard });
       await ctx.answerCallbackQuery();
       break;
     }
-    case 'menu:back':
-      await sendOrEditMessage(ctx, 'Главное меню', mainMenuKeyboard());
-      await ctx.answerCallbackQuery();
-      break;
     default:
       await ctx.answerCallbackQuery('Неизвестная команда меню');
   }

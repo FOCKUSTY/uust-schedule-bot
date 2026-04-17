@@ -5,8 +5,6 @@ export interface SessionData {
     specialization?: string;
   };
   currentWeekOffset?: number;
-  lastBotMessageId?: number;
-  lastChatId?: number;
 }
 
 export function initialSession(): SessionData {
