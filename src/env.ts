@@ -3,7 +3,7 @@ import { Env } from "fenviee";
 
 export const env = Env.create(process.env)({
   partial: [],
-  required: ["GOOGLE_CREDENTIALS", "GOOGLE_DRIVE_FOLDER_URL", "DATABASE_URL", "TELEGRAM_BOT_TOKEN"],
+  required: ["GOOGLE_DRIVE_FOLDER_URL", "DATABASE_URL", "TELEGRAM_BOT_TOKEN"],
   unique: {
     START_DATE: (value?: string) => {
       if (!value) {
