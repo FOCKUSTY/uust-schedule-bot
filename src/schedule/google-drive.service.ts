@@ -16,10 +16,13 @@ export class GoogleDriveService {
    * @param rootFolderId ID папки, содержащей папки курсов
    * @param drive Экземпляр DriveReader (если не передан, создаётся новый)
    */
-  public constructor(rootFolderId: string, dependencies?: {
-    drive?: DriveReader,
-    cache?: Cache
-  }) {
+  public constructor(
+    rootFolderId: string,
+    dependencies?: {
+      drive?: DriveReader;
+      cache?: Cache;
+    },
+  ) {
     this.rootFolderId = rootFolderId;
     this.drive = dependencies?.drive ?? new DriveReader();
     this.cache = dependencies?.cache ?? new Cache(process.cwd());

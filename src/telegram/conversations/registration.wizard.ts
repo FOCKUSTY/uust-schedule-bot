@@ -211,6 +211,9 @@ export class RegistrationWizard {
     ctx: Context,
     conversation: MyConversation,
   ): Promise<void> {
-    await sendOrEditMessage(ctx, "❌ Регистрация отменена.", { conversation, keyboard: mainMenuKeyboard() });
+    await sendOrEditMessage(ctx, "❌ Регистрация отменена.", {
+      conversation,
+      keyboard: mainMenuKeyboard(),
+    });
   }
 }

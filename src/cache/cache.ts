@@ -1,11 +1,13 @@
-import type { CacheEntry, SerializedCache } from './types';
+import type { CacheEntry, SerializedCache } from "./types";
 
-import { readFile } from 'fs/promises';
-import { FileCache } from './file-cache';
+import { readFile } from "fs/promises";
+import { FileCache } from "./file-cache";
 
 const DEFAULT_TTL_MS = 0;
 
-export class Cache<TValue = unknown> extends FileCache<Record<string, SerializedCache<TValue>>> {
+export class Cache<TValue = unknown> extends FileCache<
+  Record<string, SerializedCache<TValue>>
+> {
   private memory: Map<string, CacheEntry<TValue>> = new Map();
 
   public constructor(section: string, folder?: string) {
@@ -63,7 +65,10 @@ export class Cache<TValue = unknown> extends FileCache<Record<string, Serialized
 
   public entries(): Array<[string, TValue]> {
     this.cleanExpired();
-    return Array.from(this.memory.entries(), ([key, entry]) => [key, entry.value]);
+    return Array.from(this.memory.entries(), ([key, entry]) => [
+      key,
+      entry.value,
+    ]);
   }
 
   public get size(): number {
@@ -74,8 +79,11 @@ export class Cache<TValue = unknown> extends FileCache<Record<string, Serialized
   public override async load(): Promise<void> {
     try {
       await this.ensureDirectory();
-      const content = await readFile(this.filePath, 'utf-8');
-      const raw = JSON.parse(content) as Record<string, SerializedCache<TValue>>;
+      const content = await readFile(this.filePath, "utf-8");
+      const raw = JSON.parse(content) as Record<
+        string,
+        SerializedCache<TValue>
+      >;
 
       this.memory.clear();
 
@@ -88,11 +96,15 @@ export class Cache<TValue = unknown> extends FileCache<Record<string, Serialized
 
       this.cleanExpired();
     } catch (error) {
-      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
         this.memory.clear();
         return;
       }
-      
+
       throw new Error(`Failed to load cache from "${this.filePath}": ${error}`);
     }
   }
@@ -104,7 +116,9 @@ export class Cache<TValue = unknown> extends FileCache<Record<string, Serialized
     for (const [key, entry] of this.memory.entries()) {
       serialized[key] = {
         value: entry.value,
-        expiresAt: entry.expiresAt ? new Date(entry.expiresAt).toISOString() : undefined,
+        expiresAt: entry.expiresAt
+          ? new Date(entry.expiresAt).toISOString()
+          : undefined,
       };
     }
 
