@@ -1,10 +1,13 @@
 import { env } from "../env";
+
+import type { GroupInformation, ScheduleWeek } from "./types";
+
 import { extractIdFromUrl } from "./google";
 import { GoogleDriveService } from "./google-drive.service";
-import { ScheduleCache } from "./schedule-cache";
+
 import { ScheduleLoader } from "./schedule-loader";
-import { GroupInformation, ScheduleWeek } from "./types";
 import { WeekCalculator } from "./week-calculator";
+import { ScheduleCache } from "../cache/schedule-cache";
 
 /**
  * Основной класс для получения расписания.
@@ -36,7 +39,7 @@ export class Schedule {
 
     const driveService = new GoogleDriveService(rootFolderId);
     this.loader = deps?.loader ?? new ScheduleLoader(driveService);
-    this.cache = deps?.cache ?? new ScheduleCache(process.cwd());
+    this.cache = deps?.cache ?? new ScheduleCache();
     this.weekCalculator =
       deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
   }
@@ -46,7 +49,7 @@ export class Schedule {
    * Должен быть вызван перед первым использованием.
    */
   public async initializeCache(): Promise<void> {
-    await this.cache.load();
+    await this.cache.loadAll();
   }
 
   /**
@@ -65,7 +68,7 @@ export class Schedule {
     const weeks = await this.loader.loadFullSchedule(this.group);
 
     this.cache.setWeeks(this.group, weeks);
-    await this.cache.save();
+    await this.cache.saveAll();
 
     const week = weeks[this.weekNumber];
     if (!week) {

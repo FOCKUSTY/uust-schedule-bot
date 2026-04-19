@@ -1,6 +1,6 @@
 import type { GroupInformation } from "../schedule";
 import type { GoogleDriveService } from "../schedule/google-drive.service";
-import type { ScheduleCache } from "../schedule/schedule-cache";
+import type { Cache } from "../cache/cache";
 import type { ScheduleLoader } from "../schedule/schedule-loader";
 import type { NotificationService } from "../notifications/notification.service";
 
@@ -14,7 +14,7 @@ export class ScheduleWatcher {
 
   public constructor(
     private readonly driveService: GoogleDriveService,
-    private readonly cache: ScheduleCache,
+    private readonly cache: Cache,
     private readonly loader: ScheduleLoader,
     private readonly notificationService: NotificationService,
     private readonly options: WatcherOptions,

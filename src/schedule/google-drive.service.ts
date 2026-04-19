@@ -1,4 +1,5 @@
 import type { FileInfo, ExcelSheetInfo, ExcelWorkbook } from "./google";
+import { Cache } from "../cache/cache";
 
 import { DriveReader, ExcelReader } from "./google";
 
@@ -7,6 +8,7 @@ import { DriveReader, ExcelReader } from "./google";
  */
 export class GoogleDriveService {
   private readonly drive: DriveReader;
+  private readonly cache: Cache;
   private readonly excelReader: ExcelReader;
   private readonly rootFolderId: string;
 
@@ -14,9 +16,13 @@ export class GoogleDriveService {
    * @param rootFolderId ID папки, содержащей папки курсов
    * @param drive Экземпляр DriveReader (если не передан, создаётся новый)
    */
-  public constructor(rootFolderId: string, drive?: DriveReader) {
+  public constructor(rootFolderId: string, dependencies?: {
+    drive?: DriveReader,
+    cache?: Cache
+  }) {
     this.rootFolderId = rootFolderId;
-    this.drive = drive ?? new DriveReader();
+    this.drive = dependencies?.drive ?? new DriveReader();
+    this.cache = dependencies?.cache ?? new Cache(process.cwd());
     this.excelReader = new ExcelReader(this.drive);
   }
 

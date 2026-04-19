@@ -25,7 +25,7 @@ import { configSelectionKeyboard, mainMenuKeyboard } from "./keyboards";
 import { sendOrEditMessage } from "./utils/send-or-edit";
 
 import { extractIdFromUrl } from "../schedule/google";
-import { GoogleDriveService, ScheduleCache, ScheduleLoader } from "../schedule";
+import { GoogleDriveService, Cache, ScheduleLoader } from "../schedule";
 import { NotificationService } from "../notifications/notification.service";
 import { ScheduleWatcher } from "../watcher/schedule-watcher";
 
@@ -154,7 +154,7 @@ if (!rootFolderId) {
 }
 
 const driveService = new GoogleDriveService(rootFolderId);
-const cache = new ScheduleCache(process.cwd());
+const cache = new Cache(process.cwd());
 const loader = new ScheduleLoader(driveService);
 const notificationService = new NotificationService(bot, userService);
 

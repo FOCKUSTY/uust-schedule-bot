@@ -7,14 +7,10 @@ import { ScheduleFormatter } from "./formatter";
  * Загружает и парсит расписание из Google Drive.
  */
 export class ScheduleLoader {
-  private readonly formatter: ScheduleFormatter;
-
   public constructor(
     private readonly driveService: GoogleDriveService,
-    formatter?: ScheduleFormatter,
-  ) {
-    this.formatter = formatter ?? new ScheduleFormatter();
-  }
+    private readonly formatter: ScheduleFormatter = new ScheduleFormatter(),
+  ) {}
 
   /**
    * Загружает полное расписание для группы (все недели) и возвращает структурированные данные.
