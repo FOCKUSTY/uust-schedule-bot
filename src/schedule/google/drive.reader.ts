@@ -1,24 +1,25 @@
 import type { drive_v3 } from "googleapis";
 import type { Readable } from "stream";
+
 import type {
   DriveReaderConfig,
+  FileInfo,
   ListFolderOptions,
   ListFolderResult,
-  FileInfo,
 } from "./types";
 
 import { google } from "googleapis";
 
 import {
+  DEFAULT_FIELDS,
+  DEFAULT_PAGE_SIZE,
+  DOWNLOAD_ALT_MEDIA,
   DRIVE_API_VERSION,
   DRIVE_READONLY_SCOPES,
-  DEFAULT_PAGE_SIZE,
-  DEFAULT_FIELDS,
-  TRASHED_FILTER,
-  FOLDER_MIME_TYPE,
-  DOWNLOAD_ALT_MEDIA,
-  STREAM_RESPONSE_TYPE,
   FILE_FIELDS_FOR_INFO,
+  FOLDER_MIME_TYPE,
+  STREAM_RESPONSE_TYPE,
+  TRASHED_FILTER,
 } from "./constants";
 
 import { defaultCredentials } from "./utils";

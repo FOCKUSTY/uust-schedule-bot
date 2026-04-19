@@ -1,18 +1,18 @@
 import { join } from "node:path";
 
 import {
-  FOLDER_PATH_PREFIX,
-  FILE_PATH_PREFIX,
-  SPREADSHEET_PATH_PREFIX,
-  D_PATH_PREFIX,
-  VIEW_PATH_SEGMENT,
-  EDIT_PATH_SEGMENT,
-  QUERY_PARAM_START,
-  HASH_START,
   CREDENTIALS_JSON_FILE,
+  FILE_PATH_PREFIX,
+  FOLDER_PATH_PREFIX,
+  HASH_START,
+  QUERY_PARAM_START,
+  VIEW_PATH_SEGMENT,
 } from "./constants";
 
-export const defaultCredentials = () => {
+/**
+ * Возвращает путь к файлу credentials.json по умолчанию.
+ */
+export const defaultCredentials = (): string => {
   return join(process.cwd(), CREDENTIALS_JSON_FILE);
 };
 
@@ -42,28 +42,35 @@ export function extractIdFromUrl(url: string): string | null {
 }
 
 /**
- * Извлекает ID таблицы из ссылки Google Sheets.
- * @param url URL таблицы Google Sheets
- * @returns ID или null, если извлечь не удалось
+ * Преобразует диапазон ячеек в нотацию A1.
+ * @param startRow Начальная строка (1-based)
+ * @param startColumn Начальная колонка (1-based)
+ * @param endRow Конечная строка (опционально)
+ * @param endColumn Конечная колонка (опционально)
+ * @returns Строка вида "A1" или "A1:C10"
  */
-export function extractSpreadsheetIdFromUrl(url: string): string | null {
-  if (!isValidUrl(url)) {
-    return null;
+export function rangeToA1(
+  startRow: number,
+  startColumn: number,
+  endRow?: number,
+  endColumn?: number,
+): string {
+  if (startRow <= 0 || startColumn <= 0) {
+    throw new Error("Индексы строк и колонок должны быть >= 1");
+  }
+  if (endRow !== undefined && endRow <= 0) {
+    throw new Error("Конечная строка должна быть >= 1");
+  }
+  if (endColumn !== undefined && endColumn <= 0) {
+    throw new Error("Конечная колонка должна быть >= 1");
   }
 
-  let idCandidate: string | null = null;
-
-  if (url.includes(SPREADSHEET_PATH_PREFIX)) {
-    idCandidate = extractSegmentAfterPrefix(url, SPREADSHEET_PATH_PREFIX);
-  } else if (url.includes(D_PATH_PREFIX)) {
-    idCandidate = extractSegmentAfterPrefix(url, D_PATH_PREFIX);
+  const startCell = `${columnIndexToLetter(startColumn)}${startRow}`;
+  if (endRow === undefined || endColumn === undefined) {
+    return startCell;
   }
-
-  if (!idCandidate) {
-    return null;
-  }
-
-  return removeTrailingSegments(idCandidate, [EDIT_PATH_SEGMENT]);
+  const endCell = `${columnIndexToLetter(endColumn)}${endRow}`;
+  return `${startCell}:${endCell}`;
 }
 
 function isValidUrl(url: unknown): url is string {
@@ -78,12 +85,11 @@ function extractSegmentAfterPrefix(url: string, prefix: string): string | null {
 
   const idStart = startIndex + prefix.length;
   const remaining = url.slice(idStart);
-  const terminatorIndex = remaining.search(/[\/\?#]/);
+  const terminatorIndex = remaining.search(/[/?#]/);
 
   if (terminatorIndex === -1) {
     return remaining;
   }
-
   return remaining.slice(0, terminatorIndex);
 }
 
@@ -113,37 +119,15 @@ function removeTrailingSegments(
   return result;
 }
 
-export function rangeToA1(
-  startRow: number,
-  startCol: number,
-  endRow?: number,
-  endCol?: number,
-): string {
-  if (startRow <= 0 || startCol <= 0) {
-    throw new Error("Индексы строк и колонок должны быть >= 1");
-  }
-  if (endRow !== undefined && endRow <= 0) {
-    throw new Error("Конечная строка должна быть >= 1");
-  }
-  if (endCol !== undefined && endCol <= 0) {
-    throw new Error("Конечная колонка должна быть >= 1");
-  }
-
-  const startCell = `${columnIndexToLetter(startCol)}${startRow}`;
-  if (endRow === undefined || endCol === undefined) {
-    return startCell;
-  }
-  const endCell = `${columnIndexToLetter(endCol)}${endRow}`;
-  return `${startCell}:${endCell}`;
-}
-
 function columnIndexToLetter(index: number): string {
   let letter = "";
   let temp = index;
+
   while (temp > 0) {
     const remainder = (temp - 1) % 26;
     letter = String.fromCharCode(65 + remainder) + letter;
     temp = Math.floor((temp - 1) / 26);
   }
+  
   return letter;
 }

@@ -1,8 +1,7 @@
 import type { ExcelSheetInfo, SheetRange } from "./types";
+import { rangeToA1 } from "./utils";
 
 import * as XLSX from "xlsx";
-
-import { rangeToA1 } from "./utils";
 
 export interface SheetDimensions {
   startRow: number;
@@ -94,7 +93,7 @@ export class ExcelWorkbook {
     sheetNameOrIndex: string | number,
     range: SheetRange,
   ): string[][] {
-    const { startRow, startCol, endRow, endCol } = range;
+    const { startRow, startColumn: startCol, endRow, endColumn: endCol } = range;
     if (endRow === undefined || endCol === undefined) {
       return this.getSheetData(sheetNameOrIndex);
     }

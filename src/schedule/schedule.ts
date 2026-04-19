@@ -152,7 +152,7 @@ export class Schedule {
     const data = wordbook.getSheetDataByRange(list.name, {
       ...dimensions,
       startRow: 1,
-      startCol: 1,
+      startColumn: 1,
     });
 
     const formatter = new ScheduleFormatter();
