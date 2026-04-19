@@ -1,5 +1,12 @@
-export const CACHE_FILE_NAME = "schedule";
-
-export const TWO_HOURS_MS = 1000 * 60 * 60 * 2;
-
 export const COURSE_FOLDER_ID_PLACEHOLDER = "COURSE_FOLDER_ID";
+
+export const ONE_HOURS_MS = 60 * 60 * 1000;
+export const ONE_DAY_MS = 24 * ONE_HOURS_MS;
+
+export const CACHE_TTL = {
+  COURSES: 6 * ONE_HOURS_MS,
+  SPECIALIZATIONS: 6 * ONE_HOURS_MS,
+  GROUPS: 6 * ONE_HOURS_MS,
+  WEEKS: ONE_HOURS_MS,
+  SINGLE_WEEK: 4 * ONE_HOURS_MS, 
+} as const;

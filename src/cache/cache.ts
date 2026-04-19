@@ -1,128 +1,60 @@
-import type { CacheEntry, SerializedCache } from "./types";
+import type { CacheStorage } from './cache-storage.interface';
+import { FileCacheStorage } from './file-cache-storage';
+import { TWO_HOURS_MS } from './constants';
 
-import { readFile } from "fs/promises";
-import { FileCache } from "./file-cache";
+export class Cache {
+  private storage: CacheStorage;
 
-const DEFAULT_TTL_MS = 0;
-
-export class Cache<TValue = unknown> extends FileCache<
-  Record<string, SerializedCache<TValue>>
-> {
-  private memory: Map<string, CacheEntry<TValue>> = new Map();
-
-  public constructor(section: string, folder?: string) {
-    super(section, {}, folder);
-  }
-
-  public set(key: string, value: TValue, ttlMs: number = DEFAULT_TTL_MS): void {
-    const expiresAt = ttlMs > 0 ? Date.now() + ttlMs : undefined;
-    this.memory.set(key, { value, expiresAt });
-  }
-
-  public get(key: string): TValue | undefined {
-    const entry = this.memory.get(key);
-    if (!entry) {
-      return undefined;
-    }
-
-    if (this.isExpired(entry.expiresAt)) {
-      this.memory.delete(key);
-      return undefined;
-    }
-
-    return entry.value;
-  }
-
-  public has(key: string): boolean {
-    return this.get(key) !== undefined;
-  }
-
-  public delete(key: string): boolean {
-    return this.memory.delete(key);
-  }
-
-  public clear(): void {
-    this.memory.clear();
-  }
-
-  public cleanExpired(): void {
-    for (const [key, entry] of this.memory.entries()) {
-      if (this.isExpired(entry.expiresAt)) {
-        this.memory.delete(key);
-      }
+  public constructor(section: string, folder?: string, debounceMs?: number);
+  public constructor(storage: CacheStorage);
+  public constructor(storageOrSection: CacheStorage | string, folder?: string, debounceMs?: number) {
+    if (typeof storageOrSection === 'string') {
+      this.storage = new FileCacheStorage(storageOrSection, folder, debounceMs);
+    } else {
+      this.storage = storageOrSection;
     }
   }
 
-  public keys(): string[] {
-    this.cleanExpired();
-    return Array.from(this.memory.keys());
+  public async set<Value>(key: string, value: Value, ttlMs: number = TWO_HOURS_MS): Promise<void> {
+    await this.storage.set(key, value, ttlMs);
   }
 
-  public values(): TValue[] {
-    this.cleanExpired();
-    return Array.from(this.memory.values(), (entry) => entry.value);
+  public async get<Value>(key: string): Promise<Value | undefined> {
+    const value = await this.storage.get(key);
+    return value as Value | undefined;
   }
 
-  public entries(): Array<[string, TValue]> {
-    this.cleanExpired();
-    return Array.from(this.memory.entries(), ([key, entry]) => [
-      key,
-      entry.value,
-    ]);
+  public async has(key: string): Promise<boolean> {
+    return this.storage.has(key);
   }
 
-  public get size(): number {
-    this.cleanExpired();
-    return this.memory.size;
+  public async delete(key: string): Promise<boolean> {
+    return this.storage.delete(key);
   }
 
-  public override async load(): Promise<void> {
-    try {
-      await this.ensureDirectory();
-      const content = await readFile(this.filePath, "utf-8");
-      const raw = JSON.parse(content) as Record<
-        string,
-        SerializedCache<TValue>
-      >;
+  public async clear(): Promise<void> {
+    await this.storage.clear();
+  }
 
-      this.memory.clear();
+  public async keys(): Promise<string[]> {
+    return this.storage.keys();
+  }
 
-      for (const [key, serialized] of Object.entries(raw)) {
-        const expiresAt = serialized.expiresAt
-          ? new Date(serialized.expiresAt).getTime()
-          : undefined;
-        this.memory.set(key, { value: serialized.value, expiresAt });
-      }
-
-      this.cleanExpired();
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        error.code === "ENOENT"
-      ) {
-        this.memory.clear();
-        return;
-      }
-
-      throw new Error(`Failed to load cache from "${this.filePath}": ${error}`);
+  public async load(): Promise<void> {
+    if ('load' in this.storage && typeof (this.storage as any).load === 'function') {
+      await (this.storage as any).load();
     }
   }
 
-  public override async save(): Promise<void> {
-    this.cleanExpired();
-
-    const serialized: Record<string, SerializedCache<TValue>> = {};
-    for (const [key, entry] of this.memory.entries()) {
-      serialized[key] = {
-        value: entry.value,
-        expiresAt: entry.expiresAt
-          ? new Date(entry.expiresAt).toISOString()
-          : undefined,
-      };
+  public async save(): Promise<void> {
+    if ('save' in this.storage && typeof (this.storage as any).save === 'function') {
+      await (this.storage as any).save();
     }
+  }
 
-    this.data = serialized;
-    await super.save();
+  public stopAutoSave(): void {
+    if ('stopAutoSave' in this.storage && typeof (this.storage as any).stopAutoSave === 'function') {
+      (this.storage as any).stopAutoSave();
+    }
   }
 }

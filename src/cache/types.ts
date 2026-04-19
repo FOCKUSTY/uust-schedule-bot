@@ -22,7 +22,7 @@ export interface CacheEntry<T> {
   expiresAt?: number;
 }
 
-export interface SerializedCache<T> {
+export interface SerializedCache<T = unknown> {
   value: T;
-  expiresAt?: string; // ISO string
+  expiresAt?: string;
 }

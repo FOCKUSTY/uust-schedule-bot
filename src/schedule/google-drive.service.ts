@@ -1,21 +1,15 @@
+// google-drive.service.ts
 import type { FileInfo, ExcelSheetInfo, ExcelWorkbook } from "./google";
 import { Cache } from "../cache/cache";
-
 import { DriveReader, ExcelReader } from "./google";
+import { CACHE_TTL } from "./constants";
 
-/**
- * Сервис для работы с иерархией Google Drive: курсы → специализации → группы.
- */
 export class GoogleDriveService {
   private readonly drive: DriveReader;
   private readonly cache: Cache;
   private readonly excelReader: ExcelReader;
   private readonly rootFolderId: string;
 
-  /**
-   * @param rootFolderId ID папки, содержащей папки курсов
-   * @param drive Экземпляр DriveReader (если не передан, создаётся новый)
-   */
   public constructor(
     rootFolderId: string,
     dependencies?: {
@@ -25,81 +19,76 @@ export class GoogleDriveService {
   ) {
     this.rootFolderId = rootFolderId;
     this.drive = dependencies?.drive ?? new DriveReader();
-    this.cache = dependencies?.cache ?? new Cache(process.cwd());
+    this.cache = dependencies?.cache ?? new Cache("google-drive");
     this.excelReader = new ExcelReader(this.drive);
   }
 
-  /**
-   * Возвращает список курсов (папки внутри корневой папки).
-   */
   public async getCourses(): Promise<FileInfo[]> {
+    const cacheKey = 'courses';
+    const cached = await this.cache.get<FileInfo[]>(cacheKey);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     const files = await this.drive.listAllFiles(this.rootFolderId);
-    return files.filter((file) => file.isFolder);
+    const courses = files.filter((file) => file.isFolder);
+
+    await this.cache.set(cacheKey, courses, CACHE_TTL.COURSES);
+    return courses;
   }
 
-  /**
-   * Возвращает список специализаций для указанного курса.
-   * @param courseName Название папки курса
-   */
   public async getSpecializations(courseName: string): Promise<FileInfo[]> {
-    const courseFolder = await this.findFolderByName(
-      this.rootFolderId,
-      courseName,
-    );
+    const cacheKey = `${courseName}:specializations`;
+    const cached = await this.cache.get<FileInfo[]>(cacheKey);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
     const files = await this.drive.listAllFiles(courseFolder.id);
+    const specializations = files.filter((file) => !file.isFolder);
 
-    return files.filter((file) => !file.isFolder);
+    await this.cache.set(cacheKey, specializations, CACHE_TTL.SPECIALIZATIONS);
+    return specializations;
   }
 
-  /**
-   * Возвращает список групп (листов) для указанного курса и специализации.
-   * @param courseName Название курса
-   * @param specializationName Название специализации (имя Excel-файла без расширения)
-   */
-  public async getGroups(
-    courseName: string,
-    specializationName: string,
-  ): Promise<ExcelSheetInfo[]> {
+  public async getGroups(courseName: string, specializationName: string): Promise<ExcelSheetInfo[]> {
+    const cacheKey = `${courseName}:${specializationName}:groups`;
+    const cached = await this.cache.get<ExcelSheetInfo[]>(cacheKey);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     const workbook = await this.loadWorkbook(courseName, specializationName);
-    return workbook.listSheets();
+    const groups = workbook.listSheets();
+
+    await this.cache.set(cacheKey, groups, CACHE_TTL.GROUPS);
+    return groups;
   }
 
   /**
-   * Загружает книгу Excel для указанного курса и специализации.
-   * @param courseName Название курса
-   * @param specializationName Название специализации (имя Excel-файла)
+   * Загружает книгу Excel. Не кэшируется, так как ExcelWorkbook содержит методы и несериализуем.
+   * При необходимости можно добавить in‑memory кэш на уровне сервиса.
    */
   public async loadWorkbook(
     courseName: string,
     specializationName: string,
   ): Promise<ExcelWorkbook> {
-    const courseFolder = await this.findFolderByName(
-      this.rootFolderId,
-      courseName,
-    );
+    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
     const file = await this.findFileByName(courseFolder.id, specializationName);
-
     return this.excelReader.loadWorkbook(file.id);
   }
 
-  private async findFolderByName(
-    parentId: string,
-    name: string,
-  ): Promise<FileInfo> {
+  private async findFolderByName(parentId: string, name: string): Promise<FileInfo> {
     const files = await this.drive.listAllFiles(parentId);
     const folder = files.find((file) => file.isFolder && file.name === name);
-
     if (!folder) {
       throw new Error(`Папка "${name}" не найдена`);
     }
-
     return folder;
   }
 
-  private async findFileByName(
-    parentId: string,
-    name: string,
-  ): Promise<FileInfo> {
+  private async findFileByName(parentId: string, name: string): Promise<FileInfo> {
     const files = await this.drive.listAllFiles(parentId);
     const file = files.find((file) => {
       return (
@@ -109,11 +98,9 @@ export class GoogleDriveService {
           file.name === `${name}.xls`)
       );
     });
-
     if (!file) {
       throw new Error(`Файл "${name}" не найден`);
     }
-
     return file;
   }
 }

@@ -58,7 +58,7 @@ export class ScheduleWatcher {
    * Проверяет все группы, присутствующие в кэше (секция default).
    */
   private async checkAllGroups(): Promise<void> {
-    const groupKeys = this.cache.getAllCachedGroupKeys();
+    const groupKeys = await this.cache.getAllCachedGroupKeys();
     for (const key of groupKeys) {
       const [course, specialization, groupName] = key.split(":");
       const group: GroupInformation = {
@@ -75,7 +75,7 @@ export class ScheduleWatcher {
    */
   private async checkGroup(group: GroupInformation): Promise<void> {
     const groupKey = `${group.course}:${group.specialization}:${group.group}`;
-    const watcherData = this.cache.getWatcherData();
+    const watcherData = await this.cache.getWatcherData();
     const entry = watcherData[groupKey];
 
     let fileId: string;
