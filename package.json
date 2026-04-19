@@ -1,6 +1,20 @@
 {
   "name": "uust-telegram-bot",
-  "description": "",
+  "description": "Telegram-бот для просмотра расписания УУНиТ (ИСПО) с интеграцией Google Drive и Excel",
+  "keywords": [
+    "telegram",
+    "bot",
+    "schedule",
+    "google-drive",
+    "excel",
+    "uust",
+    "university",
+    "расписание",
+    "телеграм-бот",
+    "prisma",
+    "typescript",
+    "grammy"
+  ],
   "author": {
     "name": "FOCKUSTY",
     "email": "viserd.yt@gmail.com",
