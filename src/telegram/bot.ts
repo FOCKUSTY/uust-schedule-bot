@@ -144,15 +144,23 @@ bot.on("callback_query:data", async (ctx) => {
     switch (data) {
       case CALLBACK_DATA.SCHEDULE_SWITCH_GROUP:
         const configs = await userService.getUserConfigs(telegramId);
-        if (configs.length === 0) {;
-          return sendOrEditMessage(ctx, 'У вас нет сохранённых групп. Начните регистрацию: /start', {});
+        if (configs.length === 0) {
+          return sendOrEditMessage(
+            ctx,
+            "У вас нет сохранённых групп. Начните регистрацию: /start",
+            {},
+          );
         }
 
         const keyboard = configSelectionKeyboard(configs);
-        await sendOrEditMessage(ctx, 'Выберите группу для активации или добавьте новую:', { keyboard });
+        await sendOrEditMessage(
+          ctx,
+          "Выберите группу для активации или добавьте новую:",
+          { keyboard },
+        );
         await ctx.answerCallbackQuery();
         break;
-    
+
       default:
         break;
     }
