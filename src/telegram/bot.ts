@@ -24,6 +24,11 @@ import { menuCallbackHandler } from "./menu/menu.handler";
 import { configSelectionKeyboard, mainMenuKeyboard } from "./keyboards";
 import { sendOrEditMessage } from "./utils/send-or-edit";
 
+import { extractIdFromUrl } from "../schedule/google";
+import { GoogleDriveService, ScheduleCache, ScheduleLoader } from "../schedule";
+import { NotificationService } from "../notifications/notification.service";
+import { ScheduleWatcher } from "../watcher/schedule-watcher";
+
 export type Context = SessionFlavor<SessionData> &
   ConversationFlavor<GrammyContext>;
 export type MyConversation = Conversation<Context, Context>;
@@ -33,17 +38,16 @@ export const bot = new Bot<Context>(env.TELEGRAM_BOT_TOKEN);
 const userService = new UserService();
 const navigation = new NavigationService();
 
-// Middleware
 bot.use(session({ initial: () => initialSession() }));
 bot.use(conversations<Context, Context>());
 
-// Регистрация диалогов
 bot.use(
   createConversation<Context, Context>(
     (conversation, context) => registrationConversation(conversation, context),
     REGISTRATION_CONVERSATION,
   ),
 );
+
 bot.use(
   createConversation<Context, Context>(
     (conversation, context) => scheduleConversation(conversation, context),
@@ -57,11 +61,9 @@ bot.command("schedule", async (ctx) => {
 });
 bot.command("start", start);
 
-// Словарь обработчиков callback-запросов
 type CallbackHandler = (ctx: Context) => Promise<void>;
 const callbackHandlers = new Map<string, CallbackHandler>();
 
-// Навигация неделя
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_WEEK_PREV, async (ctx) => {
   navigation.changeWeekOffset(ctx.session, -1);
   await ctx.conversation.enter(SCHEDULE_CONVERSATION);
@@ -75,7 +77,6 @@ callbackHandlers.set(CALLBACK_DATA.SCHEDULE_WEEK_RESET, async (ctx) => {
   await ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 
-// Навигация день
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_DAY_PREV, async (ctx) => {
   navigation.changeDayOffset(ctx.session, -1);
   await ctx.conversation.enter(SCHEDULE_CONVERSATION);
@@ -89,7 +90,6 @@ callbackHandlers.set(CALLBACK_DATA.SCHEDULE_DAY_RESET, async (ctx) => {
   await ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 
-// Переключение режима просмотра
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_SWITCH_TODAY, async (ctx) => {
   navigation.setWatchType(ctx.session, "day");
   await ctx.conversation.enter(SCHEDULE_CONVERSATION);
@@ -99,23 +99,19 @@ callbackHandlers.set(CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK, async (ctx) => {
   await ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 
-// Основной обработчик callback_query
 bot.on("callback_query:data", async (ctx) => {
   const data = ctx.callbackQuery.data;
   const telegramId = ctx.from?.id;
 
-  // Сначала проверяем точные совпадения в словаре
   const handler = callbackHandlers.get(data);
   if (handler) {
     return handler(ctx);
   }
 
-  // Обработка menu
   if (data.startsWith("menu:")) {
     return menuCallbackHandler(ctx);
   }
 
-  // Обработка выбора конфигурации
   if (data.startsWith(`${CALLBACK_DATA.SELECT_CONFIG}:`)) {
     const [, dataConfigId, type] = data.split(":");
     const configId = parseInt(dataConfigId);
@@ -143,7 +139,6 @@ bot.on("callback_query:data", async (ctx) => {
     }
   }
 
-  // Неизвестная команда
   await ctx.answerCallbackQuery("Неизвестное действие");
 });
 
@@ -151,4 +146,39 @@ bot.start({
   onStart: (botInfo) => {
     console.log("Bot started as " + botInfo.username);
   },
+});
+
+const rootFolderId = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL);
+if (!rootFolderId) {
+  throw new Error("Invalid GOOGLE_DRIVE_FOLDER_URL");
+}
+
+const driveService = new GoogleDriveService(rootFolderId);
+const cache = new ScheduleCache(process.cwd());
+const loader = new ScheduleLoader(driveService);
+const notificationService = new NotificationService(bot, userService);
+
+const watcher = new ScheduleWatcher(
+  driveService,
+  cache,
+  loader,
+  notificationService,
+  {
+    intervalMs: env.WATCHER_INTERVAL_MINUTES * 60 * 1000,
+  },
+);
+
+cache.load().then(() => {
+  watcher.start();
+  console.log(`Schedule watcher started with interval ${env.WATCHER_INTERVAL_MINUTES} min`);
+});
+
+process.on("SIGINT", () => {
+  watcher.stop();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  watcher.stop();
+  process.exit(0);
 });

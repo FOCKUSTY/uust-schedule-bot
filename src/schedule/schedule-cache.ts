@@ -1,40 +1,27 @@
-import type { CacheData, GroupInformation, ScheduleWeeks } from "./types";
-
+import type { CacheData, GroupInformation, ScheduleWeeks, WatcherData } from "./types";
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
-
 import { CACHE_FILE_NAME, TWO_HOURS_MS } from "./constants";
 
-/**
- * Сервис для асинхронного кэширования расписания в файл.
- */
 export class ScheduleCache {
   private readonly filePath: string;
   private data: CacheData;
 
-  /**
-   * @param rootDir Корневая директория проекта (обычно process.cwd())
-   */
   public constructor(rootDir: string) {
     this.filePath = join(rootDir, CACHE_FILE_NAME);
-    this.data = { default: {}, other: {} };
+    this.data = { default: {}, other: {}, watcher: {} };
   }
 
-  /**
-   * Загружает данные кэша из файла (если существует).
-   */
   public async load(): Promise<void> {
     try {
       const content = await readFile(this.filePath, "utf-8");
-      this.data = JSON.parse(content);
+      const parsed = JSON.parse(content);
+      this.data = { default: {}, other: {}, watcher: {}, ...parsed };
     } catch {
-      // Файл отсутствует или повреждён – оставляем пустую структуру
+      // Файл отсутствует – оставляем пустую структуру
     }
   }
 
-  /**
-   * Сохраняет текущее состояние кэша в файл.
-   */
   public async save(): Promise<void> {
     try {
       await writeFile(
@@ -103,5 +90,54 @@ export class ScheduleCache {
    */
   public setOther<T>(key: string, value: T): void {
     this.data.other[key] = value;
+  }
+  
+  /**
+   * Возвращает все данные мониторинга.
+   */
+  public getWatcherData(): WatcherData {
+    return this.data.watcher;
+  }
+
+  /**
+   * Обновляет запись мониторинга для указанной группы.
+   * @param groupKey Ключ группы в формате `${course}:${specialization}:${group}`
+   * @param entry Частичные данные для обновления
+   */
+  public updateWatcherEntry(
+    groupKey: string,
+    entry: Partial<WatcherData[string]>,
+  ): void {
+    const current = this.data.watcher[groupKey] ?? {
+      fileId: "",
+      lastModified: "",
+      lastChecked: "",
+    };
+    this.data.watcher[groupKey] = { ...current, ...entry };
+  }
+
+  /**
+   * Удаляет запись мониторинга (если группа больше не отслеживается).
+   */
+  public deleteWatcherEntry(groupKey: string): void {
+    delete this.data.watcher[groupKey];
+  }
+
+  /**
+   * Возвращает список всех уникальных ключей групп из секции default (все закешированные группы).
+   */
+  public getAllCachedGroupKeys(): string[] {
+    const keys: string[] = [];
+    const defaultData = this.data.default;
+    
+    for (const course in defaultData) {
+      for (const spec in defaultData[course]) {
+        for (const group in defaultData[course][spec]) {
+          keys.push(`${course}:${spec}:${group}`);
+        }
+      }
+    }
+
+    return keys;
   }
 }

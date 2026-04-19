@@ -41,3 +41,31 @@ export interface CacheData {
 }
 
 export type DateLike = Date | string | number;
+
+export interface WatcherEntry {
+  fileId: string;
+  lastModified: string;   // ISO
+  lastChecked: string;    // ISO
+}
+
+export interface WatcherData {
+  [groupKey: string]: WatcherEntry;
+}
+
+export interface CacheData {
+  default: Record<
+    string, // course
+    Record<
+      string, // specialization
+      Record<
+        string, // group
+        {
+          weeks: ScheduleWeeks;
+          expiresAt: string;
+        }
+      >
+    >
+  >;
+  other: Record<string, unknown>;
+  watcher: WatcherData;
+}
