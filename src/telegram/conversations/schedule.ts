@@ -1,116 +1,106 @@
-import { Conversation } from "@grammyjs/conversations";
-import { Context } from "../bot";
+import { env } from "../../env";
+
+import type { Conversation } from "@grammyjs/conversations";
+import type { Context } from "../bot";
+
+import { InlineKeyboard } from "grammy";
 
 import { UserService } from "../../database/user.service";
-import { getCurrentWeek, Schedule } from "../../schedule";
+import { Schedule, WeekCalculator } from "../../schedule";
+
 import {
   DAY_NAMES_RU,
-  getDayIndexForToday,
   resolveDayOffset,
 } from "../schedule";
-import { InlineKeyboard } from "grammy";
+
+import { CALLBACK_DATA } from "../constants/callback-data";
+
 import {
   formatDay,
   formatWeek,
   getWeekendText,
 } from "../utils/format-schedule";
+
 import { sendOrEditMessage } from "../utils/send-or-edit";
 import { configSelectionKeyboard } from "../keyboards";
 
 const userService = new UserService();
+const weekCalculator = new WeekCalculator(env.START_DATE);
+
 export const SCHEDULE_CONVERSATION = "schedule";
 
 export const scheduleConversation = async (
   conversation: Conversation<Context, Context>,
-  interaction: Context,
+  ctx: Context,
 ) => {
   const session = await conversation.external(({ session }) => session);
-  const telegramId = interaction.from?.id;
+  const telegramId = ctx.from?.id;
   if (!telegramId) {
     throw new Error("id is not defined.");
   }
 
-  let currentDay: number | null = null;
-  let currentWeek: number | null = null;
-  let currentGroupIndex: number | null = null;
-
   const configs = await userService.getActiveConfigs(telegramId);
-  const defaultConfig = configs
-    .map((config, index) => ({ config, index }))
-    .filter((data) => data.config.isDefault)[0];
+  const defaultConfig = configs.find((c) => c.defaulted);
 
   if (configs.length === 0 || !defaultConfig) {
-    return sendOrEditMessage(interaction, "Выберите группу", {
+    return sendOrEditMessage(ctx, "Выберите группу", {
       keyboard: configSelectionKeyboard(configs),
       conversation,
     });
   }
 
-  currentGroupIndex = defaultConfig.index;
-
+  const currentGroup = defaultConfig;
   const weekOffset = session.currentWeekOffset || 0;
-  currentWeek = getCurrentWeek() + weekOffset;
+  const currentWeek = weekCalculator.getCurrentWeek() + weekOffset;
 
-  currentDay = resolveDayOffset(session.currentDayOffset);
-  const dayName = DAY_NAMES_RU.at(currentDay);
+  const dayIndex = resolveDayOffset(session.currentDayOffset);
+  const dayName = DAY_NAMES_RU.at(dayIndex);
   if (!dayName) {
-    return sendOrEditMessage(interaction, "Произошла ошибка, извините", {
+    return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
       conversation,
     });
   }
 
-  const schedule = new Schedule(configs[currentGroupIndex], currentWeek);
-  const week = await schedule.execute();
-  const day = week[dayName];
+  const schedule = new Schedule(currentGroup, currentWeek);
+  await schedule.initializeCache();
+  const week = await schedule.getWeekSchedule();
+  const day = week.days[dayName];
 
-  const dayText = (() => {
-    if (dayName === "Воскресенье") {
-      return getWeekendText(dayName, currentWeek);
-    }
+  const dayText = dayName === "Воскресенье"
+    ? getWeekendText(dayName, currentWeek, weekCalculator)
+    : formatDay(day, currentWeek, weekCalculator);
 
-    return formatDay(day, currentWeek);
-  })();
+  const weekText = formatWeek(
+    { days: week.days, weekNumber: currentWeek },
+    weekCalculator,
+  );
 
-  const weekText = formatWeek({
-    days: week,
-    weekNumber: currentWeek,
-  });
+  const keyboard = new InlineKeyboard();
 
-  const keyboard = (() => {
-    const keyboard = new InlineKeyboard();
-
-    if (session.watchType === "day") {
-      keyboard
-        .text("⬅️", "schedule:day:previous")
-        .text(`📅 ${dayName}`, "schedule:day:reset")
-        .text("➡️", "schedule:day:next")
-        .row();
-      keyboard.text("🗓 На неделю", "schedule:switch:toweek").row();
-    } else {
-      keyboard
-        .text("⬅️", "schedule:week:previous")
-        .text(`📅 Неделя ${currentWeek}`)
-        .text("➡️", "schedule:week:next")
-        .row();
-      keyboard.text("🗓 На день", "schedule:switch:today").row();
-    }
-
+  if (session.watchType === "day") {
     keyboard
-      .text("🔄 Сменить группу", "menu:switch_group")
-      .text(`${configs[currentGroupIndex].group}`, "schedule:week:reset")
+      .text("⬅️", CALLBACK_DATA.SCHEDULE_DAY_PREV)
+      .text(`📅 ${dayName}`, CALLBACK_DATA.SCHEDULE_DAY_RESET)
+      .text("➡️", CALLBACK_DATA.SCHEDULE_DAY_NEXT)
       .row();
-    keyboard.text("Вывести все группы", "schedule:print:allgroups").row();
+    keyboard.text("🗓 На неделю", CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK).row();
+  } else {
+    keyboard
+      .text("⬅️", CALLBACK_DATA.SCHEDULE_WEEK_PREV)
+      .text(`📅 Неделя ${currentWeek}`)
+      .text("➡️", CALLBACK_DATA.SCHEDULE_WEEK_NEXT)
+      .row();
+    keyboard.text("🗓 На день", CALLBACK_DATA.SCHEDULE_SWITCH_TODAY).row();
+  }
 
-    return keyboard;
-  })();
+  keyboard
+    .text("🔄 Сменить группу", CALLBACK_DATA.MENU_SWITCH_GROUP)
+    .text(currentGroup.group, CALLBACK_DATA.SCHEDULE_WEEK_RESET)
+    .row();
 
-  const text = (() => {
-    if (session.watchType === "day") {
-      return dayText;
-    }
+  keyboard.text("Вывести все группы", "schedule:print:allgroups").row();
 
-    return weekText;
-  })();
+  const text = session.watchType === "day" ? dayText : weekText;
 
-  await sendOrEditMessage(interaction, text, { keyboard, conversation });
+  await sendOrEditMessage(ctx, text, { keyboard, conversation });
 };

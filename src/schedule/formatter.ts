@@ -67,9 +67,10 @@ export class ScheduleFormatter {
       const rowData = rawData[row];
       const firstCell = rowData[0];
       const pairCell = rowData[1];
+      const trimmed = firstCell?.trim?.();
 
-      if (this.isDayName(firstCell?.trim?.())) {
-        currentDayName = firstCell as DayName;
+      if (this.isDayName(trimmed)) {
+        currentDayName = trimmed as DayName;
       }
 
       if (currentDayName === null) {

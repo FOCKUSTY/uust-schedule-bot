@@ -53,7 +53,6 @@ export class Schedule {
    * При необходимости загружает из Drive и кэширует.
    */
   public async getWeekSchedule(): Promise<ScheduleWeek> {
-    // Пробуем получить из кэша
     const cachedWeeks = this.cache.getWeeks(this.group);
     if (cachedWeeks) {
       const week = cachedWeeks[this.weekNumber];
@@ -62,10 +61,8 @@ export class Schedule {
       }
     }
 
-    // Загружаем полное расписание
     const weeks = await this.loader.loadFullSchedule(this.group);
 
-    // Кэшируем
     this.cache.setWeeks(this.group, weeks);
     await this.cache.save();
 
@@ -73,6 +70,7 @@ export class Schedule {
     if (!week) {
       throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
     }
+
     return week;
   }
 

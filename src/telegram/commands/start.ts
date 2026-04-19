@@ -7,23 +7,23 @@ import { sendOrEditMessage } from "../utils/send-or-edit";
 
 const userService = new UserService();
 
-export const start = async (interaction: Context) => {
-  const id = interaction.from?.id;
+export const start = async (ctx: Context) => {
+  const id = ctx.from?.id;
   if (!id) {
     throw new Error("id is not defined.");
   }
 
   const configs = await userService.getUserConfigs(id);
   if (configs.length === 0) {
-    return interaction.conversation.enter(REGISTRATION_CONVERSATION);
+    return ctx.conversation.enter(REGISTRATION_CONVERSATION);
   }
 
-  const activeConfigs = configs.filter(({ isActived }) => isActived);
+  const activeConfigs = configs.filter(({ actived }) => actived);
   if (activeConfigs.length === 0) {
-    return sendOrEditMessage(interaction, "Выберите группу", {
+    return sendOrEditMessage(ctx, "Выберите группу", {
       keyboard: configSelectionKeyboard(configs),
     });
   }
 
-  return interaction.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 };
