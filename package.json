@@ -21,8 +21,7 @@
     "url": "https://fockusty.vercel.app"
   },
   "scripts": {
-    "build": "tsc",
-    "prestart": "prisma generate",
+    "build": "prisma generate && tsc",
     "test": "tsc && node ./dist/test.js",
     "start": "node ./dist/telegram/bot.js"
   },
