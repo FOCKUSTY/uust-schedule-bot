@@ -1,4 +1,4 @@
-import type { drive_v3 } from 'googleapis';
+import type { drive_v3 } from "googleapis";
 
 export interface DriveReaderConfig {
   /** Путь к JSON-файлу ключа сервисного аккаунта */

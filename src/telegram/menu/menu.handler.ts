@@ -12,47 +12,59 @@ export async function menuCallbackHandler(interaction: Context) {
 
   const activeConfig = await userService.getActiveConfigs(`${telegramId}`);
   if (!activeConfig) {
-    await interaction.answerCallbackQuery('Сначала настройте группу через /start');
+    await interaction.answerCallbackQuery(
+      "Сначала настройте группу через /start",
+    );
     return;
   }
 
   switch (data) {
-    case 'menu:today':
+    case "menu:today":
       await interaction.conversation.enter(SCHEDULE_CONVERSATION);
       break;
 
-    case 'menu:tomorrow':
+    case "menu:tomorrow":
       await interaction.conversation.enter(SCHEDULE_CONVERSATION);
       break;
 
-    case 'menu:week':
+    case "menu:week":
       await interaction.conversation.enter(SCHEDULE_CONVERSATION);
       break;
 
-    case 'menu:change_group':
-    case 'menu:add_group':
-      await interaction.conversation.enter('registration');
+    case "menu:change_group":
+    case "menu:add_group":
+      await interaction.conversation.enter("registration");
       await interaction.answerCallbackQuery();
       break;
 
-    case 'menu:back':
-      await sendOrEditMessage(interaction, "Главное меню", { keyboard: mainMenuKeyboard() })
+    case "menu:back":
+      await sendOrEditMessage(interaction, "Главное меню", {
+        keyboard: mainMenuKeyboard(),
+      });
       await interaction.answerCallbackQuery();
       break;
 
-    case 'menu:switch_group': {
+    case "menu:switch_group": {
       const configs = await userService.getUserConfigs(telegramId);
-      if (configs.length === 0) {;
-        return sendOrEditMessage(interaction, 'У вас нет сохранённых групп. Начните регистрацию: /start', {});
+      if (configs.length === 0) {
+        return sendOrEditMessage(
+          interaction,
+          "У вас нет сохранённых групп. Начните регистрацию: /start",
+          {},
+        );
       }
 
       const keyboard = configSelectionKeyboard(configs);
-      await sendOrEditMessage(interaction, 'Выберите группу для активации или добавьте новую:', { keyboard });
+      await sendOrEditMessage(
+        interaction,
+        "Выберите группу для активации или добавьте новую:",
+        { keyboard },
+      );
       await interaction.answerCallbackQuery();
       break;
     }
 
     default:
-      await interaction.answerCallbackQuery('Неизвестная команда меню');
+      await interaction.answerCallbackQuery("Неизвестная команда меню");
   }
 }

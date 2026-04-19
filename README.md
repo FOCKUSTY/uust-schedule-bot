@@ -14,43 +14,50 @@ npm install -D @types/node
 ### Чтение папок и файлов на Google Drive
 
 ```typescript
-import { DriveReader, extractIdFromUrl } from './google';
+import { DriveReader, extractIdFromUrl } from "./google";
 
-const reader = new DriveReader({ keyFilePath: './service-account.json' });
-const folderId = extractIdFromUrl('https://drive.google.com/drive/folders/...');
+const reader = new DriveReader({ keyFilePath: "./service-account.json" });
+const folderId = extractIdFromUrl("https://drive.google.com/drive/folders/...");
 const files = await reader.listAllFiles(folderId);
 ```
 
 ### Чтение Google Sheets
 
 ```typescript
-import { SheetsReader, extractSpreadsheetIdFromUrl } from './google';
+import { SheetsReader, extractSpreadsheetIdFromUrl } from "./google";
 
-const sheets = new SheetsReader({ keyFilePath: './service-account.json' });
-const id = extractSpreadsheetIdFromUrl('https://docs.google.com/spreadsheets/d/...');
-const data = await sheets.getSheetDataByTitle(id, 'Лист1');
+const sheets = new SheetsReader({ keyFilePath: "./service-account.json" });
+const id = extractSpreadsheetIdFromUrl(
+  "https://docs.google.com/spreadsheets/d/...",
+);
+const data = await sheets.getSheetDataByTitle(id, "Лист1");
 ```
 
 ### Чтение Excel‑файлов (.xlsx)
 
 ```typescript
-import { DriveReader, ExcelReader } from './google';
+import { DriveReader, ExcelReader } from "./google";
 
-const drive = new DriveReader({ keyFilePath: './service-account.json' });
+const drive = new DriveReader({ keyFilePath: "./service-account.json" });
 const excel = new ExcelReader(drive);
 
 const workbook = await excel.loadWorkbook(fileId);
-const data = workbook.getSheetDataByRange(0, { startRow: 1, startCol: 1, endRow: 100, endCol: 20 });
+const data = workbook.getSheetDataByRange(0, {
+  startRow: 1,
+  startCol: 1,
+  endRow: 100,
+  endCol: 20,
+});
 ```
 
 ### Форматирование расписания
 
 ```typescript
-import { ScheduleFormatter } from './google';
+import { ScheduleFormatter } from "./google";
 
 const raw = workbook.getSheetData(0);
 const schedule = new ScheduleFormatter().format(raw);
-console.log(schedule.weeks[1]?.days['Понедельник']?.pairs[1]);
+console.log(schedule.weeks[1]?.days["Понедельник"]?.pairs[1]);
 ```
 
 ## Лицензия

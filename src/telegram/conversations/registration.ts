@@ -6,11 +6,11 @@ import { Schedule } from "../../schedule";
 import { UserService } from "../../database/user.service";
 import { sendOrEditMessage } from "../utils/send-or-edit";
 
-export const REGISTRATION_CONVERSATION = 'registration';
+export const REGISTRATION_CONVERSATION = "registration";
 const userService = new UserService();
 
-const BACK_SYMBOL = Symbol('back');
-const CANCEL_SYMBOL = Symbol('cancel');
+const BACK_SYMBOL = Symbol("back");
+const CANCEL_SYMBOL = Symbol("cancel");
 
 type SelectionResult = string | typeof BACK_SYMBOL | typeof CANCEL_SYMBOL;
 
@@ -30,21 +30,23 @@ const buildSelectionKeyboard = (
   items: string[],
   prefix: string,
   includeBack: boolean,
-  backData?: string
+  backData?: string,
 ): InlineKeyboard => {
   const keyboard = new InlineKeyboard();
-  items.forEach((name, index) => keyboard.text(name, `${prefix}:${index}`).row());
-  
+  items.forEach((name, index) =>
+    keyboard.text(name, `${prefix}:${index}`).row(),
+  );
+
   if (includeBack) {
-    keyboard.text('🔙 Назад', backData);
+    keyboard.text("🔙 Назад", backData);
   }
 
-  keyboard.text('❌ Отмена', 'reg:cancel');
+  keyboard.text("❌ Отмена", "reg:cancel");
   return keyboard;
-}
+};
 
 const promptForSelection = async (
-  params: PromptForSelectionParams
+  params: PromptForSelectionParams,
 ): Promise<SelectionResult> => {
   const {
     conversation,
@@ -59,21 +61,24 @@ const promptForSelection = async (
   } = params;
 
   const items = await fetchItems();
-  const itemNames = items.map(item => item.name);
+  const itemNames = items.map((item) => item.name);
 
   const keyboard = buildSelectionKeyboard(
     itemNames,
     callbackPrefix,
     Boolean(backData),
-    backData
+    backData,
   );
 
-  const header = currentSelectionInfo ? `${currentSelectionInfo}\n` : '';
+  const header = currentSelectionInfo ? `${currentSelectionInfo}\n` : "";
   const message = `${header}Шаг ${step}/${totalSteps}: ${promptPrefix}`;
 
   await sendOrEditMessage(interaction, message, { keyboard, conversation });
 
-  const waitPatterns: (string | RegExp)[] = [new RegExp(`^${callbackPrefix}:`), 'reg:cancel'];
+  const waitPatterns: (string | RegExp)[] = [
+    new RegExp(`^${callbackPrefix}:`),
+    "reg:cancel",
+  ];
   if (backData) {
     waitPatterns.push(backData);
   }
@@ -81,7 +86,7 @@ const promptForSelection = async (
   const context = await conversation.waitForCallbackQuery(waitPatterns);
   const data = context.callbackQuery.data;
 
-  if (data === 'reg:cancel') {
+  if (data === "reg:cancel") {
     await context.answerCallbackQuery();
     return CANCEL_SYMBOL;
   }
@@ -91,15 +96,15 @@ const promptForSelection = async (
     return BACK_SYMBOL;
   }
 
-  const index = parseInt(data.split(':')[2]);
+  const index = parseInt(data.split(":")[2]);
   const selectedValue = itemNames[index];
   await context.answerCallbackQuery({ text: `Выбрано: ${selectedValue}` });
   return selectedValue;
-}
+};
 
 export const registrationConversation = async (
   conversation: MyConversation,
-  interaction: Context
+  interaction: Context,
 ): Promise<unknown> => {
   const telegramId = interaction.from!.id;
 
@@ -113,13 +118,15 @@ export const registrationConversation = async (
       interaction,
       step: 1,
       totalSteps: 3,
-      promptPrefix: 'выберите курс',
+      promptPrefix: "выберите курс",
       fetchItems: () => Schedule.getCourses(),
-      callbackPrefix: 'reg:course',
+      callbackPrefix: "reg:course",
     });
 
     if (result === CANCEL_SYMBOL) {
-      return await sendOrEditMessage(interaction, '❌ Регистрация отменена.', { conversation });
+      return await sendOrEditMessage(interaction, "❌ Регистрация отменена.", {
+        conversation,
+      });
     }
 
     course = result as string;
@@ -131,15 +138,17 @@ export const registrationConversation = async (
       interaction,
       step: 2,
       totalSteps: 3,
-      promptPrefix: 'выберите специальность',
+      promptPrefix: "выберите специальность",
       fetchItems: () => Schedule.getSpecializations({ course: course! }),
-      callbackPrefix: 'reg:spec',
-      backData: 'reg:back_to_course',
+      callbackPrefix: "reg:spec",
+      backData: "reg:back_to_course",
       currentSelectionInfo: `📖 Курс: ${course}`,
     });
 
     if (result === CANCEL_SYMBOL) {
-      return await sendOrEditMessage(interaction, '❌ Регистрация отменена.', { conversation });
+      return await sendOrEditMessage(interaction, "❌ Регистрация отменена.", {
+        conversation,
+      });
     }
 
     if (result === BACK_SYMBOL) {
@@ -156,34 +165,44 @@ export const registrationConversation = async (
       interaction,
       step: 3,
       totalSteps: 3,
-      promptPrefix: 'выберите группу',
-      fetchItems: () => Schedule.getGroups({ course: course!, specialization: specialization! }),
-      callbackPrefix: 'reg:group',
-      backData: 'reg:back_to_spec',
+      promptPrefix: "выберите группу",
+      fetchItems: () =>
+        Schedule.getGroups({
+          course: course!,
+          specialization: specialization!,
+        }),
+      callbackPrefix: "reg:group",
+      backData: "reg:back_to_spec",
       currentSelectionInfo: `📌 Курс: ${course}, специальность: ${specialization}`,
     });
 
     if (result === CANCEL_SYMBOL) {
-      return await sendOrEditMessage(interaction, '❌ Регистрация отменена.', { conversation });
+      return await sendOrEditMessage(interaction, "❌ Регистрация отменена.", {
+        conversation,
+      });
     }
 
     if (result === BACK_SYMBOL) {
       specialization = null;
       continue;
     }
-    
+
     group = result;
   }
 
-  await userService.addConfig(telegramId, {
-    course: course!,
-    specialization: specialization!,
-    group: group!
-  }, true);
-  
+  await userService.addConfig(
+    telegramId,
+    {
+      course: course!,
+      specialization: specialization!,
+      group: group!,
+    },
+    true,
+  );
+
   await sendOrEditMessage(
     interaction,
     `✅ Группа «${group}» сохранена и выбрана как активная!`,
-    { keyboard: mainMenuKeyboard(), conversation }
+    { keyboard: mainMenuKeyboard(), conversation },
   );
 };

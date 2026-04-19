@@ -1,13 +1,13 @@
-import type { drive_v3 } from 'googleapis';
-import type { Readable } from 'stream';
+import type { drive_v3 } from "googleapis";
+import type { Readable } from "stream";
 import type {
   DriveReaderConfig,
   ListFolderOptions,
   ListFolderResult,
   FileInfo,
-} from './types';
+} from "./types";
 
-import { google } from 'googleapis';
+import { google } from "googleapis";
 
 import {
   DRIVE_API_VERSION,
@@ -19,7 +19,7 @@ import {
   DOWNLOAD_ALT_MEDIA,
   STREAM_RESPONSE_TYPE,
   FILE_FIELDS_FOR_INFO,
-} from './constants';
+} from "./constants";
 
 import { defaultCredentials } from "./utils";
 
@@ -49,7 +49,7 @@ export class DriveReader {
    */
   public async listFolder(
     folderId: string,
-    options: ListFolderOptions = {}
+    options: ListFolderOptions = {},
   ): Promise<ListFolderResult> {
     const {
       pageSize = DEFAULT_PAGE_SIZE,
@@ -69,7 +69,7 @@ export class DriveReader {
       queryParts.push(`(${extraQuery})`);
     }
 
-    const query = queryParts.join(' and ');
+    const query = queryParts.join(" and ");
 
     const response = await this.drive.files.list({
       q: query,
@@ -79,7 +79,9 @@ export class DriveReader {
       fields,
     });
 
-    const files = (response.data.files || []).map(file => this.mapToFileInfo(file));
+    const files = (response.data.files || []).map((file) =>
+      this.mapToFileInfo(file),
+    );
 
     return {
       files,
@@ -97,7 +99,7 @@ export class DriveReader {
   public async listAllFiles(
     folderId: string,
     recursive: boolean = false,
-    options: Omit<ListFolderOptions, 'pageToken'> = {}
+    options: Omit<ListFolderOptions, "pageToken"> = {},
   ): Promise<FileInfo[]> {
     const allFiles: FileInfo[] = [];
     let pageToken: string | undefined;
@@ -144,7 +146,7 @@ export class DriveReader {
   public async downloadFile(fileId: string): Promise<Readable> {
     const response = await this.drive.files.get(
       { fileId, alt: DOWNLOAD_ALT_MEDIA },
-      { responseType: STREAM_RESPONSE_TYPE }
+      { responseType: STREAM_RESPONSE_TYPE },
     );
 
     return response.data;
@@ -158,7 +160,7 @@ export class DriveReader {
   public async exportFile(fileId: string, mimeType: string): Promise<Readable> {
     const response = await this.drive.files.export(
       { fileId, mimeType },
-      { responseType: STREAM_RESPONSE_TYPE }
+      { responseType: STREAM_RESPONSE_TYPE },
     );
 
     return response.data;

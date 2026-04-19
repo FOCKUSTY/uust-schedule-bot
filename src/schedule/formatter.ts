@@ -1,13 +1,13 @@
-import type { FormattedSchedule, ScheduleWeek } from './types';
+import type { FormattedSchedule, ScheduleWeek } from "./types";
 
 const DAY_NAMES = [
-  'Понедельник',
-  'Вторник',
-  'Среда',
-  'Четверг',
-  'Пятница',
-  'Суббота',
-  'Воскресенье',
+  "Понедельник",
+  "Вторник",
+  "Среда",
+  "Четверг",
+  "Пятница",
+  "Суббота",
+  "Воскресенье",
 ] as const;
 
 type DayName = (typeof DAY_NAMES)[number];
@@ -34,17 +34,17 @@ export class ScheduleFormatter {
   private extractGroupName(rawData: string[][]): string {
     const firstRow = rawData[0] || [];
     const groupCell = firstRow[3];
-    
-    return groupCell || 'Неизвестная группа';
+
+    return groupCell || "Неизвестная группа";
   }
 
   private extractWeekNumbers(rawData: string[][]): number[] {
     const secondRow = rawData[1] || [];
     const weekNumbers: number[] = [];
-    
+
     for (let col = 3; col < secondRow.length; col++) {
       const value = secondRow[col];
-      if (value !== null && value !== undefined && value !== '') {
+      if (value !== null && value !== undefined && value !== "") {
         weekNumbers.push(Number(value));
       }
     }
@@ -54,7 +54,7 @@ export class ScheduleFormatter {
 
   private buildWeeks(
     rawData: string[][],
-    weekNumbers: number[]
+    weekNumbers: number[],
   ): Record<number, ScheduleWeek> {
     const weeks: Record<number, ScheduleWeek> = {};
     for (const weekNumber of weekNumbers) {
@@ -95,10 +95,10 @@ export class ScheduleFormatter {
   }
 
   private isDayName(value: string | null): boolean {
-    if (typeof value !== 'string') {
+    if (typeof value !== "string") {
       return false;
     }
-    
+
     return (DAY_NAMES as readonly string[]).includes(value);
   }
 
@@ -114,7 +114,7 @@ export class ScheduleFormatter {
   private ensureDayExists(
     weeks: Record<number, ScheduleWeek>,
     weekNumbers: number[],
-    dayName: DayName
+    dayName: DayName,
   ): void {
     for (const weekNumber of weekNumbers) {
       if (!weeks[weekNumber].days[dayName]) {
@@ -132,6 +132,6 @@ export class ScheduleFormatter {
     }
 
     const trimmed = value.trim();
-    return trimmed === '' ? null : trimmed;
+    return trimmed === "" ? null : trimmed;
   }
 }

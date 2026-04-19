@@ -8,21 +8,23 @@ export async function sendOrEditMessage(
   {
     keyboard,
     session,
-    conversation
+    conversation,
   }: {
-    keyboard?: InlineKeyboard,
-    session?: SessionData,
-    conversation?: MyConversation
+    keyboard?: InlineKeyboard;
+    session?: SessionData;
+    conversation?: MyConversation;
   },
 ) {
-  session = await conversation?.external((context) => context.session) || interaction.session;
+  session =
+    (await conversation?.external((context) => context.session)) ||
+    interaction.session;
   if (!session) {
     throw new Error("Session not found.");
   }
 
   const chatId = interaction.chat?.id;
   if (!chatId) {
-    throw new Error('Chat ID не найден');
+    throw new Error("Chat ID не найден");
   }
 
   const lastMessageId = session.lastBotMessageId;
@@ -32,12 +34,12 @@ export async function sendOrEditMessage(
     if (lastMessageId && lastChatId === chatId) {
       await interaction.api.editMessageText(chatId, lastMessageId, text, {
         reply_markup: keyboard,
-        parse_mode: 'HTML',
+        parse_mode: "HTML",
       });
     } else {
       const msg = await interaction.reply(text, {
         reply_markup: keyboard,
-        parse_mode: 'HTML',
+        parse_mode: "HTML",
       });
       session.lastBotMessageId = msg.message_id;
       session.lastChatId = chatId;
@@ -45,12 +47,12 @@ export async function sendOrEditMessage(
   } catch {
     const msg = await interaction.reply(text, {
       reply_markup: keyboard,
-      parse_mode: 'HTML',
+      parse_mode: "HTML",
     });
     session.lastBotMessageId = msg.message_id;
     session.lastChatId = chatId;
   } finally {
-    await conversation?.external(context => {
+    await conversation?.external((context) => {
       context.session = session;
     });
   }

@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join } from "node:path";
 
 import {
   FOLDER_PATH_PREFIX,
@@ -10,11 +10,11 @@ import {
   QUERY_PARAM_START,
   HASH_START,
   CREDENTIALS_JSON_FILE,
-} from './constants';
+} from "./constants";
 
 export const defaultCredentials = () => {
   return join(process.cwd(), CREDENTIALS_JSON_FILE);
-}
+};
 
 /**
  * Извлекает ID папки или файла из ссылки Google Drive.
@@ -67,7 +67,7 @@ export function extractSpreadsheetIdFromUrl(url: string): string | null {
 }
 
 function isValidUrl(url: unknown): url is string {
-  return typeof url === 'string' && url.length > 0;
+  return typeof url === "string" && url.length > 0;
 }
 
 function extractSegmentAfterPrefix(url: string, prefix: string): string | null {
@@ -87,7 +87,10 @@ function extractSegmentAfterPrefix(url: string, prefix: string): string | null {
   return remaining.slice(0, terminatorIndex);
 }
 
-function removeTrailingSegments(id: string, segmentsToRemove: string[]): string {
+function removeTrailingSegments(
+  id: string,
+  segmentsToRemove: string[],
+): string {
   let result = id;
 
   for (const segment of segmentsToRemove) {
@@ -114,16 +117,16 @@ export function rangeToA1(
   startRow: number,
   startCol: number,
   endRow?: number,
-  endCol?: number
+  endCol?: number,
 ): string {
   if (startRow <= 0 || startCol <= 0) {
-    throw new Error('Индексы строк и колонок должны быть >= 1');
+    throw new Error("Индексы строк и колонок должны быть >= 1");
   }
   if (endRow !== undefined && endRow <= 0) {
-    throw new Error('Конечная строка должна быть >= 1');
+    throw new Error("Конечная строка должна быть >= 1");
   }
   if (endCol !== undefined && endCol <= 0) {
-    throw new Error('Конечная колонка должна быть >= 1');
+    throw new Error("Конечная колонка должна быть >= 1");
   }
 
   const startCell = `${columnIndexToLetter(startCol)}${startRow}`;
@@ -135,7 +138,7 @@ export function rangeToA1(
 }
 
 function columnIndexToLetter(index: number): string {
-  let letter = '';
+  let letter = "";
   let temp = index;
   while (temp > 0) {
     const remainder = (temp - 1) % 26;

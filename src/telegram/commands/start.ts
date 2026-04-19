@@ -20,8 +20,10 @@ export const start = async (interaction: Context) => {
 
   const activeConfigs = configs.filter(({ isActived }) => isActived);
   if (activeConfigs.length === 0) {
-    return sendOrEditMessage(interaction, "Выберите группу", { keyboard: configSelectionKeyboard(configs) });
+    return sendOrEditMessage(interaction, "Выберите группу", {
+      keyboard: configSelectionKeyboard(configs),
+    });
   }
 
   return interaction.conversation.enter(SCHEDULE_CONVERSATION);
-}
+};

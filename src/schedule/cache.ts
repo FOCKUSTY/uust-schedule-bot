@@ -11,10 +11,10 @@ import { existsSync, readFileSync } from "fs";
 export class Cache {
   private static readFileSync() {
     const path = join(process.cwd(), CACHE_FILE);
-    
+
     if (!existsSync(path)) {
       return {};
-    };
+    }
 
     const file = readFileSync(path, "utf-8");
     const json = JSON.parse(file);
@@ -23,7 +23,7 @@ export class Cache {
 
   private _data: CacheType = {
     default: {},
-    other: {}
+    other: {},
   };
 
   public constructor() {
@@ -39,7 +39,7 @@ export class Cache {
     if (!this._data.other) {
       this._data.other = {};
     }
-    
+
     return this._data.other?.[prefix] as T;
   }
 
@@ -48,13 +48,17 @@ export class Cache {
     return this.writeFile();
   }
 
-  public getWeeks(group: GroupInformation): ScheduleWeeks|undefined {
-    return this._data?.default?.[group.course]?.[group.specialization]?.[group.group]?.weeks;
+  public getWeeks(group: GroupInformation): ScheduleWeeks | undefined {
+    return this._data?.default?.[group.course]?.[group.specialization]?.[
+      group.group
+    ]?.weeks;
   }
 
   private addLocal(group: GroupInformation, weeks: ScheduleWeeks) {
     if (this.expiresDateReached(group)) {
-      return this._data.default?.[group.course]?.[group.specialization]?.[group.group];
+      return this._data.default?.[group.course]?.[group.specialization]?.[
+        group.group
+      ];
     }
 
     const data = this.createGroup(group, weeks);
@@ -64,7 +68,7 @@ export class Cache {
   private createGroup(group: GroupInformation, weeks: ScheduleWeeks) {
     const data = {
       weeks,
-      expiresAt: getExpiresAtTimeForCache()
+      expiresAt: getExpiresAtTimeForCache(),
     };
 
     this._data["default"] = {
@@ -76,13 +80,16 @@ export class Cache {
         ...this._data?.["default"]?.[group.course],
       },
       ...this._data?.["default"],
-    }
+    };
 
     return data;
   }
 
   private expiresDateReached(group: GroupInformation) {
-    const data = this._data?.["default"]?.[group.course]?.[group.specialization]?.[group.group];
+    const data =
+      this._data?.["default"]?.[group.course]?.[group.specialization]?.[
+        group.group
+      ];
     if (!data) {
       return false;
     }

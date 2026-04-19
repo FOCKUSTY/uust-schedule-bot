@@ -2,7 +2,13 @@ import { env } from "../env";
 
 import type { FileData, GroupInformation, Specializations } from "./types";
 
-import { DriveReader, extractIdFromUrl, ExcelReader, FileInfo, ExcelSheetInfo } from "./google";
+import {
+  DriveReader,
+  extractIdFromUrl,
+  ExcelReader,
+  FileInfo,
+  ExcelSheetInfo,
+} from "./google";
 import { ScheduleFormatter } from "./formatter";
 
 import { getCurrentWeek } from "./utils";
@@ -29,8 +35,10 @@ export class Schedule {
 
     return courses;
   }
-  
-  public static async getSpecializations({ course }: Pick<GroupInformation, "course">) {
+
+  public static async getSpecializations({
+    course,
+  }: Pick<GroupInformation, "course">) {
     const specializations = cache.get<FileInfo[]>(`specializations:${course}`);
     if (specializations) {
       return specializations;
@@ -39,7 +47,7 @@ export class Schedule {
     const drive = new DriveReader();
     const courseFolder = await this.getFileFromFolder(drive, {
       name: course,
-      folderId: COURSE_FOLDER_ID
+      folderId: COURSE_FOLDER_ID,
     });
 
     const files = await drive.listAllFiles(courseFolder.id);
@@ -48,8 +56,13 @@ export class Schedule {
     return files;
   }
 
-  public static async getGroups({ course, specialization }: Pick<GroupInformation, "course"|"specialization">) {
-    const groups = cache.get<ExcelSheetInfo[]>(`groupes:${course}:${specialization}`);
+  public static async getGroups({
+    course,
+    specialization,
+  }: Pick<GroupInformation, "course" | "specialization">) {
+    const groups = cache.get<ExcelSheetInfo[]>(
+      `groupes:${course}:${specialization}`,
+    );
     if (groups) {
       return groups;
     }
@@ -57,7 +70,7 @@ export class Schedule {
     const drive = new DriveReader();
     const courseFolder = await Schedule.getFileFromFolder(drive, {
       name: course,
-      folderId: COURSE_FOLDER_ID
+      folderId: COURSE_FOLDER_ID,
     });
 
     const file = await Schedule.getFileFromFolder(drive, {
@@ -74,9 +87,12 @@ export class Schedule {
     return lists;
   }
 
-  private static async getFileFromFolder(drive: DriveReader, { folderId, name, extension }: FileData) {
+  private static async getFileFromFolder(
+    drive: DriveReader,
+    { folderId, name, extension }: FileData,
+  ) {
     const files = await drive.listAllFiles(folderId);
-    const file = files.filter(file => {
+    const file = files.filter((file) => {
       if (extension) {
         return file.name === `${name}.${extension}`;
       }
@@ -113,10 +129,10 @@ export class Schedule {
     }
 
     const drive = new DriveReader();
-    
+
     const courseFolder = await Schedule.getFileFromFolder(drive, {
       name: this._config.course,
-      folderId: COURSE_FOLDER_ID
+      folderId: COURSE_FOLDER_ID,
     });
 
     const file = await Schedule.getFileFromFolder(drive, {
@@ -127,7 +143,7 @@ export class Schedule {
     const excel = new ExcelReader(drive);
     const wordbook = await excel.loadWorkbook(file.id);
     const lists = wordbook.listSheets();
-    const list = lists.filter(list => list.name === this._config.group)[0];
+    const list = lists.filter((list) => list.name === this._config.group)[0];
     if (!list) {
       throw new Error("Groud not found.");
     }
@@ -136,7 +152,7 @@ export class Schedule {
     const data = wordbook.getSheetDataByRange(list.name, {
       ...dimensions,
       startRow: 1,
-      startCol: 1
+      startCol: 1,
     });
 
     const formatter = new ScheduleFormatter();
@@ -156,7 +172,10 @@ export class Schedule {
     this._config.group = group;
   }
 
-  public setSpecialization({ group, specialization }: Pick<GroupInformation, "specialization"|"group">) {
+  public setSpecialization({
+    group,
+    specialization,
+  }: Pick<GroupInformation, "specialization" | "group">) {
     this._config.group = group;
     this._config.specialization = specialization;
   }

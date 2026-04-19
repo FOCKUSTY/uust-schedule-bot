@@ -1,8 +1,8 @@
-import type { ExcelSheetInfo, SheetRange } from './types';
+import type { ExcelSheetInfo, SheetRange } from "./types";
 
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 
-import { rangeToA1 } from './utils';
+import { rangeToA1 } from "./utils";
 
 export interface SheetDimensions {
   startRow: number;
@@ -20,7 +20,7 @@ export class ExcelWorkbook {
   private readonly workbook: XLSX.WorkBook;
 
   public constructor(buffer: Buffer) {
-    this.workbook = XLSX.read(buffer, { type: 'buffer' });
+    this.workbook = XLSX.read(buffer, { type: "buffer" });
   }
 
   /**
@@ -42,9 +42,11 @@ export class ExcelWorkbook {
    * Возвращает размеры используемой области листа.
    * @param sheetNameOrIndex Название или индекс листа
    */
-  public getSheetDimensions(sheetNameOrIndex: string | number): SheetDimensions {
+  public getSheetDimensions(
+    sheetNameOrIndex: string | number,
+  ): SheetDimensions {
     const sheet = this.getSheet(sheetNameOrIndex);
-    const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+    const range = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
     return {
       startRow: range.s.r,
       endRow: range.e.r,
@@ -62,7 +64,7 @@ export class ExcelWorkbook {
    */
   public getSheetData(
     sheetNameOrIndex: string | number,
-    range?: string
+    range?: string,
   ): string[][] {
     const sheet = this.getSheet(sheetNameOrIndex);
     const options: XLSX.Sheet2JSONOpts = { header: 1 };
@@ -90,7 +92,7 @@ export class ExcelWorkbook {
    */
   public getSheetDataByRange(
     sheetNameOrIndex: string | number,
-    range: SheetRange
+    range: SheetRange,
   ): string[][] {
     const { startRow, startCol, endRow, endCol } = range;
     if (endRow === undefined || endCol === undefined) {
@@ -99,10 +101,10 @@ export class ExcelWorkbook {
     const a1Range = rangeToA1(startRow, startCol, endRow, endCol);
     return this.getSheetData(sheetNameOrIndex, a1Range);
   }
-  
+
   private getSheet(sheetNameOrIndex: string | number): XLSX.WorkSheet {
     let sheetName: string;
-    if (typeof sheetNameOrIndex === 'number') {
+    if (typeof sheetNameOrIndex === "number") {
       sheetName = this.workbook.SheetNames[sheetNameOrIndex];
       if (!sheetName) {
         throw new Error(`Лист с индексом ${sheetNameOrIndex} не найден`);

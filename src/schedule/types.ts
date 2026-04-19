@@ -34,18 +34,18 @@ export type CacheType = {
     [course: string]: {
       [specialization: string]: {
         [group: string]: {
-          weeks: ScheduleWeeks,
+          weeks: ScheduleWeeks;
           /** ISO date string */
           expiresAt: string;
-        }
-      }
-    }
-  },
+        };
+      };
+    };
+  };
   other: {
-    [prefix: string]: unknown,
-  }
-}
+    [prefix: string]: unknown;
+  };
+};
 
 export type Specializations = {
   [course: string]: FileInfo[];
-}
+};

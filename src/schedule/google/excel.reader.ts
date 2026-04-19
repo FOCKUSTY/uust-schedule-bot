@@ -1,6 +1,6 @@
-import type { Readable } from 'stream';
-import { DriveReader } from './drive.reader';
-import { ExcelWorkbook } from './excel-workbook';
+import type { Readable } from "stream";
+import { DriveReader } from "./drive.reader";
+import { ExcelWorkbook } from "./excel-workbook";
 
 /**
  * Класс для чтения Excel-файлов из Google Drive.
@@ -28,9 +28,9 @@ export class ExcelReader {
   private streamToBuffer(stream: Readable): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
-      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-      stream.on('error', (error) => reject(error));
-      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+      stream.on("error", (error) => reject(error));
+      stream.on("end", () => resolve(Buffer.concat(chunks)));
     });
   }
 }

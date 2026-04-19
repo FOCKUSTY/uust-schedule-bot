@@ -75,7 +75,7 @@ export class UserService {
   public async deleteConfig(telegramId: TelegramId, configId: number) {
     const user = await this.findOrCreate(telegramId);
     const { where } = this.getWhereUserIdConfigId(user.id, configId);
-    
+
     const userConfig = await this.prisma.userConfig.findUnique({ where });
     if (!userConfig) {
       return;
@@ -88,10 +88,7 @@ export class UserService {
     }
   }
 
-  public async toggleConfigActive(
-    telegramId: TelegramId,
-    configId: number,
-  ) {
+  public async toggleConfigActive(telegramId: TelegramId, configId: number) {
     const user = await this.findOrCreate(telegramId);
     const { where } = this.getWhereUserIdConfigId(user.id, configId);
 
@@ -114,13 +111,13 @@ export class UserService {
 
     const userConfig = await this.prisma.userConfig.findUnique({ where });
     if (!userConfig) {
-      throw new Error('Config not found');
+      throw new Error("Config not found");
     }
 
     if (userConfig.isDefault) {
       return this.setDefaultConfigDisabled(telegramId, configId);
     }
-    
+
     return this.setDefaultConfigEnabled(telegramId, configId);
   }
 

@@ -1,4 +1,4 @@
-import { env } from "../env"
+import { env } from "../env";
 
 export const getCurrentWeek = () => {
   const target = new Date();
@@ -16,20 +16,20 @@ export const getCurrentWeek = () => {
   const weekNumber = Math.floor(days / 7);
 
   return weekNumber;
-}
+};
 
 export const getDateFromWeekNumber = (
   weekNumber: number,
-  dayIndex: number = 0
+  dayIndex: number = 0,
 ): Date => {
   const baseDate = new Date(env.START_DATE.getTime());
   baseDate.setDate(baseDate.getDate() + weekNumber * 7);
-  
+
   const startDayOfWeek = (baseDate.getDay() + 6) % 7;
-  
+
   baseDate.setDate(baseDate.getDate() - startDayOfWeek + dayIndex);
   baseDate.setHours(0, 0, 0, 0);
-  
+
   return baseDate;
 };
 
@@ -40,4 +40,4 @@ export const getExpiresAtTimeForCache = () => {
   const expiresAt = now + TWO_HOURS;
 
   return new Date(expiresAt).toISOString();
-}
+};
