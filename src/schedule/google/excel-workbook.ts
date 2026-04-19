@@ -93,7 +93,12 @@ export class ExcelWorkbook {
     sheetNameOrIndex: string | number,
     range: SheetRange,
   ): string[][] {
-    const { startRow, startColumn: startCol, endRow, endColumn: endCol } = range;
+    const {
+      startRow,
+      startColumn: startCol,
+      endRow,
+      endColumn: endCol,
+    } = range;
     if (endRow === undefined || endCol === undefined) {
       return this.getSheetData(sheetNameOrIndex);
     }

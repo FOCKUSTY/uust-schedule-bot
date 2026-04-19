@@ -35,18 +35,30 @@ export class RegistrationWizard {
     this.schedule = schedule;
   }
 
-  public async start(conversation: MyConversation, ctx: Context): Promise<void> {
+  public async start(
+    conversation: MyConversation,
+    ctx: Context,
+  ): Promise<void> {
     const course = await this.selectCourse(conversation, ctx);
     if (!course) {
       return this.cancel(ctx, conversation);
     }
 
-    const specialization = await this.selectSpecialization(conversation, ctx, course);
+    const specialization = await this.selectSpecialization(
+      conversation,
+      ctx,
+      course,
+    );
     if (!specialization) {
       return this.cancel(ctx, conversation);
     }
 
-    const group = await this.selectGroup(conversation, ctx, course, specialization);
+    const group = await this.selectGroup(
+      conversation,
+      ctx,
+      course,
+      specialization,
+    );
     if (!group) {
       return this.cancel(ctx, conversation);
     }
@@ -189,11 +201,16 @@ export class RegistrationWizard {
 
     const index = parseInt(data.split(":")[2]);
     const selectedValue = itemNames[index];
-    await responseCtx.answerCallbackQuery({ text: `Выбрано: ${selectedValue}` });
+    await responseCtx.answerCallbackQuery({
+      text: `Выбрано: ${selectedValue}`,
+    });
     return selectedValue;
   }
 
-  private async cancel(ctx: Context, conversation: MyConversation): Promise<void> {
+  private async cancel(
+    ctx: Context,
+    conversation: MyConversation,
+  ): Promise<void> {
     await sendOrEditMessage(ctx, "❌ Регистрация отменена.", { conversation });
   }
 }

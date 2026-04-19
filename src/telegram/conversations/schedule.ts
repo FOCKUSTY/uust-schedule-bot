@@ -8,10 +8,7 @@ import { InlineKeyboard } from "grammy";
 import { UserService } from "../../database/user.service";
 import { Schedule, WeekCalculator } from "../../schedule";
 
-import {
-  DAY_NAMES_RU,
-  resolveDayOffset,
-} from "../schedule";
+import { DAY_NAMES_RU, resolveDayOffset } from "../schedule";
 
 import { CALLBACK_DATA } from "../constants/callback-data";
 
@@ -66,9 +63,10 @@ export const scheduleConversation = async (
   const week = await schedule.getWeekSchedule();
   const day = week.days[dayName];
 
-  const dayText = dayName === "Воскресенье"
-    ? getWeekendText(dayName, currentWeek, weekCalculator)
-    : formatDay(day, currentWeek, weekCalculator);
+  const dayText =
+    dayName === "Воскресенье"
+      ? getWeekendText(dayName, currentWeek, weekCalculator)
+      : formatDay(day, currentWeek, weekCalculator);
 
   const weekText = formatWeek(
     { days: week.days, weekNumber: currentWeek },

@@ -20,7 +20,9 @@ export class ScheduleLoader {
    * Загружает полное расписание для группы (все недели) и возвращает структурированные данные.
    * @param group Информация о группе
    */
-  public async loadFullSchedule(group: GroupInformation): Promise<ScheduleWeeks> {
+  public async loadFullSchedule(
+    group: GroupInformation,
+  ): Promise<ScheduleWeeks> {
     const workbook = await this.driveService.loadWorkbook(
       group.course,
       group.specialization,

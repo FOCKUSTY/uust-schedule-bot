@@ -128,6 +128,6 @@ function columnIndexToLetter(index: number): string {
     letter = String.fromCharCode(65 + remainder) + letter;
     temp = Math.floor((temp - 1) / 26);
   }
-  
+
   return letter;
 }

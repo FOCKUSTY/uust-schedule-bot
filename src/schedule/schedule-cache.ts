@@ -52,7 +52,8 @@ export class ScheduleCache {
    * @param group Идентификатор группы
    */
   public getWeeks(group: GroupInformation): ScheduleWeeks | null {
-    const groupData = this.data.default?.[group.course]?.[group.specialization]?.[group.group];
+    const groupData =
+      this.data.default?.[group.course]?.[group.specialization]?.[group.group];
     if (!groupData) {
       return null;
     }

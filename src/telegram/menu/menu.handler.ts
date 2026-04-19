@@ -22,9 +22,13 @@ export async function menuCallbackHandler(ctx: Context) {
     case CALLBACK_DATA.MENU_WEEK:
       if (!hasActiveConfig) {
         await ctx.answerCallbackQuery("Сначала выберите активную группу");
-        return sendOrEditMessage(ctx, "У вас нет активных групп. Добавьте через меню.", {
-          keyboard: mainMenuKeyboard(),
-        });
+        return sendOrEditMessage(
+          ctx,
+          "У вас нет активных групп. Добавьте через меню.",
+          {
+            keyboard: mainMenuKeyboard(),
+          },
+        );
       }
       await ctx.conversation.enter(SCHEDULE_CONVERSATION);
       break;

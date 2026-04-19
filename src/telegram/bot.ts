@@ -137,11 +137,9 @@ bot.on("callback_query:data", async (ctx) => {
       const configs = await userService.getUserConfigs(telegramId);
       const keyboard = configSelectionKeyboard(configs);
 
-      return sendOrEditMessage(
-        ctx,
-        "Пожалуйста, выберите группу из списка:",
-        { keyboard },
-      );
+      return sendOrEditMessage(ctx, "Пожалуйста, выберите группу из списка:", {
+        keyboard,
+      });
     }
   }
 

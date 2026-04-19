@@ -1,13 +1,6 @@
-import type { 
-  FileInfo,
-  ExcelSheetInfo,
-  ExcelWorkbook,
-} from "./google";
+import type { FileInfo, ExcelSheetInfo, ExcelWorkbook } from "./google";
 
-import {
-  DriveReader,
-  ExcelReader,
-} from "./google";
+import { DriveReader, ExcelReader } from "./google";
 
 /**
  * Сервис для работы с иерархией Google Drive: курсы → специализации → группы.
@@ -40,7 +33,10 @@ export class GoogleDriveService {
    * @param courseName Название папки курса
    */
   public async getSpecializations(courseName: string): Promise<FileInfo[]> {
-    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
+    const courseFolder = await this.findFolderByName(
+      this.rootFolderId,
+      courseName,
+    );
     const files = await this.drive.listAllFiles(courseFolder.id);
 
     return files.filter((file) => !file.isFolder);
@@ -68,17 +64,21 @@ export class GoogleDriveService {
     courseName: string,
     specializationName: string,
   ): Promise<ExcelWorkbook> {
-    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
+    const courseFolder = await this.findFolderByName(
+      this.rootFolderId,
+      courseName,
+    );
     const file = await this.findFileByName(courseFolder.id, specializationName);
-    
+
     return this.excelReader.loadWorkbook(file.id);
   }
 
-  private async findFolderByName(parentId: string, name: string): Promise<FileInfo> {
+  private async findFolderByName(
+    parentId: string,
+    name: string,
+  ): Promise<FileInfo> {
     const files = await this.drive.listAllFiles(parentId);
-    const folder = files.find(
-      (file) => file.isFolder && file.name === name,
-    );
+    const folder = files.find((file) => file.isFolder && file.name === name);
 
     if (!folder) {
       throw new Error(`Папка "${name}" не найдена`);
@@ -87,10 +87,18 @@ export class GoogleDriveService {
     return folder;
   }
 
-  private async findFileByName(parentId: string, name: string): Promise<FileInfo> {
+  private async findFileByName(
+    parentId: string,
+    name: string,
+  ): Promise<FileInfo> {
     const files = await this.drive.listAllFiles(parentId);
     const file = files.find((file) => {
-      return !file.isFolder && (file.name === name || file.name === `${name}.xlsx` || file.name === `${name}.xls`);
+      return (
+        !file.isFolder &&
+        (file.name === name ||
+          file.name === `${name}.xlsx` ||
+          file.name === `${name}.xls`)
+      );
     });
 
     if (!file) {
