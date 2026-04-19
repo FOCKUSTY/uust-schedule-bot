@@ -1,6 +1,6 @@
 import type { GroupInformation } from "../schedule";
 import type { GoogleDriveService } from "../schedule/google-drive.service";
-import type { Cache } from "../cache/cache";
+import type { ScheduleCache } from "../cache";
 import type { ScheduleLoader } from "../schedule/schedule-loader";
 import type { NotificationService } from "../notifications/notification.service";
 
@@ -14,7 +14,7 @@ export class ScheduleWatcher {
 
   public constructor(
     private readonly driveService: GoogleDriveService,
-    private readonly cache: Cache,
+    private readonly cache: ScheduleCache,
     private readonly loader: ScheduleLoader,
     private readonly notificationService: NotificationService,
     private readonly options: WatcherOptions,
@@ -125,7 +125,7 @@ export class ScheduleWatcher {
         const weeks = await this.loader.loadFullSchedule(group);
         this.cache.setWeeks(group, weeks);
         this.cache.updateWatcherEntry(groupKey, { lastModified });
-        await this.cache.save();
+        await this.cache.saveAll();
 
         await this.notificationService.notifyGroupChange(group);
       } catch (error) {
@@ -133,7 +133,7 @@ export class ScheduleWatcher {
       }
     } else if (lastModified && !entry?.lastModified) {
       this.cache.updateWatcherEntry(groupKey, { lastModified });
-      await this.cache.save();
+      await this.cache.saveAll();
     }
   }
 }

@@ -25,7 +25,8 @@ import { configSelectionKeyboard, mainMenuKeyboard } from "./keyboards";
 import { sendOrEditMessage } from "./utils/send-or-edit";
 
 import { extractIdFromUrl } from "../schedule/google";
-import { GoogleDriveService, Cache, ScheduleLoader } from "../schedule";
+import { ScheduleCache } from "../cache";
+import { GoogleDriveService, ScheduleLoader } from "../schedule";
 import { NotificationService } from "../notifications/notification.service";
 import { ScheduleWatcher } from "../watcher/schedule-watcher";
 
@@ -154,7 +155,7 @@ if (!rootFolderId) {
 }
 
 const driveService = new GoogleDriveService(rootFolderId);
-const cache = new Cache(process.cwd());
+const cache = new ScheduleCache();
 const loader = new ScheduleLoader(driveService);
 const notificationService = new NotificationService(bot, userService);
 
@@ -168,7 +169,7 @@ const watcher = new ScheduleWatcher(
   },
 );
 
-cache.load().then(() => {
+cache.loadAll().then(() => {
   watcher.start();
   console.log(
     `Schedule watcher started with interval ${env.WATCHER_INTERVAL_MINUTES} min`,
