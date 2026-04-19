@@ -61,7 +61,11 @@ export class ScheduleWatcher {
     const groupKeys = this.cache.getAllCachedGroupKeys();
     for (const key of groupKeys) {
       const [course, specialization, groupName] = key.split(":");
-      const group: GroupInformation = { course, specialization, group: groupName };
+      const group: GroupInformation = {
+        course,
+        specialization,
+        group: groupName,
+      };
       await this.checkGroup(group);
     }
   }
@@ -111,7 +115,11 @@ export class ScheduleWatcher {
       ...(lastModified ? {} : { lastModified: "" }),
     });
 
-    if (lastModified && entry?.lastModified && lastModified !== entry.lastModified) {
+    if (
+      lastModified &&
+      entry?.lastModified &&
+      lastModified !== entry.lastModified
+    ) {
       console.log(`Schedule changed for group ${groupKey}, updating cache...`);
       try {
         const weeks = await this.loader.loadFullSchedule(group);

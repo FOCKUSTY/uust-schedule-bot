@@ -1,4 +1,9 @@
-import type { CacheData, GroupInformation, ScheduleWeeks, WatcherData } from "./types";
+import type {
+  CacheData,
+  GroupInformation,
+  ScheduleWeeks,
+  WatcherData,
+} from "./types";
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { CACHE_FILE_NAME, TWO_HOURS_MS } from "./constants";
@@ -91,7 +96,7 @@ export class ScheduleCache {
   public setOther<T>(key: string, value: T): void {
     this.data.other[key] = value;
   }
-  
+
   /**
    * Возвращает все данные мониторинга.
    */
@@ -129,7 +134,7 @@ export class ScheduleCache {
   public getAllCachedGroupKeys(): string[] {
     const keys: string[] = [];
     const defaultData = this.data.default;
-    
+
     for (const course in defaultData) {
       for (const spec in defaultData[course]) {
         for (const group in defaultData[course][spec]) {

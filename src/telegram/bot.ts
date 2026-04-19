@@ -170,7 +170,9 @@ const watcher = new ScheduleWatcher(
 
 cache.load().then(() => {
   watcher.start();
-  console.log(`Schedule watcher started with interval ${env.WATCHER_INTERVAL_MINUTES} min`);
+  console.log(
+    `Schedule watcher started with interval ${env.WATCHER_INTERVAL_MINUTES} min`,
+  );
 });
 
 process.on("SIGINT", () => {

@@ -16,7 +16,7 @@ export const env = Env.create(process.env)({
       if (isNaN(parsed) || parsed <= 0) {
         return 60;
       }
-      
+
       return parsed;
     },
   },

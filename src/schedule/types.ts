@@ -44,8 +44,8 @@ export type DateLike = Date | string | number;
 
 export interface WatcherEntry {
   fileId: string;
-  lastModified: string;   // ISO
-  lastChecked: string;    // ISO
+  lastModified: string; // ISO
+  lastChecked: string; // ISO
 }
 
 export interface WatcherData {
