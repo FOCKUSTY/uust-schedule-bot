@@ -1,17 +1,29 @@
-import { join } from 'node:path';
+import { join } from "node:path";
 
-import type { GroupInformation, ScheduleWeeks, WatcherData } from '../schedule/types';
+import type {
+  GroupInformation,
+  ScheduleWeeks,
+  WatcherData,
+} from "../schedule/types";
 
-import { Cache } from './cache';
-import { CACHE_FILE_NAME, TWO_HOURS_MS } from './constants';
+import { Cache } from "./cache";
+import { CACHE_FILE_NAME, TWO_HOURS_MS } from "./constants";
 
 export class ScheduleCache {
   private readonly weeksCache: Cache;
   private readonly watcherCache: Cache;
 
   public constructor() {
-    this.weeksCache = new Cache(CACHE_FILE_NAME, join(CACHE_FILE_NAME, 'weeks'), 2000);
-    this.watcherCache = new Cache(CACHE_FILE_NAME, join(CACHE_FILE_NAME, 'watcher'), 2000);
+    this.weeksCache = new Cache(
+      CACHE_FILE_NAME,
+      join(CACHE_FILE_NAME, "weeks"),
+      2000,
+    );
+    this.watcherCache = new Cache(
+      CACHE_FILE_NAME,
+      join(CACHE_FILE_NAME, "watcher"),
+      2000,
+    );
   }
 
   public async loadAll(): Promise<void> {
@@ -27,7 +39,9 @@ export class ScheduleCache {
     this.watcherCache.stopAutoSave();
   }
 
-  public async getWeeks(group: GroupInformation): Promise<ScheduleWeeks | undefined> {
+  public async getWeeks(
+    group: GroupInformation,
+  ): Promise<ScheduleWeeks | undefined> {
     const key = this.buildWeeksKey(group);
     return this.weeksCache.get<ScheduleWeeks>(key);
   }
@@ -64,9 +78,9 @@ export class ScheduleCache {
     ttlMs?: number,
   ): Promise<void> {
     const current = (await this.watcherCache.get(groupKey)) ?? {
-      fileId: '',
-      lastModified: '',
-      lastChecked: '',
+      fileId: "",
+      lastModified: "",
+      lastChecked: "",
     };
     const updated = { ...current, ...entry };
     await this.watcherCache.set(groupKey, updated, ttlMs);

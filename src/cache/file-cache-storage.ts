@@ -1,11 +1,11 @@
-import { access, lstatSync, mkdirSync, readFileSync } from 'node:fs';
-import type { CacheStorage } from './cache-storage.interface';
-import type { SerializedCache } from './types';
+import { access, lstatSync, mkdirSync, readFileSync } from "node:fs";
+import type { CacheStorage } from "./cache-storage.interface";
+import type { SerializedCache } from "./types";
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
-import lockfile from 'proper-lockfile';
+import lockfile from "proper-lockfile";
 
 const DEFAULT_DEBOUNCE_MS = 2000;
 
@@ -15,9 +15,15 @@ export class FileCacheStorage implements CacheStorage {
   private saveTimeout?: NodeJS.Timeout;
   private readonly debounceMs: number;
 
-  public constructor(section: string, folder?: string, debounceMs: number = DEFAULT_DEBOUNCE_MS) {
-    const baseDir = folder ? join(process.cwd(), "cache", folder) : join(process.cwd(), 'cache');
-    const safeSection = section.replace(/[^a-zA-Z0-9-_]/g, '_');
+  public constructor(
+    section: string,
+    folder?: string,
+    debounceMs: number = DEFAULT_DEBOUNCE_MS,
+  ) {
+    const baseDir = folder
+      ? join(process.cwd(), "cache", folder)
+      : join(process.cwd(), "cache");
+    const safeSection = section.replace(/[^a-zA-Z0-9-_]/g, "_");
     this.filePath = join(baseDir, `${safeSection}.cache`);
     this.debounceMs = debounceMs;
 
@@ -44,7 +50,10 @@ export class FileCacheStorage implements CacheStorage {
   }
 
   public async set(key: string, value: unknown, ttlMs?: number): Promise<void> {
-    const expiresAt = ttlMs && ttlMs > 0 ? new Date(Date.now() + ttlMs).toISOString() : undefined;
+    const expiresAt =
+      ttlMs && ttlMs > 0
+        ? new Date(Date.now() + ttlMs).toISOString()
+        : undefined;
     this.memory.set(key, { value, expiresAt });
     this.scheduleSave();
   }
@@ -83,16 +92,20 @@ export class FileCacheStorage implements CacheStorage {
 
   public async load(): Promise<void> {
     try {
-      await mkdir(join(this.filePath, '..'), { recursive: true });
+      await mkdir(join(this.filePath, ".."), { recursive: true });
 
-      const content = await readFile(this.filePath, 'utf-8');
+      const content = await readFile(this.filePath, "utf-8");
       const raw = JSON.parse(content) as Record<string, SerializedCache>;
       this.memory.clear();
       for (const [key, serialized] of Object.entries(raw)) {
         this.memory.set(key, serialized);
       }
     } catch (error) {
-      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
         this.memory.clear();
         return;
       }
@@ -111,11 +124,15 @@ export class FileCacheStorage implements CacheStorage {
       }
     }
 
-    await mkdir(join(this.filePath, '..'), { recursive: true });
+    await mkdir(join(this.filePath, ".."), { recursive: true });
 
     const release = await lockfile.lock(this.filePath, { retries: 5 });
     try {
-      await writeFile(this.filePath, JSON.stringify(serialized, null, 2), 'utf-8');
+      await writeFile(
+        this.filePath,
+        JSON.stringify(serialized, null, 2),
+        "utf-8",
+      );
     } finally {
       await release();
     }
@@ -129,7 +146,7 @@ export class FileCacheStorage implements CacheStorage {
     this.clearSaveTimeout();
     this.saveTimeout = setTimeout(async () => {
       await this.save().catch((error) => {
-        console.error('Auto-save failed:', error);
+        console.error("Auto-save failed:", error);
       });
       this.saveTimeout = undefined;
     }, this.debounceMs);

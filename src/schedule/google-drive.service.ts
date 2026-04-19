@@ -24,7 +24,7 @@ export class GoogleDriveService {
   }
 
   public async getCourses(): Promise<FileInfo[]> {
-    const cacheKey = 'courses';
+    const cacheKey = "courses";
     const cached = await this.cache.get<FileInfo[]>(cacheKey);
     if (cached !== undefined) {
       return cached;
@@ -44,7 +44,10 @@ export class GoogleDriveService {
       return cached;
     }
 
-    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
+    const courseFolder = await this.findFolderByName(
+      this.rootFolderId,
+      courseName,
+    );
     const files = await this.drive.listAllFiles(courseFolder.id);
     const specializations = files.filter((file) => !file.isFolder);
 
@@ -52,7 +55,10 @@ export class GoogleDriveService {
     return specializations;
   }
 
-  public async getGroups(courseName: string, specializationName: string): Promise<ExcelSheetInfo[]> {
+  public async getGroups(
+    courseName: string,
+    specializationName: string,
+  ): Promise<ExcelSheetInfo[]> {
     const cacheKey = `${courseName}:${specializationName}:groups`;
     const cached = await this.cache.get<ExcelSheetInfo[]>(cacheKey);
     if (cached !== undefined) {
@@ -74,12 +80,18 @@ export class GoogleDriveService {
     courseName: string,
     specializationName: string,
   ): Promise<ExcelWorkbook> {
-    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
+    const courseFolder = await this.findFolderByName(
+      this.rootFolderId,
+      courseName,
+    );
     const file = await this.findFileByName(courseFolder.id, specializationName);
     return this.excelReader.loadWorkbook(file.id);
   }
 
-  private async findFolderByName(parentId: string, name: string): Promise<FileInfo> {
+  private async findFolderByName(
+    parentId: string,
+    name: string,
+  ): Promise<FileInfo> {
     const files = await this.drive.listAllFiles(parentId);
     const folder = files.find((file) => file.isFolder && file.name === name);
     if (!folder) {
@@ -88,7 +100,10 @@ export class GoogleDriveService {
     return folder;
   }
 
-  private async findFileByName(parentId: string, name: string): Promise<FileInfo> {
+  private async findFileByName(
+    parentId: string,
+    name: string,
+  ): Promise<FileInfo> {
     const files = await this.drive.listAllFiles(parentId);
     const file = files.find((file) => {
       return (

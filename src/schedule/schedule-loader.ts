@@ -1,9 +1,9 @@
-import type { GroupInformation, ScheduleWeek, ScheduleWeeks } from './types';
+import type { GroupInformation, ScheduleWeek, ScheduleWeeks } from "./types";
 
-import { GoogleDriveService } from './google-drive.service';
-import { ScheduleFormatter } from './formatter';
-import { Cache } from '../cache';
-import { CACHE_TTL } from './constants';
+import { GoogleDriveService } from "./google-drive.service";
+import { ScheduleFormatter } from "./formatter";
+import { Cache } from "../cache";
+import { CACHE_TTL } from "./constants";
 
 export class ScheduleLoader {
   private readonly cache: Cache;
@@ -13,17 +13,22 @@ export class ScheduleLoader {
     private readonly formatter: ScheduleFormatter = new ScheduleFormatter(),
     cache?: Cache,
   ) {
-    this.cache = cache ?? new Cache('loader', 'schedule');
+    this.cache = cache ?? new Cache("loader", "schedule");
   }
 
-  public async loadFullSchedule(group: GroupInformation): Promise<ScheduleWeeks> {
+  public async loadFullSchedule(
+    group: GroupInformation,
+  ): Promise<ScheduleWeeks> {
     const cacheKey = this.buildWeeksKey(group);
     const cached = await this.cache.get<ScheduleWeeks>(cacheKey);
     if (cached !== undefined) {
       return cached;
     }
 
-    const workbook = await this.driveService.loadWorkbook(group.course, group.specialization);
+    const workbook = await this.driveService.loadWorkbook(
+      group.course,
+      group.specialization,
+    );
     const dimensions = workbook.getSheetDimensions(group.group);
     const rawData = workbook.getSheetDataByRange(group.group, {
       startRow: 1,
@@ -37,7 +42,10 @@ export class ScheduleLoader {
     return weeks;
   }
 
-  public async loadWeekSchedule(group: GroupInformation, weekNumber: number): Promise<ScheduleWeek> {
+  public async loadWeekSchedule(
+    group: GroupInformation,
+    weekNumber: number,
+  ): Promise<ScheduleWeek> {
     const weekCacheKey = this.buildWeekKey(group, weekNumber);
     const cachedWeek = await this.cache.get<ScheduleWeek>(weekCacheKey);
     if (cachedWeek !== undefined) {
