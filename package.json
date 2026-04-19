@@ -22,6 +22,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prestart": "prisma generate",
     "test": "tsc && node ./dist/test.js",
     "start": "node ./dist/telegram/bot.js"
   },
