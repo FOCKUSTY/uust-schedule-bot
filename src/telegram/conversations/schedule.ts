@@ -93,7 +93,7 @@ export const scheduleConversation = async (
   }
 
   keyboard
-    .text("🔄 Сменить группу", CALLBACK_DATA.MENU_SWITCH_GROUP)
+    .text("🔄 Сменить группу", CALLBACK_DATA.SCHEDULE_SWITCH_GROUP)
     .text(currentGroup.group, CALLBACK_DATA.SCHEDULE_WEEK_RESET)
     .row();
 

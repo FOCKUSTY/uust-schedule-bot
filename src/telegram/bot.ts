@@ -67,37 +67,37 @@ const callbackHandlers = new Map<string, CallbackHandler>();
 
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_WEEK_PREV, async (ctx) => {
   navigation.changeWeekOffset(ctx.session, -1);
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_WEEK_NEXT, async (ctx) => {
   navigation.changeWeekOffset(ctx.session, 1);
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_WEEK_RESET, async (ctx) => {
   navigation.resetWeekOffset(ctx.session);
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_DAY_PREV, async (ctx) => {
   navigation.changeDayOffset(ctx.session, -1);
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_DAY_NEXT, async (ctx) => {
   navigation.changeDayOffset(ctx.session, 1);
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_DAY_RESET, async (ctx) => {
   navigation.resetDayOffset(ctx.session);
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_SWITCH_TODAY, async (ctx) => {
   navigation.setWatchType(ctx.session, "day");
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 callbackHandlers.set(CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK, async (ctx) => {
   navigation.setWatchType(ctx.session, "week");
-  await ctx.conversation.enter(SCHEDULE_CONVERSATION);
+  return ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
 
 bot.on("callback_query:data", async (ctx) => {
@@ -137,6 +137,24 @@ bot.on("callback_query:data", async (ctx) => {
       return sendOrEditMessage(ctx, "Пожалуйста, выберите группу из списка:", {
         keyboard,
       });
+    }
+  }
+
+  if (data.startsWith("schedule:")) {
+    switch (data) {
+      case CALLBACK_DATA.SCHEDULE_SWITCH_GROUP:
+        const configs = await userService.getUserConfigs(telegramId);
+        if (configs.length === 0) {;
+          return sendOrEditMessage(ctx, 'У вас нет сохранённых групп. Начните регистрацию: /start', {});
+        }
+
+        const keyboard = configSelectionKeyboard(configs);
+        await sendOrEditMessage(ctx, 'Выберите группу для активации или добавьте новую:', { keyboard });
+        await ctx.answerCallbackQuery();
+        break;
+    
+      default:
+        break;
     }
   }
 

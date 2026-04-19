@@ -1,6 +1,8 @@
-import { InlineKeyboard } from "grammy";
+import { GrammyError, InlineKeyboard } from "grammy";
 import { Context, MyConversation } from "../bot";
 import { SessionData } from "../session";
+
+const SAME_TEXT_ERROR_DESCRIPTION = "Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message";
 
 export async function sendOrEditMessage(
   interaction: Context,
@@ -44,11 +46,18 @@ export async function sendOrEditMessage(
       session.lastBotMessageId = msg.message_id;
       session.lastChatId = chatId;
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof GrammyError) {
+      if (error.description === SAME_TEXT_ERROR_DESCRIPTION) {
+        return interaction.answerCallbackQuery("Ничего не изменилось");
+      }
+    }
+
     const msg = await interaction.reply(text, {
       reply_markup: keyboard,
       parse_mode: "HTML",
     });
+
     session.lastBotMessageId = msg.message_id;
     session.lastChatId = chatId;
   } finally {

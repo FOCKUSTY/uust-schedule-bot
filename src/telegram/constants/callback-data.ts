@@ -6,6 +6,7 @@ export const CALLBACK_DATA = {
   MENU_ADD_GROUP: "menu:add_group",
   MENU_BACK: "menu:back",
 
+  SCHEDULE_SWITCH_GROUP: "schedule:group:switch",
   SCHEDULE_WEEK_PREV: "schedule:week:previous",
   SCHEDULE_WEEK_NEXT: "schedule:week:next",
   SCHEDULE_WEEK_RESET: "schedule:week:reset",
