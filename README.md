@@ -1,65 +1,133 @@
-# Google Drive / Sheets API Reader
+# 🎓 UUST Schedule Bot
 
-Набор классов для чтения данных из Google Drive и Google Sheets через сервисный аккаунт. Поддерживает Excel-файлы и форматирование расписания.
+Telegram-бот для получения расписания занятий УУНиТ (пока что только ИСПО) (Уфимского университета науки и технологий) из Google Drive / Excel.
 
-## Установка
+## 📦 Возможности
+
+- Регистрация пользователя с выбором курса, специализации и группы
+- Просмотр расписания на **сегодня**, **завтра** или **на всю неделю**
+- Навигация по дням и неделям (вперёд/назад)
+- Поддержка нескольких групп: можно добавить несколько конфигураций и переключаться между ними
+- Установка группы **по умолчанию** и активация/деактивация
+- Кэширование расписания (файл `.cache`) с TTL 2 часа для экономии запросов к Google API
+
+## 🛠️ Технологии
+
+- [TypeScript](https://www.typescriptlang.org/)
+- [Node.js](https://nodejs.org/) (CommonJS)
+- [grammy](https://grammy.dev/) – фреймворк для Telegram ботов
+- [Prisma](https://www.prisma.io/) + PostgreSQL – хранение пользователей и конфигураций
+- [Google APIs](https://github.com/googleapis/google-api-nodejs-client) – доступ к Google Drive
+- [SheetJS (xlsx)](https://sheetjs.com/) – парсинг Excel-файлов
+- [fenviee](https://github.com/fockusty/fenviee) – валидация переменных окружения
+
+## 📁 Структура проекта
+
+```
+src/
+├── env.ts                    # Загрузка и валидация переменных окружения
+├── index.ts                  # Точка входа (экспорт модулей)
+├── database/                 # Работа с БД
+│   ├── prisma.ts
+│   ├── user.service.ts
+│   └── schema.prisma
+├── schedule/                 # Логика получения и кэширования расписания
+│   ├── google/               # Взаимодействие с Google Drive и Excel
+│   ├── google-drive.service.ts
+│   ├── schedule-loader.ts
+│   ├── schedule-cache.ts
+│   ├── week-calculator.ts
+│   ├── formatter.ts
+│   └── schedule.ts
+└── telegram/                 # Telegram-бот и UI
+    ├── bot.ts
+    ├── session.ts
+    ├── commands/
+    ├── conversations/
+    ├── keyboards/
+    ├── menu/
+    ├── services/
+    └── utils/
+```
+
+## ⚙️ Установка и настройка
+
+### 1. Клонирование и установка зависимостей
 
 ```bash
-npm install googleapis xlsx
-npm install -D @types/node
+git clone https://github.com/yourname/uust-schedule-bot.git
+cd uust-schedule-bot
+pnpm install
 ```
 
-## Использование
+### 2. Переменные окружения
 
-### Чтение папок и файлов на Google Drive
+Создайте файл `.env` в корне проекта:
 
-```typescript
-import { DriveReader, extractIdFromUrl } from "./google";
-
-const reader = new DriveReader({ keyFilePath: "./service-account.json" });
-const folderId = extractIdFromUrl("https://drive.google.com/drive/folders/...");
-const files = await reader.listAllFiles(folderId);
+```env
+GOOGLE_DRIVE_FOLDER_URL="https://drive.google.com/drive/folders/ВАШ_ID_ПАПКИ"
+DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
+TELEGRAM_BOT_TOKEN="1234567890:ABCdef..."
+START_DATE="2025-09-01"
 ```
 
-### Чтение Google Sheets
+- `GOOGLE_DRIVE_FOLDER_URL` — ссылка на корневую папку с курсами (должна содержать подпапки курсов, внутри которых Excel-файлы специализаций)
+- `DATABASE_URL` — строка подключения к PostgreSQL
+- `TELEGRAM_BOT_TOKEN` — токен бота от [@BotFather](https://t.me/BotFather)
+- `START_DATE` — дата начала учебного года (формат `YYYY-MM-DD`), от неё считается номер недели
 
-```typescript
-import { SheetsReader, extractSpreadsheetIdFromUrl } from "./google";
+### 3. Сервисный аккаунт Google
 
-const sheets = new SheetsReader({ keyFilePath: "./service-account.json" });
-const id = extractSpreadsheetIdFromUrl(
-  "https://docs.google.com/spreadsheets/d/...",
-);
-const data = await sheets.getSheetDataByTitle(id, "Лист1");
+1. Создайте проект в [Google Cloud Console](https://console.cloud.google.com/)
+2. Включите **Google Drive API**
+3. Создайте сервисный аккаунт и скачайте JSON-ключ
+4. Переименуйте ключ в `credentials.json` и поместите в корень проекта
+5. Предоставьте сервисному аккаунту доступ к нужной папке на Google Drive (как минимум на чтение)
+
+### 4. База данных
+
+Примените миграции Prisma:
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
 ```
 
-### Чтение Excel‑файлов (.xlsx)
+## 🚀 Запуск
 
-```typescript
-import { DriveReader, ExcelReader } from "./google";
+### Сборка
 
-const drive = new DriveReader({ keyFilePath: "./service-account.json" });
-const excel = new ExcelReader(drive);
-
-const workbook = await excel.loadWorkbook(fileId);
-const data = workbook.getSheetDataByRange(0, {
-  startRow: 1,
-  startCol: 1,
-  endRow: 100,
-  endCol: 20,
-});
+```bash
+pnpm build
 ```
 
-### Форматирование расписания
+### Запуск бота
 
-```typescript
-import { ScheduleFormatter } from "./google";
-
-const raw = workbook.getSheetData(0);
-const schedule = new ScheduleFormatter().format(raw);
-console.log(schedule.weeks[1]?.days["Понедельник"]?.pairs[1]);
+```bash
+pnpm start
 ```
 
-## Лицензия
+Или в режиме разработки (с авто-пересборкой) можно использовать `ts-node` или `tsx`.
 
-MIT
+## 📝 Использование бота
+
+1. Найдите бота в Telegram по имени или ссылке.
+2. Отправьте команду `/start`.
+3. Следуйте инструкциям для выбора курса → специализации → группы.
+4. После регистрации используйте кнопки меню для навигации по расписанию.
+5. Можно добавить несколько групп и переключаться между ними через меню «🔄 Сменить группу».
+
+## 🔧 Команды бота
+
+| Команда      | Описание                           |
+|--------------|------------------------------------|
+| `/start`     | Начать работу, выбрать группу      |
+| `/schedule`  | Показать расписание (текущий режим)|
+
+## 📄 Лицензия
+
+MIT © 2026 FOCKUSTY
+
+---
+
+Разработано с ❤️ и вниманием к чистому коду (согласно стандартам команды **LAF**).
