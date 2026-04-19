@@ -1,0 +1,1457 @@
+
+`D:\projects\me\uust-schedule-bot\src\schedule\cache.ts`
+```.ts
+import type { CacheType, GroupInformation, ScheduleWeeks } from "./types";
+
+import { getExpiresAtTimeForCache } from "./utils";
+import { CACHE_FILE } from "./constants";
+
+import { join } from "path";
+
+import { writeFile } from "fs/promises";
+import { existsSync, readFileSync } from "fs";
+
+export class Cache {
+  private static readFileSync() {
+    const path = join(process.cwd(), CACHE_FILE);
+
+    if (!existsSync(path)) {
+      return {};
+    }
+
+    const file = readFileSync(path, "utf-8");
+    const json = JSON.parse(file);
+    return json;
+  }
+
+  private _data: CacheType = {
+    default: {},
+    other: {},
+  };
+
+  public constructor() {
+    this._data = Cache.readFileSync();
+  }
+
+  public set<T>(prefix: string, data: T) {
+    this._data.other[prefix] = data;
+    this.writeFile();
+  }
+
+  public get<T = unknown>(prefix: string): T {
+    if (!this._data.other) {
+      this._data.other = {};
+    }
+
+    return this._data.other?.[prefix] as T;
+  }
+
+  public execute(group: GroupInformation, weeks: ScheduleWeeks) {
+    this.addLocal(group, weeks);
+    return this.writeFile();
+  }
+
+  public getWeeks(group: GroupInformation): ScheduleWeeks | undefined {
+    return this._data?.default?.[group.course]?.[group.specialization]?.[
+      group.group
+    ]?.weeks;
+  }
+
+  private addLocal(group: GroupInformation, weeks: ScheduleWeeks) {
+    if (this.expiresDateReached(group)) {
+      return this._data.default?.[group.course]?.[group.specialization]?.[
+        group.group
+      ];
+    }
+
+    const data = this.createGroup(group, weeks);
+    return data;
+  }
+
+  private createGroup(group: GroupInformation, weeks: ScheduleWeeks) {
+    const data = {
+      weeks,
+      expiresAt: getExpiresAtTimeForCache(),
+    };
+
+    this._data["default"] = {
+      [group.course]: {
+        [group.specialization]: {
+          [group.group]: data,
+          ...this._data?.["default"]?.[group.course]?.[group.specialization],
+        },
+        ...this._data?.["default"]?.[group.course],
+      },
+      ...this._data?.["default"],
+    };
+
+    return data;
+  }
+
+  private expiresDateReached(group: GroupInformation) {
+    const data =
+      this._data?.["default"]?.[group.course]?.[group.specialization]?.[
+        group.group
+      ];
+    if (!data) {
+      return false;
+    }
+
+    const expiresAt = new Date(data.expiresAt).getTime();
+    const now = new Date().getTime();
+
+    return now >= expiresAt;
+  }
+
+  private writeFile() {
+    const file = join(process.cwd(), CACHE_FILE);
+    return writeFile(file, JSON.stringify(this._data, undefined, 0), "utf-8");
+  }
+}
+
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\constants.ts`
+```.ts
+export const CACHE_FILE_NAME = ".cache";
+
+export const TWO_HOURS_MS = 1000 * 60 * 60 * 2;
+
+export const COURSE_FOLDER_ID_PLACEHOLDER = "COURSE_FOLDER_ID";
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\formatter.ts`
+```.ts
+import type { FormattedSchedule, ScheduleWeek } from "./types";
+
+const DAY_NAMES = [
+  "Понедельник",
+  "Вторник",
+  "Среда",
+  "Четверг",
+  "Пятница",
+  "Суббота",
+  "Воскресенье",
+] as const;
+
+type DayName = (typeof DAY_NAMES)[number];
+
+/**
+ * Класс для форматирования расписания из сырого Excel-массива.
+ */
+export class ScheduleFormatter {
+  /**
+   * Преобразует сырой массив в структурированное расписание.
+   * @param rawData Двумерный массив строк из Excel
+   */
+  public format(rawData: string[][]): FormattedSchedule {
+    const groupName = this.extractGroupName(rawData);
+    const weekNumbers = this.extractWeekNumbers(rawData);
+    const weeks = this.buildWeeks(rawData, weekNumbers);
+
+    return {
+      groupName,
+      weeks,
+    };
+  }
+
+  private extractGroupName(rawData: string[][]): string {
+    const firstRow = rawData[0] || [];
+    const groupCell = firstRow[3];
+
+    return groupCell || "Неизвестная группа";
+  }
+
+  private extractWeekNumbers(rawData: string[][]): number[] {
+    const secondRow = rawData[1] || [];
+    const weekNumbers: number[] = [];
+
+    for (let col = 3; col < secondRow.length; col++) {
+      const value = secondRow[col];
+      if (value !== null && value !== undefined && value !== "") {
+        weekNumbers.push(Number(value));
+      }
+    }
+
+    return weekNumbers;
+  }
+
+  private buildWeeks(
+    rawData: string[][],
+    weekNumbers: number[],
+  ): Record<number, ScheduleWeek> {
+    const weeks: Record<number, ScheduleWeek> = {};
+    for (const weekNumber of weekNumbers) {
+      weeks[weekNumber] = { weekNumber, days: {} };
+    }
+
+    let currentDayName: DayName | null = null;
+
+    for (let row = 2; row < rawData.length; row++) {
+      const rowData = rawData[row];
+      const firstCell = rowData[0];
+      const pairCell = rowData[1];
+
+      if (this.isDayName(firstCell?.trim?.())) {
+        currentDayName = firstCell as DayName;
+      }
+
+      if (currentDayName === null) {
+        continue;
+      }
+
+      const pairNumber = this.parsePairNumber(pairCell);
+      if (pairNumber === null) {
+        continue;
+      }
+
+      this.ensureDayExists(weeks, weekNumbers, currentDayName);
+
+      for (let colIndex = 0; colIndex < weekNumbers.length; colIndex++) {
+        const weekNumber = weekNumbers[colIndex];
+        const cellValue = rowData[colIndex + 3] || null;
+        const cleanedValue = this.cleanCellValue(cellValue);
+        weeks[weekNumber].days[currentDayName].pairs[pairNumber] = cleanedValue;
+      }
+    }
+
+    return weeks;
+  }
+
+  private isDayName(value: string | null): boolean {
+    if (typeof value !== "string") {
+      return false;
+    }
+
+    return (DAY_NAMES as readonly string[]).includes(value);
+  }
+
+  private parsePairNumber(value: string | null): number | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const num = Number(value);
+    return Number.isNaN(num) ? null : num;
+  }
+
+  private ensureDayExists(
+    weeks: Record<number, ScheduleWeek>,
+    weekNumbers: number[],
+    dayName: DayName,
+  ): void {
+    for (const weekNumber of weekNumbers) {
+      if (!weeks[weekNumber].days[dayName]) {
+        weeks[weekNumber].days[dayName] = {
+          dayName,
+          pairs: {},
+        };
+      }
+    }
+  }
+
+  private cleanCellValue(value: string | null): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    return trimmed === "" ? null : trimmed;
+  }
+}
+
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google-drive.service.ts`
+```.ts
+import type { 
+  FileInfo,
+  ExcelSheetInfo,
+  ExcelWorkbook,
+} from "./google";
+
+import {
+  DriveReader,
+  ExcelReader,
+} from "./google";
+
+/**
+ * Сервис для работы с иерархией Google Drive: курсы → специализации → группы.
+ */
+export class GoogleDriveService {
+  private readonly drive: DriveReader;
+  private readonly excelReader: ExcelReader;
+  private readonly rootFolderId: string;
+
+  /**
+   * @param rootFolderId ID папки, содержащей папки курсов
+   * @param drive Экземпляр DriveReader (если не передан, создаётся новый)
+   */
+  public constructor(rootFolderId: string, drive?: DriveReader) {
+    this.rootFolderId = rootFolderId;
+    this.drive = drive ?? new DriveReader();
+    this.excelReader = new ExcelReader(this.drive);
+  }
+
+  /**
+   * Возвращает список курсов (папки внутри корневой папки).
+   */
+  public async getCourses(): Promise<FileInfo[]> {
+    const files = await this.drive.listAllFiles(this.rootFolderId);
+    return files.filter((file) => file.isFolder);
+  }
+
+  /**
+   * Возвращает список специализаций для указанного курса.
+   * @param courseName Название папки курса
+   */
+  public async getSpecializations(courseName: string): Promise<FileInfo[]> {
+    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
+    const files = await this.drive.listAllFiles(courseFolder.id);
+
+    return files.filter((file) => !file.isFolder);
+  }
+
+  /**
+   * Возвращает список групп (листов) для указанного курса и специализации.
+   * @param courseName Название курса
+   * @param specializationName Название специализации (имя Excel-файла без расширения)
+   */
+  public async getGroups(
+    courseName: string,
+    specializationName: string,
+  ): Promise<ExcelSheetInfo[]> {
+    const workbook = await this.loadWorkbook(courseName, specializationName);
+    return workbook.listSheets();
+  }
+
+  /**
+   * Загружает книгу Excel для указанного курса и специализации.
+   * @param courseName Название курса
+   * @param specializationName Название специализации (имя Excel-файла)
+   */
+  public async loadWorkbook(
+    courseName: string,
+    specializationName: string,
+  ): Promise<ExcelWorkbook> {
+    const courseFolder = await this.findFolderByName(this.rootFolderId, courseName);
+    const file = await this.findFileByName(courseFolder.id, specializationName);
+    
+    return this.excelReader.loadWorkbook(file.id);
+  }
+
+  private async findFolderByName(parentId: string, name: string): Promise<FileInfo> {
+    const files = await this.drive.listAllFiles(parentId);
+    const folder = files.find(
+      (file) => file.isFolder && file.name === name,
+    );
+
+    if (!folder) {
+      throw new Error(`Папка "${name}" не найдена`);
+    }
+
+    return folder;
+  }
+
+  private async findFileByName(parentId: string, name: string): Promise<FileInfo> {
+    const files = await this.drive.listAllFiles(parentId);
+    const file = files.find((file) => {
+      return !file.isFolder && (file.name === name || file.name === `${name}.xlsx` || file.name === `${name}.xls`);
+    });
+
+    if (!file) {
+      throw new Error(`Файл "${name}" не найден`);
+    }
+
+    return file;
+  }
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\index.ts`
+```.ts
+export * from "./constants";
+export * from "./formatter";
+export * from "./google-drive.service";
+export * from "./schedule";
+export * from "./schedule-cache";
+export * from "./schedule-loader";
+export * from "./types";
+export * from "./week-calculator";
+
+export * as Google from "./google";
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\readdir.txt`
+```.txt
+const fs = require("fs");
+const path = require("path");
+
+let text = "";
+
+fs.readdirSync(__dirname, {
+  recursive: true,
+  encoding: "utf-8"
+}).forEach((fileName) => {
+  const filePath = path.join(__dirname, fileName);
+  
+  if (fs.lstatSync(filePath).isDirectory()) {
+    return null;
+  }
+
+  const file = fs.readFileSync(filePath);
+  
+  text += ("\n" + `\`${filePath}\`\n\`\`\`${path.extname(filePath)}\n${file}\n\`\`\``);
+});
+
+fs.writeFileSync("./code.txt", text, "utf-8");
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\schedule-cache.ts`
+```.ts
+import type { CacheData, GroupInformation, ScheduleWeeks } from "./types";
+
+import { readFile, writeFile } from "fs/promises";
+import { join } from "path";
+
+import { CACHE_FILE_NAME, TWO_HOURS_MS } from "./constants";
+
+/**
+ * Сервис для асинхронного кэширования расписания в файл.
+ */
+export class ScheduleCache {
+  private readonly filePath: string;
+  private data: CacheData;
+
+  /**
+   * @param rootDir Корневая директория проекта (обычно process.cwd())
+   */
+  public constructor(rootDir: string) {
+    this.filePath = join(rootDir, CACHE_FILE_NAME);
+    this.data = { default: {}, other: {} };
+  }
+
+  /**
+   * Загружает данные кэша из файла (если существует).
+   */
+  public async load(): Promise<void> {
+    try {
+      const content = await readFile(this.filePath, "utf-8");
+      this.data = JSON.parse(content);
+    } catch {
+      // Файл отсутствует или повреждён – оставляем пустую структуру
+    }
+  }
+
+  /**
+   * Сохраняет текущее состояние кэша в файл.
+   */
+  public async save(): Promise<void> {
+    try {
+      await writeFile(
+        this.filePath,
+        JSON.stringify(this.data, null, 2),
+        "utf-8",
+      );
+    } catch (error) {
+      console.error("Failed to write schedule cache:", error);
+    }
+  }
+
+  /**
+   * Возвращает закэшированные недели для группы, если они не просрочены.
+   * @param group Идентификатор группы
+   */
+  public getWeeks(group: GroupInformation): ScheduleWeeks | null {
+    const groupData = this.data.default?.[group.course]?.[group.specialization]?.[group.group];
+    if (!groupData) {
+      return null;
+    }
+
+    const now = Date.now();
+    const expiresAt = new Date(groupData.expiresAt).getTime();
+    if (now >= expiresAt) {
+      return null;
+    }
+
+    return groupData.weeks;
+  }
+
+  /**
+   * Сохраняет недели расписания для группы с указанным TTL.
+   * @param group Идентификатор группы
+   * @param weeks Данные недель
+   * @param ttl Время жизни в миллисекундах (по умолчанию 2 часа)
+   */
+  public setWeeks(
+    group: GroupInformation,
+    weeks: ScheduleWeeks,
+    ttl: number = TWO_HOURS_MS,
+  ): void {
+    const expiresAt = new Date(Date.now() + ttl).toISOString();
+
+    this.data.default[group.course] ??= {};
+    this.data.default[group.course][group.specialization] ??= {};
+    this.data.default[group.course][group.specialization][group.group] = {
+      weeks,
+      expiresAt,
+    };
+  }
+
+  /**
+   * Возвращает произвольные данные из секции `other`.
+   * @param key Ключ
+   */
+  public getOther<T = unknown>(key: string): T | undefined {
+    return this.data.other[key] as T | undefined;
+  }
+
+  /**
+   * Сохраняет произвольные данные в секцию `other`.
+   * @param key Ключ
+   * @param value Значение
+   */
+  public setOther<T>(key: string, value: T): void {
+    this.data.other[key] = value;
+  }
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\schedule-loader.ts`
+```.ts
+import type { GroupInformation, ScheduleWeek, ScheduleWeeks } from "./types";
+
+import { GoogleDriveService } from "./google-drive.service";
+import { ScheduleFormatter } from "./formatter";
+
+/**
+ * Загружает и парсит расписание из Google Drive.
+ */
+export class ScheduleLoader {
+  private readonly formatter: ScheduleFormatter;
+
+  public constructor(
+    private readonly driveService: GoogleDriveService,
+    formatter?: ScheduleFormatter,
+  ) {
+    this.formatter = formatter ?? new ScheduleFormatter();
+  }
+
+  /**
+   * Загружает полное расписание для группы (все недели) и возвращает структурированные данные.
+   * @param group Информация о группе
+   */
+  public async loadFullSchedule(group: GroupInformation): Promise<ScheduleWeeks> {
+    const workbook = await this.driveService.loadWorkbook(
+      group.course,
+      group.specialization,
+    );
+
+    const dimensions = workbook.getSheetDimensions(group.group);
+    const rawData = workbook.getSheetDataByRange(group.group, {
+      startRow: 1,
+      startColumn: 1,
+      endRow: dimensions.endRow + 1,
+      endColumn: dimensions.endCol + 1,
+    });
+
+    const formatted = this.formatter.format(rawData);
+    return formatted.weeks;
+  }
+
+  /**
+   * Загружает расписание только для конкретной недели.
+   * @param group Информация о группе
+   * @param weekNumber Номер недели
+   */
+  public async loadWeekSchedule(
+    group: GroupInformation,
+    weekNumber: number,
+  ): Promise<ScheduleWeek> {
+    const weeks = await this.loadFullSchedule(group);
+    const week = weeks[weekNumber];
+    if (!week) {
+      throw new Error(`Неделя ${weekNumber} не найдена в расписании`);
+    }
+    return week;
+  }
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\schedule.ts`
+```.ts
+import { env } from "../env";
+import { extractIdFromUrl } from "./google";
+import { GoogleDriveService } from "./google-drive.service";
+import { ScheduleCache } from "./schedule-cache";
+import { ScheduleLoader } from "./schedule-loader";
+import { GroupInformation, ScheduleWeek } from "./types";
+import { WeekCalculator } from "./week-calculator";
+
+/**
+ * Основной класс для получения расписания.
+ * Иммутабельный: при изменении параметров возвращает новый экземпляр.
+ */
+export class Schedule {
+  private readonly loader: ScheduleLoader;
+  private readonly cache: ScheduleCache;
+  private readonly weekCalculator: WeekCalculator;
+
+  /**
+   * @param group Информация о группе
+   * @param weekNumber Номер недели (0-based)
+   * @param deps Зависимости (если не переданы, создаются с параметрами из env)
+   */
+  public constructor(
+    public readonly group: GroupInformation,
+    public readonly weekNumber: number,
+    deps?: {
+      loader?: ScheduleLoader;
+      cache?: ScheduleCache;
+      weekCalculator?: WeekCalculator;
+    },
+  ) {
+    const rootFolderId = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL);
+    if (!rootFolderId) {
+      throw new Error("Invalid GOOGLE_DRIVE_FOLDER_URL");
+    }
+
+    const driveService = new GoogleDriveService(rootFolderId);
+    this.loader = deps?.loader ?? new ScheduleLoader(driveService);
+    this.cache = deps?.cache ?? new ScheduleCache(process.cwd());
+    this.weekCalculator = deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
+  }
+
+  /**
+   * Инициализирует кэш (загружает данные из файла).
+   * Должен быть вызван перед первым использованием.
+   */
+  public async initializeCache(): Promise<void> {
+    await this.cache.load();
+  }
+
+  /**
+   * Возвращает расписание на выбранную неделю.
+   * При необходимости загружает из Drive и кэширует.
+   */
+  public async getWeekSchedule(): Promise<ScheduleWeek> {
+    // Пробуем получить из кэша
+    const cachedWeeks = this.cache.getWeeks(this.group);
+    if (cachedWeeks) {
+      const week = cachedWeeks[this.weekNumber];
+      if (week) {
+        return week;
+      }
+    }
+
+    // Загружаем полное расписание
+    const weeks = await this.loader.loadFullSchedule(this.group);
+
+    // Кэшируем
+    this.cache.setWeeks(this.group, weeks);
+    await this.cache.save();
+
+    const week = weeks[this.weekNumber];
+    if (!week) {
+      throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
+    }
+    return week;
+  }
+
+  /**
+   * Создаёт новый экземпляр Schedule с другой неделей.
+   */
+  public withWeek(newWeek: number): Schedule {
+    return new Schedule(this.group, newWeek, {
+      loader: this.loader,
+      cache: this.cache,
+      weekCalculator: this.weekCalculator,
+    });
+  }
+
+  /**
+   * Создаёт новый экземпляр Schedule с другой группой.
+   */
+  public withGroup(newGroup: GroupInformation): Schedule {
+    return new Schedule(newGroup, this.weekNumber, {
+      loader: this.loader,
+      cache: this.cache,
+      weekCalculator: this.weekCalculator,
+    });
+  }
+
+  /**
+   * Возвращает сервис кэша (для продвинутого использования).
+   */
+  public getCache(): ScheduleCache {
+    return this.cache;
+  }
+
+  /**
+   * Возвращает сервис загрузки (для получения списков курсов и т.п.).
+   */
+  public getLoader(): ScheduleLoader {
+    return this.loader;
+  }
+
+  /**
+   * Возвращает калькулятор недель.
+   */
+  public getWeekCalculator(): WeekCalculator {
+    return this.weekCalculator;
+  }
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\types.ts`
+```.ts
+import type { FileInfo, ExcelSheetInfo } from "./google";
+
+export interface GroupInformation {
+  course: string;
+  specialization: string;
+  group: string;
+}
+
+export interface ScheduleDay {
+  dayName: string;
+  pairs: Record<number, string | null>;
+}
+
+export interface ScheduleWeek {
+  weekNumber: number;
+  days: Record<string, ScheduleDay>;
+}
+
+export type ScheduleWeeks = Record<string, ScheduleWeek>;
+
+export interface FormattedSchedule {
+  groupName: string;
+  weeks: ScheduleWeeks;
+}
+
+export interface CacheData {
+  default: Record<
+    string, // course
+    Record<
+      string, // specialization
+      Record<
+        string, // group
+        {
+          weeks: ScheduleWeeks;
+          expiresAt: string; // ISO
+        }
+      >
+    >
+  >;
+  other: Record<string, unknown>;
+}
+
+export type DateLike = Date | string | number;
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\utils.ts`
+```.ts
+import { env } from "../env";
+
+export const getCurrentWeek = () => {
+  const target = new Date();
+  target.setHours(0, 0, 0, 0);
+
+  const start = new Date(env.START_DATE.getTime());
+  start.setHours(0, 0, 0, 0);
+
+  if (target < start) {
+    return 0;
+  }
+
+  const difference = target.getTime() - start.getTime();
+  const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+  const weekNumber = Math.floor(days / 7);
+
+  return weekNumber;
+};
+
+export const getDateFromWeekNumber = (
+  weekNumber: number,
+  dayIndex: number = 0,
+): Date => {
+  const baseDate = new Date(env.START_DATE.getTime());
+  baseDate.setDate(baseDate.getDate() + weekNumber * 7);
+
+  const startDayOfWeek = (baseDate.getDay() + 6) % 7;
+
+  baseDate.setDate(baseDate.getDate() - startDayOfWeek + dayIndex);
+  baseDate.setHours(0, 0, 0, 0);
+
+  return baseDate;
+};
+
+const TWO_HOURS = 1000 * 60 * 60 * 2;
+
+export const getExpiresAtTimeForCache = () => {
+  const now = new Date().getTime();
+  const expiresAt = now + TWO_HOURS;
+
+  return new Date(expiresAt).toISOString();
+};
+
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\week-calculator.ts`
+```.ts
+import type { DateLike } from "./types";
+
+/**
+ * Класс для вычисления номера учебной недели и дат.
+ */
+export class WeekCalculator {
+  private readonly startDate: Date;
+
+  /**
+   * @param startDate Дата начала первого учебного дня (обычно START_DATE из .env)
+   */
+  public constructor(startDate: Date) {
+    this.startDate = this.normalizeDate(startDate);
+  }
+
+  /**
+   * Возвращает номер текущей учебной недели относительно даты старта.
+   * @param targetDate Дата, для которой вычисляется неделя (по умолчанию сегодня)
+   */
+  public getCurrentWeek(targetDate: DateLike = new Date()): number {
+    const target = this.normalizeDate(targetDate);
+    const start = this.startDate;
+
+    if (target < start) {
+      return 0;
+    }
+
+    const diffMs = target.getTime() - start.getTime();
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return Math.floor(days / 7);
+  }
+
+  /**
+   * Возвращает объект Date для указанного дня недели внутри учебной недели.
+   * @param weekNumber Номер учебной недели (0-based)
+   * @param dayIndex Индекс дня недели (0 = Понедельник, 6 = Воскресенье)
+   */
+  public getDateFromWeekNumber(weekNumber: number, dayIndex: number = 0): Date {
+    const baseDate = new Date(this.startDate);
+    baseDate.setDate(baseDate.getDate() + weekNumber * 7);
+
+    const startDayOfWeek = (baseDate.getDay() + 6) % 7;
+    baseDate.setDate(baseDate.getDate() - startDayOfWeek + dayIndex);
+    baseDate.setHours(0, 0, 0, 0);
+    return baseDate;
+  }
+
+  private normalizeDate(date: DateLike): Date {
+    const normilizedDate = new Date(date);
+    normilizedDate.setHours(0, 0, 0, 0);
+    return normilizedDate;
+  }
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google\constants.ts`
+```.ts
+// ====================== ОБЩИЕ ======================
+export const STREAM_RESPONSE_TYPE = "stream";
+export const CREDENTIALS_JSON_FILE = "credentials.json";
+
+// ====================== GOOGLE DRIVE ======================
+export const DRIVE_API_VERSION = "v3";
+export const DRIVE_READONLY_SCOPES = [
+  "https://www.googleapis.com/auth/drive.readonly",
+];
+
+export const DEFAULT_PAGE_SIZE = 100;
+export const DEFAULT_FIELDS =
+  "nextPageToken, files(id, name, mimeType, size, modifiedTime, createdTime, webViewLink, parents)";
+
+export const TRASHED_FILTER = "trashed = false";
+export const FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
+export const DOWNLOAD_ALT_MEDIA = "media";
+export const FILE_FIELDS_FOR_INFO =
+  "id, name, mimeType, size, modifiedTime, createdTime, webViewLink, parents";
+
+// ====================== GOOGLE SHEETS ======================
+export const SHEETS_API_VERSION = "v4";
+export const SHEETS_READONLY_SCOPE =
+  "https://www.googleapis.com/auth/spreadsheets.readonly";
+
+export const SPREADSHEET_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
+export const DEFAULT_RANGE = "A1:Z1000";
+export const DEFAULT_SHEET_TITLE = "Sheet1";
+export const CSV_EXPORT_MIME_TYPE = "text/csv";
+
+// ====================== URL EXTRACTION ======================
+export const FOLDER_PATH_PREFIX = "/folders/";
+export const FILE_PATH_PREFIX = "/file/d/";
+export const SPREADSHEET_PATH_PREFIX = "/spreadsheets/d/";
+export const D_PATH_PREFIX = "/d/";
+
+export const VIEW_PATH_SEGMENT = "/view";
+export const EDIT_PATH_SEGMENT = "/edit";
+export const QUERY_PARAM_START = "?";
+export const HASH_START = "#";
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google\drive.reader.ts`
+```.ts
+import type { drive_v3 } from "googleapis";
+import type { Readable } from "stream";
+
+import type {
+  DriveReaderConfig,
+  FileInfo,
+  ListFolderOptions,
+  ListFolderResult,
+} from "./types";
+
+import { google } from "googleapis";
+
+import {
+  DEFAULT_FIELDS,
+  DEFAULT_PAGE_SIZE,
+  DOWNLOAD_ALT_MEDIA,
+  DRIVE_API_VERSION,
+  DRIVE_READONLY_SCOPES,
+  FILE_FIELDS_FOR_INFO,
+  FOLDER_MIME_TYPE,
+  STREAM_RESPONSE_TYPE,
+  TRASHED_FILTER,
+} from "./constants";
+
+import { defaultCredentials } from "./utils";
+
+/**
+ * Класс для чтения данных Google Drive через сервисный аккаунт.
+ */
+export class DriveReader {
+  private readonly drive: drive_v3.Drive;
+
+  /**
+   * @param config Конфигурация с путём к ключу сервисного аккаунта
+   */
+  public constructor(config?: Partial<DriveReaderConfig>) {
+    const scopes = config?.scopes ?? DRIVE_READONLY_SCOPES;
+    const auth = new google.auth.GoogleAuth({
+      keyFile: config?.keyFilePath || defaultCredentials(),
+      scopes,
+    });
+
+    this.drive = google.drive({ version: DRIVE_API_VERSION, auth });
+  }
+
+  /**
+   * Возвращает одну страницу содержимого папки.
+   * @param folderId ID папки
+   * @param options Параметры запроса
+   */
+  public async listFolder(
+    folderId: string,
+    options: ListFolderOptions = {},
+  ): Promise<ListFolderResult> {
+    const {
+      pageSize = DEFAULT_PAGE_SIZE,
+      pageToken,
+      orderBy,
+      fields = DEFAULT_FIELDS,
+      query: extraQuery,
+      includeTrashed = false,
+    } = options;
+
+    const queryParts = [`'${folderId}' in parents`];
+
+    if (!includeTrashed) {
+      queryParts.push(TRASHED_FILTER);
+    }
+    if (extraQuery) {
+      queryParts.push(`(${extraQuery})`);
+    }
+
+    const query = queryParts.join(" and ");
+
+    const response = await this.drive.files.list({
+      q: query,
+      pageSize,
+      pageToken,
+      orderBy,
+      fields,
+    });
+
+    const files = (response.data.files || []).map((file) =>
+      this.mapToFileInfo(file),
+    );
+
+    return {
+      files,
+      nextPageToken: response.data.nextPageToken,
+      incompleteSearch: response.data.incompleteSearch || false,
+    };
+  }
+
+  /**
+   * Получает все файлы из папки.
+   * @param folderId ID папки
+   * @param recursive Если true, будут также собраны файлы из подпапок
+   * @param options Параметры запроса (без pageToken)
+   */
+  public async listAllFiles(
+    folderId: string,
+    recursive: boolean = false,
+    options: Omit<ListFolderOptions, "pageToken"> = {},
+  ): Promise<FileInfo[]> {
+    const allFiles: FileInfo[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const result = await this.listFolder(folderId, { ...options, pageToken });
+      allFiles.push(...result.files);
+
+      if (!recursive) {
+        pageToken = result.nextPageToken || undefined;
+        continue;
+      }
+
+      for (const file of result.files) {
+        if (file.isFolder) {
+          const subFiles = await this.listAllFiles(file.id, true, options);
+          allFiles.push(...subFiles);
+        }
+      }
+
+      pageToken = result.nextPageToken || undefined;
+    } while (pageToken);
+
+    return allFiles;
+  }
+
+  /**
+   * Возвращает информацию об одном файле или папке.
+   * @param fileId ID файла
+   */
+  public async getFileInfo(fileId: string): Promise<FileInfo> {
+    const response = await this.drive.files.get({
+      fileId,
+      fields: FILE_FIELDS_FOR_INFO,
+    });
+
+    return this.mapToFileInfo(response.data);
+  }
+
+  /**
+   * Скачивает бинарное содержимое файла в виде Readable-потока.
+   * @param fileId ID файла
+   */
+  public async downloadFile(fileId: string): Promise<Readable> {
+    const response = await this.drive.files.get(
+      { fileId, alt: DOWNLOAD_ALT_MEDIA },
+      { responseType: STREAM_RESPONSE_TYPE },
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Экспортирует файл Google Workspace (Docs, Sheets, Slides) в указанный формат.
+   * @param fileId ID файла
+   * @param mimeType Целевой MIME-тип, например 'application/pdf'
+   */
+  public async exportFile(fileId: string, mimeType: string): Promise<Readable> {
+    const response = await this.drive.files.export(
+      { fileId, mimeType },
+      { responseType: STREAM_RESPONSE_TYPE },
+    );
+
+    return response.data;
+  }
+
+  private mapToFileInfo(file: drive_v3.Schema$File): FileInfo {
+    return {
+      id: file.id!,
+      name: file.name!,
+      mimeType: file.mimeType!,
+      size: file.size || null,
+      modifiedTime: file.modifiedTime || null,
+      createdTime: file.createdTime || null,
+      webViewLink: file.webViewLink || null,
+      parents: file.parents || [],
+      isFolder: file.mimeType === FOLDER_MIME_TYPE,
+      raw: file,
+    };
+  }
+}
+
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google\excel-workbook.ts`
+```.ts
+import type { ExcelSheetInfo, SheetRange } from "./types";
+import { rangeToA1 } from "./utils";
+
+import * as XLSX from "xlsx";
+
+export interface SheetDimensions {
+  startRow: number;
+  endRow: number;
+  startCol: number;
+  endCol: number;
+  rowCount: number;
+  columnCount: number;
+}
+
+/**
+ * Представляет открытую книгу Excel.
+ */
+export class ExcelWorkbook {
+  private readonly workbook: XLSX.WorkBook;
+
+  public constructor(buffer: Buffer) {
+    this.workbook = XLSX.read(buffer, { type: "buffer" });
+  }
+
+  /**
+   * Возвращает список листов с метаинформацией.
+   */
+  public listSheets(): ExcelSheetInfo[] {
+    return this.workbook.SheetNames.map((name, index) => {
+      const dimensions = this.getSheetDimensions(name);
+      return {
+        name,
+        index,
+        rowCount: dimensions.rowCount,
+        columnCount: dimensions.columnCount,
+      };
+    });
+  }
+
+  /**
+   * Возвращает размеры используемой области листа.
+   * @param sheetNameOrIndex Название или индекс листа
+   */
+  public getSheetDimensions(
+    sheetNameOrIndex: string | number,
+  ): SheetDimensions {
+    const sheet = this.getSheet(sheetNameOrIndex);
+    const range = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
+    return {
+      startRow: range.s.r,
+      endRow: range.e.r,
+      startCol: range.s.c,
+      endCol: range.e.c,
+      rowCount: range.e.r - range.s.r + 1,
+      columnCount: range.e.c - range.s.c + 1,
+    };
+  }
+
+  /**
+   * Возвращает данные листа в виде двумерного массива строк.
+   * @param sheetNameOrIndex Название или индекс листа
+   * @param range Опциональный диапазон в формате A1 (например, 'A1:C10')
+   */
+  public getSheetData(
+    sheetNameOrIndex: string | number,
+    range?: string,
+  ): string[][] {
+    const sheet = this.getSheet(sheetNameOrIndex);
+    const options: XLSX.Sheet2JSONOpts = { header: 1 };
+    if (range) {
+      options.range = range;
+    }
+    return XLSX.utils.sheet_to_json(sheet, options) as string[][];
+  }
+
+  /**
+   * Возвращает все листы в виде объекта { [sheetName]: данные }.
+   */
+  public getAllSheetsData(): Record<string, string[][]> {
+    const result: Record<string, string[][]> = {};
+    for (const sheetName of this.workbook.SheetNames) {
+      result[sheetName] = this.getSheetData(sheetName);
+    }
+    return result;
+  }
+
+  /**
+   * Возвращает данные листа по заданному диапазону (1-based индексы).
+   * @param sheetNameOrIndex Название или индекс листа
+   * @param range Объект с границами диапазона
+   */
+  public getSheetDataByRange(
+    sheetNameOrIndex: string | number,
+    range: SheetRange,
+  ): string[][] {
+    const { startRow, startColumn: startCol, endRow, endColumn: endCol } = range;
+    if (endRow === undefined || endCol === undefined) {
+      return this.getSheetData(sheetNameOrIndex);
+    }
+    const a1Range = rangeToA1(startRow, startCol, endRow, endCol);
+    return this.getSheetData(sheetNameOrIndex, a1Range);
+  }
+
+  private getSheet(sheetNameOrIndex: string | number): XLSX.WorkSheet {
+    let sheetName: string;
+    if (typeof sheetNameOrIndex === "number") {
+      sheetName = this.workbook.SheetNames[sheetNameOrIndex];
+      if (!sheetName) {
+        throw new Error(`Лист с индексом ${sheetNameOrIndex} не найден`);
+      }
+    } else {
+      sheetName = sheetNameOrIndex;
+      if (!this.workbook.SheetNames.includes(sheetName)) {
+        throw new Error(`Лист с именем "${sheetName}" не найден`);
+      }
+    }
+    return this.workbook.Sheets[sheetName];
+  }
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google\excel.reader.ts`
+```.ts
+import type { Readable } from "stream";
+
+import { DriveReader } from "./drive.reader";
+import { ExcelWorkbook } from "./excel-workbook";
+
+/**
+ * Класс для чтения Excel-файлов из Google Drive.
+ */
+export class ExcelReader {
+  private readonly driveReader: DriveReader;
+
+  /**
+   * @param driveReader Экземпляр DriveReader с настроенной аутентификацией
+   */
+  public constructor(driveReader: DriveReader) {
+    this.driveReader = driveReader;
+  }
+
+  /**
+   * Загружает файл и возвращает объект книги Excel.
+   * @param fileId ID файла в Google Drive
+   */
+  public async loadWorkbook(fileId: string): Promise<ExcelWorkbook> {
+    const fileStream = await this.driveReader.downloadFile(fileId);
+    const buffer = await this.streamToBuffer(fileStream);
+    return new ExcelWorkbook(buffer);
+  }
+
+  private streamToBuffer(stream: Readable): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+      stream.on("error", (error) => reject(error));
+      stream.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+  }
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google\index.ts`
+```.ts
+export * from "./constants";
+export * from "./drive.reader";
+export * from "./excel-workbook";
+export * from "./excel.reader";
+export * from "./types";
+export * from "./utils";
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google\types.ts`
+```.ts
+import type { drive_v3 } from "googleapis";
+
+export interface DriveReaderConfig {
+  /** Путь к JSON-файлу ключа сервисного аккаунта */
+  keyFilePath: string;
+  /** Области доступа (по умолчанию только чтение) */
+  scopes?: string[];
+}
+
+export interface ListFolderOptions {
+  /** Количество элементов на страницу (1–1000) */
+  pageSize?: number;
+  /** Токен следующей страницы */
+  pageToken?: string;
+  /** Сортировка, например 'folder,name,modifiedTime desc' */
+  orderBy?: string;
+  /** Поля, возвращаемые API (по умолчанию основные) */
+  fields?: string;
+  /** Дополнительный фильтр, будет добавлен в q */
+  query?: string;
+  /** Включать ли файлы из корзины */
+  includeTrashed?: boolean;
+}
+
+export interface FileInfo {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: string | null;
+  modifiedTime: string | null;
+  createdTime: string | null;
+  webViewLink: string | null;
+  parents: string[];
+  isFolder: boolean;
+  raw: drive_v3.Schema$File;
+}
+
+export interface ListFolderResult {
+  files: FileInfo[];
+  nextPageToken?: string | null;
+  incompleteSearch: boolean;
+}
+
+export interface ExcelSheetInfo {
+  /** Название листа */
+  name: string;
+  /** Индекс листа (начиная с 0) */
+  index: number;
+  /** Количество строк (приблизительное) */
+  rowCount: number;
+  /** Количество колонок (приблизительное) */
+  columnCount: number;
+}
+
+export interface ExcelWorkbookData {
+  /** Список листов */
+  sheets: ExcelSheetInfo[];
+  /** Сырой объект workbook из библиотеки xlsx */
+  raw: unknown;
+}
+
+export interface SheetRange {
+  /** Начальная строка (1-based) */
+  startRow: number;
+  /** Начальная колонка (1-based) */
+  startColumn: number;
+  /** Конечная строка (1-based, опционально) */
+  endRow?: number;
+  /** Конечная колонка (1-based, опционально) */
+  endColumn?: number;
+}
+```
+`D:\projects\me\uust-schedule-bot\src\schedule\google\utils.ts`
+```.ts
+import { join } from "node:path";
+
+import {
+  CREDENTIALS_JSON_FILE,
+  FILE_PATH_PREFIX,
+  FOLDER_PATH_PREFIX,
+  HASH_START,
+  QUERY_PARAM_START,
+  VIEW_PATH_SEGMENT,
+} from "./constants";
+
+/**
+ * Возвращает путь к файлу credentials.json по умолчанию.
+ */
+export const defaultCredentials = (): string => {
+  return join(process.cwd(), CREDENTIALS_JSON_FILE);
+};
+
+/**
+ * Извлекает ID папки или файла из ссылки Google Drive.
+ * @param url URL страницы папки или файла на Google Drive
+ * @returns ID или null, если извлечь не удалось
+ */
+export function extractIdFromUrl(url: string): string | null {
+  if (!isValidUrl(url)) {
+    return null;
+  }
+
+  let idCandidate: string | null = null;
+
+  if (url.includes(FOLDER_PATH_PREFIX)) {
+    idCandidate = extractSegmentAfterPrefix(url, FOLDER_PATH_PREFIX);
+  } else if (url.includes(FILE_PATH_PREFIX)) {
+    idCandidate = extractSegmentAfterPrefix(url, FILE_PATH_PREFIX);
+  }
+
+  if (!idCandidate) {
+    return null;
+  }
+
+  return removeTrailingSegments(idCandidate, [VIEW_PATH_SEGMENT]);
+}
+
+/**
+ * Преобразует диапазон ячеек в нотацию A1.
+ * @param startRow Начальная строка (1-based)
+ * @param startColumn Начальная колонка (1-based)
+ * @param endRow Конечная строка (опционально)
+ * @param endColumn Конечная колонка (опционально)
+ * @returns Строка вида "A1" или "A1:C10"
+ */
+export function rangeToA1(
+  startRow: number,
+  startColumn: number,
+  endRow?: number,
+  endColumn?: number,
+): string {
+  if (startRow <= 0 || startColumn <= 0) {
+    throw new Error("Индексы строк и колонок должны быть >= 1");
+  }
+  if (endRow !== undefined && endRow <= 0) {
+    throw new Error("Конечная строка должна быть >= 1");
+  }
+  if (endColumn !== undefined && endColumn <= 0) {
+    throw new Error("Конечная колонка должна быть >= 1");
+  }
+
+  const startCell = `${columnIndexToLetter(startColumn)}${startRow}`;
+  if (endRow === undefined || endColumn === undefined) {
+    return startCell;
+  }
+  const endCell = `${columnIndexToLetter(endColumn)}${endRow}`;
+  return `${startCell}:${endCell}`;
+}
+
+function isValidUrl(url: unknown): url is string {
+  return typeof url === "string" && url.length > 0;
+}
+
+function extractSegmentAfterPrefix(url: string, prefix: string): string | null {
+  const startIndex = url.indexOf(prefix);
+  if (startIndex === -1) {
+    return null;
+  }
+
+  const idStart = startIndex + prefix.length;
+  const remaining = url.slice(idStart);
+  const terminatorIndex = remaining.search(/[/?#]/);
+
+  if (terminatorIndex === -1) {
+    return remaining;
+  }
+  return remaining.slice(0, terminatorIndex);
+}
+
+function removeTrailingSegments(
+  id: string,
+  segmentsToRemove: string[],
+): string {
+  let result = id;
+
+  for (const segment of segmentsToRemove) {
+    const index = result.indexOf(segment);
+    if (index !== -1) {
+      result = result.slice(0, index);
+    }
+  }
+
+  const queryIndex = result.indexOf(QUERY_PARAM_START);
+  if (queryIndex !== -1) {
+    result = result.slice(0, queryIndex);
+  }
+
+  const hashIndex = result.indexOf(HASH_START);
+  if (hashIndex !== -1) {
+    result = result.slice(0, hashIndex);
+  }
+
+  return result;
+}
+
+function columnIndexToLetter(index: number): string {
+  let letter = "";
+  let temp = index;
+
+  while (temp > 0) {
+    const remainder = (temp - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    temp = Math.floor((temp - 1) / 26);
+  }
+  
+  return letter;
+}
+```

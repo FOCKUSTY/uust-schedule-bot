@@ -1,4 +1,10 @@
-import type { FileInfo } from "./google";
+import type { FileInfo, ExcelSheetInfo } from "./google";
+
+export interface GroupInformation {
+  course: string;
+  specialization: string;
+  group: string;
+}
 
 export interface ScheduleDay {
   dayName: string;
@@ -17,35 +23,21 @@ export interface FormattedSchedule {
   weeks: ScheduleWeeks;
 }
 
-export interface GroupInformation {
-  course: string;
-  specialization: string;
-  group: string;
-}
-
-export interface FileData {
-  folderId: string;
-  name: string;
-  extension?: string;
-}
-
-export type CacheType = {
-  default: {
-    [course: string]: {
-      [specialization: string]: {
-        [group: string]: {
+export interface CacheData {
+  default: Record<
+    string, // course
+    Record<
+      string, // specialization
+      Record<
+        string, // group
+        {
           weeks: ScheduleWeeks;
-          /** ISO date string */
-          expiresAt: string;
-        };
-      };
-    };
-  };
-  other: {
-    [prefix: string]: unknown;
-  };
-};
+          expiresAt: string; // ISO
+        }
+      >
+    >
+  >;
+  other: Record<string, unknown>;
+}
 
-export type Specializations = {
-  [course: string]: FileInfo[];
-};
+export type DateLike = Date | string | number;

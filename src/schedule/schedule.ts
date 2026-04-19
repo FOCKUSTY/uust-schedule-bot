@@ -1,190 +1,121 @@
 import { env } from "../env";
+import { extractIdFromUrl } from "./google";
+import { GoogleDriveService } from "./google-drive.service";
+import { ScheduleCache } from "./schedule-cache";
+import { ScheduleLoader } from "./schedule-loader";
+import { GroupInformation, ScheduleWeek } from "./types";
+import { WeekCalculator } from "./week-calculator";
 
-import type { FileData, GroupInformation, Specializations } from "./types";
-
-import {
-  DriveReader,
-  extractIdFromUrl,
-  ExcelReader,
-  FileInfo,
-  ExcelSheetInfo,
-} from "./google";
-import { ScheduleFormatter } from "./formatter";
-
-import { getCurrentWeek } from "./utils";
-import { Cache } from "./cache";
-
-const cache = new Cache();
-
-const COURSE_FOLDER_ID = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!;
-if (!COURSE_FOLDER_ID) {
-  throw new Error("Bad URL.");
-}
-
+/**
+ * Основной класс для получения расписания.
+ * Иммутабельный: при изменении параметров возвращает новый экземпляр.
+ */
 export class Schedule {
-  public static async getCourses() {
-    const cachedCourses = cache.get<FileInfo[]>("courses");
-    if (cachedCourses) {
-      return cachedCourses;
-    }
+  private readonly loader: ScheduleLoader;
+  private readonly cache: ScheduleCache;
+  private readonly weekCalculator: WeekCalculator;
 
-    const drive = new DriveReader();
-    const courses = await drive.listAllFiles(COURSE_FOLDER_ID);
-
-    cache.set("courses", courses);
-
-    return courses;
-  }
-
-  public static async getSpecializations({
-    course,
-  }: Pick<GroupInformation, "course">) {
-    const specializations = cache.get<FileInfo[]>(`specializations:${course}`);
-    if (specializations) {
-      return specializations;
-    }
-
-    const drive = new DriveReader();
-    const courseFolder = await this.getFileFromFolder(drive, {
-      name: course,
-      folderId: COURSE_FOLDER_ID,
-    });
-
-    const files = await drive.listAllFiles(courseFolder.id);
-    cache.set(`specializations:${course}`, files);
-
-    return files;
-  }
-
-  public static async getGroups({
-    course,
-    specialization,
-  }: Pick<GroupInformation, "course" | "specialization">) {
-    const groups = cache.get<ExcelSheetInfo[]>(
-      `groupes:${course}:${specialization}`,
-    );
-    if (groups) {
-      return groups;
-    }
-
-    const drive = new DriveReader();
-    const courseFolder = await Schedule.getFileFromFolder(drive, {
-      name: course,
-      folderId: COURSE_FOLDER_ID,
-    });
-
-    const file = await Schedule.getFileFromFolder(drive, {
-      name: specialization,
-      folderId: courseFolder.id,
-    });
-
-    const excel = new ExcelReader(drive);
-    const wordbook = await excel.loadWorkbook(file.id);
-    const lists = wordbook.listSheets();
-
-    cache.set(`groupes:${course}:${specialization}`, lists);
-
-    return lists;
-  }
-
-  private static async getFileFromFolder(
-    drive: DriveReader,
-    { folderId, name, extension }: FileData,
-  ) {
-    const files = await drive.listAllFiles(folderId);
-    const file = files.filter((file) => {
-      if (extension) {
-        return file.name === `${name}.${extension}`;
-      }
-
-      return file.name === name;
-    })[0];
-
-    if (!file) {
-      throw new Error(`File ${name} not found`);
-    }
-
-    return file;
-  }
-
-  private _config: GroupInformation;
-  private _week: number;
-
+  /**
+   * @param group Информация о группе
+   * @param weekNumber Номер недели (0-based)
+   * @param deps Зависимости (если не переданы, создаются с параметрами из env)
+   */
   public constructor(
-    config: GroupInformation,
-    week: number = getCurrentWeek(),
+    public readonly group: GroupInformation,
+    public readonly weekNumber: number,
+    deps?: {
+      loader?: ScheduleLoader;
+      cache?: ScheduleCache;
+      weekCalculator?: WeekCalculator;
+    },
   ) {
-    this._config = config;
-    this._week = week;
+    const rootFolderId = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL);
+    if (!rootFolderId) {
+      throw new Error("Invalid GOOGLE_DRIVE_FOLDER_URL");
+    }
+
+    const driveService = new GoogleDriveService(rootFolderId);
+    this.loader = deps?.loader ?? new ScheduleLoader(driveService);
+    this.cache = deps?.cache ?? new ScheduleCache(process.cwd());
+    this.weekCalculator = deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
   }
 
-  public get config() {
-    return this._config;
+  /**
+   * Инициализирует кэш (загружает данные из файла).
+   * Должен быть вызван перед первым использованием.
+   */
+  public async initializeCache(): Promise<void> {
+    await this.cache.load();
   }
 
-  public async execute() {
-    const cachedWeeks = this.getFromCache();
+  /**
+   * Возвращает расписание на выбранную неделю.
+   * При необходимости загружает из Drive и кэширует.
+   */
+  public async getWeekSchedule(): Promise<ScheduleWeek> {
+    // Пробуем получить из кэша
+    const cachedWeeks = this.cache.getWeeks(this.group);
     if (cachedWeeks) {
-      return cachedWeeks[`${this._week}`].days;
+      const week = cachedWeeks[this.weekNumber];
+      if (week) {
+        return week;
+      }
     }
 
-    const drive = new DriveReader();
+    // Загружаем полное расписание
+    const weeks = await this.loader.loadFullSchedule(this.group);
 
-    const courseFolder = await Schedule.getFileFromFolder(drive, {
-      name: this._config.course,
-      folderId: COURSE_FOLDER_ID,
-    });
+    // Кэшируем
+    this.cache.setWeeks(this.group, weeks);
+    await this.cache.save();
 
-    const file = await Schedule.getFileFromFolder(drive, {
-      name: this._config.specialization,
-      folderId: courseFolder.id,
-    });
-
-    const excel = new ExcelReader(drive);
-    const wordbook = await excel.loadWorkbook(file.id);
-    const lists = wordbook.listSheets();
-    const list = lists.filter((list) => list.name === this._config.group)[0];
-    if (!list) {
-      throw new Error("Groud not found.");
+    const week = weeks[this.weekNumber];
+    if (!week) {
+      throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
     }
-
-    const dimensions = wordbook.getSheetDimensions(list.name);
-    const data = wordbook.getSheetDataByRange(list.name, {
-      ...dimensions,
-      startRow: 1,
-      startColumn: 1,
-    });
-
-    const formatter = new ScheduleFormatter();
-    const schedule = formatter.format(data);
-
-    cache.execute(this._config, schedule.weeks);
-
-    const week = schedule.weeks[`${this._week}`].days;
     return week;
   }
 
-  public getFromCache() {
-    return cache.getWeeks(this._config);
+  /**
+   * Создаёт новый экземпляр Schedule с другой неделей.
+   */
+  public withWeek(newWeek: number): Schedule {
+    return new Schedule(this.group, newWeek, {
+      loader: this.loader,
+      cache: this.cache,
+      weekCalculator: this.weekCalculator,
+    });
   }
 
-  public setGroup({ group }: Pick<GroupInformation, "group">) {
-    this._config.group = group;
+  /**
+   * Создаёт новый экземпляр Schedule с другой группой.
+   */
+  public withGroup(newGroup: GroupInformation): Schedule {
+    return new Schedule(newGroup, this.weekNumber, {
+      loader: this.loader,
+      cache: this.cache,
+      weekCalculator: this.weekCalculator,
+    });
   }
 
-  public setSpecialization({
-    group,
-    specialization,
-  }: Pick<GroupInformation, "specialization" | "group">) {
-    this._config.group = group;
-    this._config.specialization = specialization;
+  /**
+   * Возвращает сервис кэша (для продвинутого использования).
+   */
+  public getCache(): ScheduleCache {
+    return this.cache;
   }
 
-  public setCourse(config: GroupInformation) {
-    this._config = config;
+  /**
+   * Возвращает сервис загрузки (для получения списков курсов и т.п.).
+   */
+  public getLoader(): ScheduleLoader {
+    return this.loader;
   }
 
-  public setWeek(week: number) {
-    this._week = week;
+  /**
+   * Возвращает калькулятор недель.
+   */
+  public getWeekCalculator(): WeekCalculator {
+    return this.weekCalculator;
   }
 }
