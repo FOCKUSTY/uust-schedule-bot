@@ -1,5 +1,4 @@
 import { env } from "../env";
-import "../credentials";
 
 import type { Context as GrammyContext, SessionFlavor } from "grammy";
 import type { Conversation, ConversationFlavor } from "@grammyjs/conversations";
