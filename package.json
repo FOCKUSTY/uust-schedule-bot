@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsc",
     "test": "tsc && node ./dist/test.js",
-    "start": "tsc && node ./dist/telegram/bot.js"
+    "start": "node ./dist/telegram/bot.js"
   },
   "dependencies": {
     "@grammyjs/conversations": "^2.1.1",

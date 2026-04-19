@@ -15,7 +15,4 @@
   },
   "include": ["./**/*.ts"],
   "exclude": ["node_modules", "prisma.config.ts"],
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  }
 }

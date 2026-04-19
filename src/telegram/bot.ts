@@ -1,10 +1,12 @@
+import { env } from "../env";
+import "../credentials";
+
 import type { Context as GrammyContext, SessionFlavor } from "grammy";
 import type { Conversation, ConversationFlavor } from "@grammyjs/conversations";
 
 import { Bot, session } from "grammy";
 import { conversations, createConversation } from "@grammyjs/conversations";
 
-import { env } from "../env";
 import { UserService } from "../database/user.service";
 import { initialSession, SessionData } from "./session";
 import { CALLBACK_DATA } from "./constants/callback-data";
