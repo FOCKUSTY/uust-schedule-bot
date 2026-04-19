@@ -1,9 +1,9 @@
 generator client {
-  provider = "prisma-client"
-  output = "./generated"
-  moduleFormat = "cjs"
+  provider               = "prisma-client"
+  output                 = "./generated"
+  moduleFormat           = "cjs"
   generatedFileExtension = "ts"
-  compilerBuild = "fast"
+  compilerBuild          = "fast"
 }
 
 datasource db {
@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Config {
-  id             Int           @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   course         String
   specialization String
   group          String
@@ -19,20 +19,20 @@ model Config {
 }
 
 model User {
-  id          Int           @id @default(autoincrement())
-  telegramId  String        @unique
+  id          Int          @id @default(autoincrement())
+  telegramId  String       @unique
   userConfigs UserConfig[]
 }
 
 model UserConfig {
   userId    Int
   configId  Int
-  
+
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   config    Config @relation(fields: [configId], references: [id], onDelete: Cascade)
 
-  isActived  Boolean  @default(true)
-  isDefault  Boolean
+  actived   Boolean  @default(true)
+  defaulted Boolean
 
   assignedAt DateTime @default(now())
 

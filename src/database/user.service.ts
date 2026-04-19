@@ -1,10 +1,14 @@
 import type { GroupInformation } from "../schedule";
+
 import { Prisma } from "./prisma";
 
 type TelegramId = number | string;
 
+/**
+ * Сервис для работы с пользователями и их конфигурациями групп.
+ */
 export class UserService {
-  private static readonly includeData = {
+  private readonly includeData = {
     userConfigs: {
       include: {
         config: true,
@@ -14,11 +18,14 @@ export class UserService {
 
   public constructor(public readonly prisma: Prisma = new Prisma()) {}
 
+  /**
+   * Находит существующего пользователя по telegramId или создаёт нового.
+   */
   public async findOrCreate(telegramId: TelegramId) {
     const id = telegramId.toString();
     const user = await this.prisma.user.findUnique({
       where: { telegramId: id },
-      include: UserService.includeData,
+      include: this.includeData,
     });
 
     if (user) {
@@ -27,24 +34,34 @@ export class UserService {
 
     return this.prisma.user.create({
       data: { telegramId: id },
-      include: UserService.includeData,
+      include: this.includeData,
     });
   }
 
+  /**
+   * Возвращает все конфигурации пользователя (включая неактивные).
+   */
   public async getUserConfigs(telegramId: TelegramId) {
     const user = await this.findOrCreate(telegramId);
-    return user.userConfigs.map(({ config, isActived, isDefault }) => ({
+    return user.userConfigs.map(({ config, actived, defaulted }) => ({
       ...config,
-      isActived,
-      isDefault,
+      actived,
+      defaulted,
     }));
   }
 
+  /**
+   * Возвращает только активные конфигурации пользователя.
+   */
   public async getActiveConfigs(telegramId: TelegramId) {
     const configs = await this.getUserConfigs(telegramId);
-    return configs.filter((config) => config.isActived);
+    return configs.filter((config) => config.actived);
   }
 
+  /**
+   * Добавляет новую конфигурацию группы для пользователя.
+   * @param setAsDefault – если true, делает новую конфигурацию дефолтной.
+   */
   public async addConfig(
     telegramId: TelegramId,
     config: GroupInformation,
@@ -56,7 +73,7 @@ export class UserService {
     if (setAsDefault) {
       await this.prisma.userConfig.updateMany({
         where: { userId: user.id },
-        data: { isDefault: false },
+        data: { defaulted: false },
       });
     }
 
@@ -64,17 +81,20 @@ export class UserService {
       data: {
         userId: user.id,
         configId: newConfig.id,
-        isActived: true,
-        isDefault: setAsDefault,
+        actived: true,
+        defaulted: setAsDefault,
       },
     });
 
     return newConfig;
   }
 
+  /**
+   * Удаляет конфигурацию пользователя.
+   */
   public async deleteConfig(telegramId: TelegramId, configId: number) {
     const user = await this.findOrCreate(telegramId);
-    const { where } = this.getWhereUserIdConfigId(user.id, configId);
+    const where = { userId_configId: { userId: user.id, configId } };
 
     const userConfig = await this.prisma.userConfig.findUnique({ where });
     if (!userConfig) {
@@ -83,14 +103,17 @@ export class UserService {
 
     await this.prisma.userConfig.delete({ where });
 
-    if (userConfig.isActived) {
+    if (userConfig.actived) {
       await this.activateFirstUserConfig(user.id);
     }
   }
 
+  /**
+   * Переключает флаг активности конфигурации.
+   */
   public async toggleConfigActive(telegramId: TelegramId, configId: number) {
     const user = await this.findOrCreate(telegramId);
-    const { where } = this.getWhereUserIdConfigId(user.id, configId);
+    const where = { userId_configId: { userId: user.id, configId } };
 
     const config = await this.prisma.userConfig.findUnique({ where });
     if (!config) {
@@ -99,28 +122,32 @@ export class UserService {
 
     return this.prisma.userConfig.update({
       where,
-      data: {
-        isActived: !config.isActived,
-      },
+      data: { actived: !config.actived },
     });
   }
 
+  /**
+   * Переключает статус дефолтной конфигурации.
+   */
   public async toggleDefaultConfig(telegramId: TelegramId, configId: number) {
     const user = await this.findOrCreate(telegramId);
-    const { where } = this.getWhereUserIdConfigId(user.id, configId);
+    const where = { userId_configId: { userId: user.id, configId } };
 
     const userConfig = await this.prisma.userConfig.findUnique({ where });
     if (!userConfig) {
       throw new Error("Config not found");
     }
 
-    if (userConfig.isDefault) {
+    if (userConfig.defaulted) {
       return this.setDefaultConfigDisabled(telegramId, configId);
     }
 
     return this.setDefaultConfigEnabled(telegramId, configId);
   }
 
+  /**
+   * Делает указанную конфигурацию дефолтной (и активной).
+   */
   public async setDefaultConfigEnabled(
     telegramId: TelegramId,
     configId: number,
@@ -129,18 +156,21 @@ export class UserService {
     return this.prisma.$transaction([
       this.prisma.userConfig.updateMany({
         where: { userId: user.id },
-        data: { isDefault: false },
+        data: { defaulted: false },
       }),
       this.prisma.userConfig.update({
-        ...this.getWhereUserIdConfigId(user.id, configId),
+        where: { userId_configId: { userId: user.id, configId } },
         data: {
-          isDefault: true,
-          isActived: true,
+          defaulted: true,
+          actived: true,
         },
       }),
     ]);
   }
 
+  /**
+   * Отключает дефолтный статус у конфигурации и назначает дефолтной другую.
+   */
   public async setDefaultConfigDisabled(
     telegramId: TelegramId,
     configId: number,
@@ -179,20 +209,9 @@ export class UserService {
         },
       },
       data: {
-        isDefault: true,
-        isActived: true,
+        defaulted: true,
+        actived: true,
       },
     });
-  }
-
-  private getWhereUserIdConfigId(userId: number, configId: number) {
-    return {
-      where: {
-        userId_configId: {
-          userId,
-          configId,
-        },
-      },
-    };
   }
 }
