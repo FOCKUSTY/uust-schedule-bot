@@ -2,7 +2,11 @@ import type { ScheduleDay, ScheduleWeek } from "../../schedule";
 import type { WeekCalculator } from "../../schedule";
 
 import { StringBuilder } from "./string-builder";
-import { MAX_PAIRS, REGULAR_PAIR_TIMES, SATURDAY_PAIR_TIMES } from "../constants/pairs";
+import {
+  MAX_PAIRS,
+  REGULAR_PAIR_TIMES,
+  SATURDAY_PAIR_TIMES,
+} from "../constants/pairs";
 
 const DAY_NAMES_RU = [
   "Понедельник",
@@ -27,7 +31,8 @@ const normalizeDays = (days: ScheduleWeek["days"]): ScheduleWeek["days"] => {
 };
 
 const getPairTimes = (dayName: string, pairNumber: number): string | null => {
-  const times = dayName === "Суббота" ? SATURDAY_PAIR_TIMES : REGULAR_PAIR_TIMES;
+  const times =
+    dayName === "Суббота" ? SATURDAY_PAIR_TIMES : REGULAR_PAIR_TIMES;
   const pair = times[pairNumber - 1];
   if (!pair) return null;
   return `${pair.start}-${pair.end}`;
@@ -43,7 +48,9 @@ export const getWeekendText = (
     DAY_NAMES_RU.indexOf(dayName),
   );
   return new StringBuilder()
-    .appendLine(`${dayName}, выходной день ${date.toLocaleDateString()} (неделя ${weekNumber})`)
+    .appendLine(
+      `${dayName}, выходной день ${date.toLocaleDateString()} (неделя ${weekNumber})`,
+    )
     .appendLine("Пар нет")
     .toString();
 };
@@ -102,7 +109,9 @@ export const formatWeek = (
   const firstDate = weekCalculator.getDateFromWeekNumber(week.weekNumber, 0);
   const lastDate = weekCalculator.getDateFromWeekNumber(week.weekNumber, 5);
   builder
-    .bold(`📆 Неделя ${week.weekNumber} (${firstDate.toLocaleDateString()} – ${lastDate.toLocaleDateString()})`)
+    .bold(
+      `📆 Неделя ${week.weekNumber} (${firstDate.toLocaleDateString()} – ${lastDate.toLocaleDateString()})`,
+    )
     .appendLine()
     .appendLine();
 
@@ -113,7 +122,9 @@ export const formatWeek = (
     const day = days[dayName];
     if (!day || dayName === "Воскресенье") continue;
 
-    builder.appendRaw(formatDay(day, week.weekNumber, weekCalculator, groupName));
+    builder.appendRaw(
+      formatDay(day, week.weekNumber, weekCalculator, groupName),
+    );
 
     if (i < DAY_NAMES_RU.length - 2) {
       builder.appendRawLine().appendRawLine();

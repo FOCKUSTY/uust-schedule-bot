@@ -1,6 +1,6 @@
 // src/telegram/utils/string-builder.ts
 
-import { escapeHtml } from './escape-html';
+import { escapeHtml } from "./escape-html";
 
 export class StringBuilder {
   private parts: string[] = [];
@@ -10,8 +10,8 @@ export class StringBuilder {
     return this;
   }
 
-  public appendLine(text: string = ''): this {
-    this.parts.push(escapeHtml(text) + '\n');
+  public appendLine(text: string = ""): this {
+    this.parts.push(escapeHtml(text) + "\n");
     return this;
   }
 
@@ -73,18 +73,18 @@ export class StringBuilder {
   /**
    * Добавляет произвольную строку с переводом строки без экранирования.
    */
-  public appendRawLine(html: string = ''): this {
-    this.parts.push(html + '\n');
+  public appendRawLine(html: string = ""): this {
+    this.parts.push(html + "\n");
     return this;
   }
 
   public newLine(): this {
-    this.parts.push('\n');
+    this.parts.push("\n");
     return this;
   }
 
   public toString(): string {
-    return this.parts.join('');
+    return this.parts.join("");
   }
 
   public clear(): void {

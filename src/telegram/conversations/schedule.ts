@@ -63,9 +63,10 @@ export const scheduleConversation = async (
   const week = await schedule.getWeekSchedule();
   const day = week.days[dayName];
 
-  const dayText = dayName === "Воскресенье"
-    ? getWeekendText(dayName, currentWeek, weekCalculator)
-    : formatDay(day, currentWeek, weekCalculator, currentGroup.group);
+  const dayText =
+    dayName === "Воскресенье"
+      ? getWeekendText(dayName, currentWeek, weekCalculator)
+      : formatDay(day, currentWeek, weekCalculator, currentGroup.group);
 
   const weekText = formatWeek(
     { days: week.days, weekNumber: currentWeek },
