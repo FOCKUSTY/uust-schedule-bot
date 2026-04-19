@@ -1,5 +1,3 @@
-// src/telegram/utils/string-builder.ts
-
 import { escapeHtml } from "./escape-html";
 
 export class StringBuilder {

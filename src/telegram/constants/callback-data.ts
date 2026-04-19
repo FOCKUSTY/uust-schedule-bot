@@ -1,5 +1,4 @@
 export const CALLBACK_DATA = {
-  // Главное меню
   MENU_TODAY: "menu:today",
   MENU_TOMORROW: "menu:tomorrow",
   MENU_WEEK: "menu:week",
@@ -7,7 +6,6 @@ export const CALLBACK_DATA = {
   MENU_ADD_GROUP: "menu:add_group",
   MENU_BACK: "menu:back",
 
-  // Навигация по расписанию
   SCHEDULE_WEEK_PREV: "schedule:week:previous",
   SCHEDULE_WEEK_NEXT: "schedule:week:next",
   SCHEDULE_WEEK_RESET: "schedule:week:reset",
@@ -17,7 +15,6 @@ export const CALLBACK_DATA = {
   SCHEDULE_SWITCH_TODAY: "schedule:switch:today",
   SCHEDULE_SWITCH_TOWEEK: "schedule:switch:toweek",
 
-  // Регистрация
   REG_COURSE_PREFIX: "reg:course",
   REG_SPEC_PREFIX: "reg:spec",
   REG_GROUP_PREFIX: "reg:group",
@@ -25,6 +22,5 @@ export const CALLBACK_DATA = {
   REG_BACK_TO_SPEC: "reg:back_to_spec",
   REG_CANCEL: "reg:cancel",
 
-  // Выбор конфигурации
   SELECT_CONFIG: "select_config",
 } as const;
