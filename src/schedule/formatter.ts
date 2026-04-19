@@ -1,4 +1,4 @@
-import type { FormattedSchedule, ScheduleDay, ScheduleWeek } from './types';
+import type { FormattedSchedule, ScheduleWeek } from './types';
 
 const DAY_NAMES = [
   'Понедельник',
@@ -68,7 +68,7 @@ export class ScheduleFormatter {
       const firstCell = rowData[0];
       const pairCell = rowData[1];
 
-      if (this.isDayName(firstCell)) {
+      if (this.isDayName(firstCell?.trim?.())) {
         currentDayName = firstCell as DayName;
       }
 
@@ -98,8 +98,8 @@ export class ScheduleFormatter {
     if (typeof value !== 'string') {
       return false;
     }
-
-    return DAY_NAMES.includes(value as DayName);
+    
+    return (DAY_NAMES as readonly string[]).includes(value);
   }
 
   private parsePairNumber(value: string | null): number | null {

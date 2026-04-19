@@ -18,6 +18,21 @@ export const getCurrentWeek = () => {
   return weekNumber;
 }
 
+export const getDateFromWeekNumber = (
+  weekNumber: number,
+  dayIndex: number = 0
+): Date => {
+  const baseDate = new Date(env.START_DATE.getTime());
+  baseDate.setDate(baseDate.getDate() + weekNumber * 7);
+  
+  const startDayOfWeek = (baseDate.getDay() + 6) % 7;
+  
+  baseDate.setDate(baseDate.getDate() - startDayOfWeek + dayIndex);
+  baseDate.setHours(0, 0, 0, 0);
+  
+  return baseDate;
+};
+
 const TWO_HOURS = 1000 * 60 * 60 * 2;
 
 export const getExpiresAtTimeForCache = () => {

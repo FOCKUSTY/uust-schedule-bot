@@ -36,7 +36,11 @@ export class Cache {
   }
 
   public get<T = unknown>(prefix: string): T {
-    return this._data.other[prefix] as T;
+    if (!this._data.other) {
+      this._data.other = {};
+    }
+    
+    return this._data.other?.[prefix] as T;
   }
 
   public execute(group: GroupInformation, weeks: ScheduleWeeks) {

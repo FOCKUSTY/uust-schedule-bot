@@ -17,7 +17,7 @@ if (!COURSE_FOLDER_ID) {
 
 export class Schedule {
   public static async getCourses() {
-    const cachedCourses = cache.get("courses");
+    const cachedCourses = cache.get<FileInfo[]>("courses");
     if (cachedCourses) {
       return cachedCourses;
     }
@@ -63,7 +63,6 @@ export class Schedule {
     const file = await Schedule.getFileFromFolder(drive, {
       name: specialization,
       folderId: courseFolder.id,
-      extension: "xlsx"
     });
 
     const excel = new ExcelReader(drive);
@@ -123,7 +122,6 @@ export class Schedule {
     const file = await Schedule.getFileFromFolder(drive, {
       name: this._config.specialization,
       folderId: courseFolder.id,
-      extension: "xlsx"
     });
 
     const excel = new ExcelReader(drive);
