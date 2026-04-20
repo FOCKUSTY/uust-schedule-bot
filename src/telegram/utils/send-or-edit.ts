@@ -6,7 +6,7 @@ const SAME_TEXT_ERROR_DESCRIPTION =
   "Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message";
 
 export async function sendOrEditMessage(
-  interaction: Context,
+  ctx: Context,
   text: string,
   {
     keyboard,
@@ -20,12 +20,12 @@ export async function sendOrEditMessage(
 ) {
   session =
     (await conversation?.external((context) => context.session)) ||
-    interaction.session;
+    ctx.session;
   if (!session) {
     throw new Error("Session not found.");
   }
 
-  const chatId = interaction.chat?.id;
+  const chatId = ctx.chat?.id;
   if (!chatId) {
     throw new Error("Chat ID не найден");
   }
@@ -33,35 +33,34 @@ export async function sendOrEditMessage(
   const lastMessageId = session.lastBotMessageId;
   const lastChatId = session.lastChatId;
 
+  const reply = async () => {
+    const msg = await ctx.reply(text, {
+      reply_markup: keyboard,
+      parse_mode: "HTML",
+    });
+
+    session.lastBotMessageId = msg.message_id;
+    session.lastChatId = chatId;
+  }
+
   try {
-    if (lastMessageId && lastChatId === chatId) {
-      return interaction.api.editMessageText(chatId, lastMessageId, text, {
-        reply_markup: keyboard,
-        parse_mode: "HTML",
-      });
+    if (!lastMessageId || lastChatId !== chatId) {
+      return reply();
     }
-
-    const msg = await interaction.reply(text, {
+    
+    await ctx.api.editMessageText(chatId, lastMessageId, text, {
       reply_markup: keyboard,
       parse_mode: "HTML",
-    });
+    }).catch(reply);
 
-    session.lastBotMessageId = msg.message_id;
-    session.lastChatId = chatId;
+
+    if (!ctx.message) {
+      return;
+    }
+
+    ctx.api.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
   } catch (error) {
-    if (error instanceof GrammyError) {
-      if (error.description === SAME_TEXT_ERROR_DESCRIPTION) {
-        return interaction.answerCallbackQuery("Ничего не изменилось");
-      }
-    }
-
-    const msg = await interaction.reply(text, {
-      reply_markup: keyboard,
-      parse_mode: "HTML",
-    });
-
-    session.lastBotMessageId = msg.message_id;
-    session.lastChatId = chatId;
+    return reply();
   } finally {
     await conversation?.external((context) => {
       context.session = session;

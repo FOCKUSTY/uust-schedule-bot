@@ -8,7 +8,7 @@ import { InlineKeyboard } from "grammy";
 import { UserService } from "../../database/user.service";
 import { Schedule, WeekCalculator } from "../../schedule";
 
-import { DAY_NAMES_RU, resolveDayOffset } from "../schedule";
+import { DAY_NAMES_RU, resolveDayOffset, resolveQuickDate } from "../schedule";
 
 import { CALLBACK_DATA } from "../constants/callback-data";
 
@@ -37,7 +37,7 @@ export const scheduleConversation = async (
   }
 
   const configs = await userService.getActiveConfigs(telegramId);
-  const defaultConfig = configs.find((c) => c.defaulted);
+  const defaultConfig = configs.find((config) => config.defaulted);
 
   if (configs.length === 0 || !defaultConfig) {
     return sendOrEditMessage(ctx, "Выберите группу", {
@@ -46,11 +46,19 @@ export const scheduleConversation = async (
     });
   }
 
-  const currentGroup = defaultConfig;
-  const weekOffset = session.currentWeekOffset || 0;
-  const currentWeek = weekCalculator.getCurrentWeek() + weekOffset;
+  const {
+    dayIndex,
+    weekNumber: currentWeek,
+    dayOffset
+  } = resolveQuickDate({
+    qiuckDate: session.quickDate,
+    weekNumber: weekCalculator.getCurrentWeek(),
+    offsets: {
+      dayOffset: session.currentDayOffset,
+      weekOffset: session.currentWeekOffset
+    }
+  });
 
-  const dayIndex = resolveDayOffset(session.currentDayOffset);
   const dayName = DAY_NAMES_RU.at(dayIndex);
   if (!dayName) {
     return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
@@ -58,11 +66,12 @@ export const scheduleConversation = async (
     });
   }
 
+  const currentGroup = defaultConfig;
   const schedule = new Schedule(currentGroup, currentWeek);
   await schedule.initializeCache();
+  
   const week = await schedule.getWeekSchedule();
   const day = week.days[dayName];
-
   const dayText =
     dayName === "Воскресенье"
       ? getWeekendText(dayName, currentWeek, weekCalculator)
@@ -101,5 +110,13 @@ export const scheduleConversation = async (
 
   const text = session.watchType === "day" ? dayText : weekText;
 
-  await sendOrEditMessage(ctx, text, { keyboard, conversation });
+  await conversation.external(({session}) => {
+    if (session.quickDate !== "none" && session.currentDayOffset !== dayOffset) {
+      session.currentDayOffset = dayOffset;
+    }
+
+    session.quickDate = "none";
+  });
+
+  await sendOrEditMessage(ctx, text, { keyboard, session, conversation });
 };

@@ -10,6 +10,7 @@ export interface SessionData {
     specialization?: string;
   };
   watchType: "day" | "week";
+  quickDate: "none" | "today" | "tomorrow";
   currentWeekOffset: number;
   currentDayOffset: number;
   lastBotMessageId?: number;
@@ -21,6 +22,7 @@ export function initial(): SessionData {
     currentWeekOffset: 0,
     currentDayOffset: 0,
     watchType: "day",
+    quickDate: "today"
   };
 }
 

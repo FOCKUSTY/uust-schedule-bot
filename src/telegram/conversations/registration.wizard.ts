@@ -81,7 +81,7 @@ export class RegistrationWizard {
     ctx: Context,
   ): Promise<string | null> {
     const loader = this.schedule.getLoader();
-    const driveService = loader["driveService"]; // небольшой хак для доступа
+    const driveService = loader["driveService"];
     const result = await this.promptForSelection({
       conversation,
       ctx,

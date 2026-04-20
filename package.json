@@ -22,7 +22,8 @@
   },
   "scripts": {
     "build": "prisma generate && tsc",
-    "start": "node ./dist/telegram/start.js"
+    "start": "node ./dist/telegram/start.js",
+    "dev": "ts-node ./src/telegram/start.ts"
   },
   "dependencies": {
     "@grammyjs/conversations": "^2.1.1",

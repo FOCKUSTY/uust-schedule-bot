@@ -1,19 +1,11 @@
 import type { CallbackHandler } from "../bot";
+import { today, tomorrow } from "../commands/quick-date";
 
-import { UserService } from "../../database/user.service";
 import { CALLBACK_DATA } from "../constants/callback-data";
 import { REGISTRATION_CONVERSATION } from "../conversations/registration";
 import { SCHEDULE_CONVERSATION } from "../conversations/schedule";
 import { mainMenuKeyboard } from "../keyboards";
 import { sendOrEditMessage } from "../utils/send-or-edit";
-
-const userService = new UserService();
-
-const SCHEDULE_ACTIONS = [
-  CALLBACK_DATA.MENU_TODAY,
-  CALLBACK_DATA.MENU_TOMORROW,
-  CALLBACK_DATA.MENU_WEEK,
-] as const;
 
 const REGISTRATION_ACTIONS = [
   CALLBACK_DATA.MENU_SWITCH_GROUP,
@@ -32,32 +24,13 @@ export class MenuHandler {
   }
 
   private registerScheduleActions() {
-    SCHEDULE_ACTIONS.forEach((key) => {
-      this.callbackHandlers.set(key, async (ctx) => {
-        const telegramId = ctx.from?.id;
-        if (!telegramId) {
-          await ctx.answerCallbackQuery(
-            "Ошибка: пользователь не идентифицирован",
-          );
-          return;
-        }
-
-        const activeConfigs = await userService.getActiveConfigs(telegramId);
-        const hasActiveConfig = activeConfigs.length > 0;
-
-        if (!hasActiveConfig) {
-          await ctx.answerCallbackQuery("Сначала выберите активную группу");
-          return sendOrEditMessage(
-            ctx,
-            "У вас нет активных групп. Добавьте через меню.",
-            { keyboard: mainMenuKeyboard() },
-          );
-        }
-
-        await ctx.conversation.enter(SCHEDULE_CONVERSATION);
-        return ctx.answerCallbackQuery();
-      });
+    this.callbackHandlers.set(CALLBACK_DATA.MENU_WEEK, async (ctx) => {
+      ctx.session.watchType = "week";
+      return ctx.conversation.enter(SCHEDULE_CONVERSATION);
     });
+
+    this.callbackHandlers.set(CALLBACK_DATA.MENU_TODAY, today);
+    this.callbackHandlers.set(CALLBACK_DATA.MENU_TOMORROW, tomorrow);
   }
 
   private registerRegistrationActions() {
@@ -74,7 +47,8 @@ export class MenuHandler {
       await sendOrEditMessage(ctx, "Главное меню", {
         keyboard: mainMenuKeyboard(),
       });
-      await ctx.answerCallbackQuery();
+      
+      return ctx.answerCallbackQuery();
     });
   }
 }

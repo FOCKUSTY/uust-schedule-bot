@@ -3,8 +3,9 @@ import type { Bot } from "grammy";
 
 import { start } from "./start";
 import { schedule } from "./schedule";
+import { today, tomorrow } from "./quick-date";
 
-const COMMANDS = [start, schedule];
+const COMMANDS = [start, schedule, today, tomorrow];
 
 export class CommandsRegister {
   public constructor(private readonly bot: Bot<Context>) {}

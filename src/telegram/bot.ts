@@ -58,3 +58,7 @@ bot.start({
     listen();
   },
 });
+
+bot.catch((error) => {
+  return console.error(error);
+});
