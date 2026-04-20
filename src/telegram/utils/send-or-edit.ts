@@ -45,7 +45,7 @@ export async function sendOrEditMessage(
       reply_markup: keyboard,
       parse_mode: "HTML",
     });
-    
+
     session.lastBotMessageId = msg.message_id;
     session.lastChatId = chatId;
   } catch (error) {

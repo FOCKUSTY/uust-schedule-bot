@@ -4,15 +4,10 @@ import type { Bot } from "grammy";
 import { start } from "./start";
 import { schedule } from "./schedule";
 
-const COMMANDS = [
-  start,
-  schedule
-]
+const COMMANDS = [start, schedule];
 
 export class CommandsRegister {
-  public constructor(
-    private readonly bot: Bot<Context>
-  ) {}
+  public constructor(private readonly bot: Bot<Context>) {}
 
   public execute() {
     COMMANDS.forEach((command) => {

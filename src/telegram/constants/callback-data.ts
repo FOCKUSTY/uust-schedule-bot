@@ -7,7 +7,7 @@ export const CALLBACK_DATA = {
   MENU_BACK: "menu:back",
 
   SCHEDULE_SWITCH_GROUP: "schedule:group:switch",
-  
+
   SCHEDULE_WEEK_PREV: "schedule:week:previous",
   SCHEDULE_WEEK_NEXT: "schedule:week:next",
   SCHEDULE_WEEK_RESET: "schedule:week:reset",
@@ -15,7 +15,7 @@ export const CALLBACK_DATA = {
   SCHEDULE_DAY_PREV: "schedule:day:previous",
   SCHEDULE_DAY_NEXT: "schedule:day:next",
   SCHEDULE_DAY_RESET: "schedule:day:reset",
-  
+
   SCHEDULE_SWITCH_TODAY: "schedule:switch:today",
   SCHEDULE_SWITCH_TOWEEK: "schedule:switch:toweek",
 

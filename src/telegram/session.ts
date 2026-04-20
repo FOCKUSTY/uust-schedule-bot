@@ -25,9 +25,7 @@ export function initial(): SessionData {
 }
 
 export class SessionRegister {
-  public constructor(
-    private readonly bot: Bot<Context>
-  ) {}
+  public constructor(private readonly bot: Bot<Context>) {}
 
   public execute() {
     this.bot.use(session({ initial }));

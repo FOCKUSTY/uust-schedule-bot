@@ -42,11 +42,9 @@ bot.on("callback_query:data", async (ctx) => {
     return handler(ctx);
   }
 
-  const promiseData = await Promise.all([
-    configHandler.handle(ctx)
-  ]);
+  const promiseData = await Promise.all([configHandler.handle(ctx)]);
 
-  if (promiseData.every(data => data !== "NON")) {
+  if (promiseData.every((data) => data !== "NON")) {
     return;
   }
 

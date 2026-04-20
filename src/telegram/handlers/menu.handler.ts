@@ -22,7 +22,7 @@ const REGISTRATION_ACTIONS = [
 
 export class MenuHandler {
   public constructor(
-    private readonly callbackHandlers: Map<string, CallbackHandler>
+    private readonly callbackHandlers: Map<string, CallbackHandler>,
   ) {}
 
   public execute() {
@@ -36,7 +36,9 @@ export class MenuHandler {
       this.callbackHandlers.set(key, async (ctx) => {
         const telegramId = ctx.from?.id;
         if (!telegramId) {
-          await ctx.answerCallbackQuery("Ошибка: пользователь не идентифицирован");
+          await ctx.answerCallbackQuery(
+            "Ошибка: пользователь не идентифицирован",
+          );
           return;
         }
 
@@ -48,7 +50,7 @@ export class MenuHandler {
           return sendOrEditMessage(
             ctx,
             "У вас нет активных групп. Добавьте через меню.",
-            { keyboard: mainMenuKeyboard() }
+            { keyboard: mainMenuKeyboard() },
           );
         }
 
@@ -69,7 +71,9 @@ export class MenuHandler {
 
   private registerBackAction() {
     this.callbackHandlers.set(CALLBACK_DATA.MENU_BACK, async (ctx) => {
-      await sendOrEditMessage(ctx, "Главное меню", { keyboard: mainMenuKeyboard() });
+      await sendOrEditMessage(ctx, "Главное меню", {
+        keyboard: mainMenuKeyboard(),
+      });
       await ctx.answerCallbackQuery();
     });
   }
