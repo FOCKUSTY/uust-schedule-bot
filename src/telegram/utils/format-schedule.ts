@@ -18,6 +18,15 @@ const DAY_NAMES_RU = [
   "Воскресенье",
 ];
 
+const toRussianDate = (date: Date) => {
+  return date.toLocaleDateString('ru-RU', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
 const normalizeDays = (days: ScheduleWeek["days"]): ScheduleWeek["days"] => {
   const normalized: ScheduleWeek["days"] = {};
 
@@ -49,7 +58,7 @@ export const getWeekendText = (
   );
   return new StringBuilder()
     .appendLine(
-      `${dayName}, выходной день ${date.toLocaleDateString()} (неделя ${weekNumber})`,
+      `${toRussianDate(date)}, выходной день (неделя ${weekNumber})`,
     )
     .appendLine("Пар нет")
     .toString();
@@ -72,7 +81,7 @@ export const formatDay = (
   if (groupName) {
     builder.append(` ${groupName}`);
   }
-  builder.append(` на ${date.toLocaleDateString()}:`).appendLine();
+  builder.append(` на ${toRussianDate(date)}:`).appendLine();
 
   const pairs = day.pairs;
   const pairKeys = Object.keys(pairs)
@@ -110,7 +119,7 @@ export const formatWeek = (
   const lastDate = weekCalculator.getDateFromWeekNumber(week.weekNumber, 5);
   builder
     .bold(
-      `📆 Неделя ${week.weekNumber} (${firstDate.toLocaleDateString()} – ${lastDate.toLocaleDateString()})`,
+      `📆 Неделя ${week.weekNumber} (${toRussianDate(firstDate)} – ${toRussianDate(lastDate)})`,
     )
     .appendLine()
     .appendLine();
