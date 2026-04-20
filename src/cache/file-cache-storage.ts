@@ -31,7 +31,7 @@ export class FileCacheStorage implements CacheStorage {
       mkdirSync(join(this.filePath, ".."), { recursive: true });
       readFileSync(this.filePath, "utf-8");
     } catch {
-      writeFile(this.filePath, "", "utf-8");
+      writeFile(this.filePath, "{}", "utf-8");
     }
   }
 
