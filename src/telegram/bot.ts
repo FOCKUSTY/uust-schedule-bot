@@ -1,5 +1,7 @@
 import { env } from "../env";
 
+import "./app";
+
 import type { Context as GrammyContext, SessionFlavor } from "grammy";
 import type { Conversation, ConversationFlavor } from "@grammyjs/conversations";
 
