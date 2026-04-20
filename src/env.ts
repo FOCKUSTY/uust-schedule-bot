@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Env } from "fenviee";
+import { Env, isPort } from "fenviee";
 
 export const env = Env.create(process.env)({
   partial: [],
@@ -19,6 +19,7 @@ export const env = Env.create(process.env)({
 
       return parsed;
     },
+    PORT: isPort
   },
   default: {},
 });

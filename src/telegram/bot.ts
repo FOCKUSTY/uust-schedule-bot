@@ -31,8 +31,6 @@ import { GoogleDriveService, ScheduleLoader } from "../schedule";
 import { NotificationService } from "../notifications/notification.service";
 import { ScheduleWatcher } from "../watcher/schedule-watcher";
 
-import express from "express";
-
 export type Context = SessionFlavor<SessionData> &
   ConversationFlavor<GrammyContext>;
 export type MyConversation = Conversation<Context, Context>;
@@ -59,7 +57,6 @@ bot.use(
   ),
 );
 
-// Команды
 bot.command("schedule", async (ctx) => {
   await ctx.conversation.enter(SCHEDULE_CONVERSATION);
 });
@@ -203,15 +200,6 @@ cache.loadAll().then(() => {
   console.log(
     `Schedule watcher started with interval ${env.WATCHER_INTERVAL_MINUTES} min`,
   );
-});
-
-const app = express();
-app.get('/', (_, res) => {
-  res.send('Hello World!')
-})
-
-app.listen(3000, () => {
-  console.log("Example app listening on port 3000");
 });
 
 process.on("SIGINT", () => {
