@@ -9,7 +9,7 @@ export const DAY_NAMES_RU = [
 ];
 
 export const getDayIndexForToday = (): number => {
-  const day = new Date().getDay();
+  const day = new Date().getUTCDay();
   return (day + 6) % 7;
 };
 

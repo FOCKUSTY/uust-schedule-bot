@@ -56,6 +56,7 @@ export const getWeekendText = (
     weekNumber,
     DAY_NAMES_RU.indexOf(dayName),
   );
+
   return new StringBuilder()
     .appendLine(
       `${toRussianDate(date)}, выходной день (неделя ${weekNumber})`,
@@ -76,12 +77,11 @@ export const formatDay = (
   );
 
   const builder = new StringBuilder();
-
-  builder.append(`🎩 ${day.dayName}`);
   if (groupName) {
-    builder.append(` ${groupName}`);
+    builder.append(`${groupName} `);
   }
-  builder.append(` на ${toRussianDate(date)}:`).appendLine();
+
+  builder.append(`🎩 на ${toRussianDate(date)}:`).appendLine();
 
   const pairs = day.pairs;
   const pairKeys = Object.keys(pairs)
