@@ -4,6 +4,22 @@ import type { SessionData } from "../session";
  * Управляет смещениями недели и дня в сессии пользователя.
  */
 export class NavigationService {
+  public changeOrResetOffset(session: SessionData, type: "week"|"day", delta?: number) {
+    if (!delta) {
+      if (type === "week") {
+        return this.resetWeekOffset(session);
+      }
+
+      return this.resetDayOffset(session);
+    }
+
+    if (type === "week") {
+      return this.changeWeekOffset(session, delta);
+    }
+
+    return this.changeDayOffset(session, delta);
+  }
+
   /**
    * Изменяет смещение недели на заданную величину.
    */

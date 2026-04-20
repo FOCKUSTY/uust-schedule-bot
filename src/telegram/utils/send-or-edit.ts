@@ -35,18 +35,19 @@ export async function sendOrEditMessage(
 
   try {
     if (lastMessageId && lastChatId === chatId) {
-      await interaction.api.editMessageText(chatId, lastMessageId, text, {
+      return interaction.api.editMessageText(chatId, lastMessageId, text, {
         reply_markup: keyboard,
         parse_mode: "HTML",
       });
-    } else {
-      const msg = await interaction.reply(text, {
-        reply_markup: keyboard,
-        parse_mode: "HTML",
-      });
-      session.lastBotMessageId = msg.message_id;
-      session.lastChatId = chatId;
     }
+
+    const msg = await interaction.reply(text, {
+      reply_markup: keyboard,
+      parse_mode: "HTML",
+    });
+    
+    session.lastBotMessageId = msg.message_id;
+    session.lastChatId = chatId;
   } catch (error) {
     if (error instanceof GrammyError) {
       if (error.description === SAME_TEXT_ERROR_DESCRIPTION) {
