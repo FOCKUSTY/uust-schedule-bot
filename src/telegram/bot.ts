@@ -1,7 +1,5 @@
 import { env } from "../env";
 
-import "./app";
-
 import type { Context as GrammyContext, SessionFlavor } from "grammy";
 import type { Conversation, ConversationFlavor } from "@grammyjs/conversations";
 
@@ -32,6 +30,8 @@ import { ScheduleCache } from "../cache";
 import { GoogleDriveService, ScheduleLoader } from "../schedule";
 import { NotificationService } from "../notifications/notification.service";
 import { ScheduleWatcher } from "../watcher/schedule-watcher";
+
+import { listen } from "./app";
 
 export type Context = SessionFlavor<SessionData> &
   ConversationFlavor<GrammyContext>;
@@ -174,6 +174,8 @@ bot.on("callback_query:data", async (ctx) => {
 bot.start({
   onStart: (botInfo) => {
     console.log("Bot started as " + botInfo.username);
+
+    listen();
   },
 });
 

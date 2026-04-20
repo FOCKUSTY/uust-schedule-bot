@@ -33,6 +33,8 @@ app.get("/:course/:specialization/:group/:week", async (request, response) => {
   }
 });
 
-app.listen(env.PORT, () => {
-  console.log(`Example app listening on port ${env.PORT}`);
-});
+export const listen = () => {
+  return app.listen(env.PORT, () => {
+    console.log(`Example app listening on port ${env.PORT}`);
+  });
+}
