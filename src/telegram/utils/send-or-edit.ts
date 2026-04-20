@@ -19,8 +19,7 @@ export async function sendOrEditMessage(
   },
 ) {
   session =
-    (await conversation?.external((context) => context.session)) ||
-    ctx.session;
+    (await conversation?.external((context) => context.session)) || ctx.session;
   if (!session) {
     throw new Error("Session not found.");
   }
@@ -41,18 +40,19 @@ export async function sendOrEditMessage(
 
     session.lastBotMessageId = msg.message_id;
     session.lastChatId = chatId;
-  }
+  };
 
   try {
     if (!lastMessageId || lastChatId !== chatId) {
       return reply();
     }
-    
-    await ctx.api.editMessageText(chatId, lastMessageId, text, {
-      reply_markup: keyboard,
-      parse_mode: "HTML",
-    }).catch(reply);
 
+    await ctx.api
+      .editMessageText(chatId, lastMessageId, text, {
+        reply_markup: keyboard,
+        parse_mode: "HTML",
+      })
+      .catch(reply);
 
     if (!ctx.message) {
       return;

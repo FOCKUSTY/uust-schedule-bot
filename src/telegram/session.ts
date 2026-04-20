@@ -22,7 +22,7 @@ export function initial(): SessionData {
     currentWeekOffset: 0,
     currentDayOffset: 0,
     watchType: "day",
-    quickDate: "today"
+    quickDate: "today",
   };
 }
 

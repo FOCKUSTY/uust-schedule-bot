@@ -25,17 +25,14 @@ export const resolveDayOffset = (currentOffset: number): number => {
 export const resolveQuickDate = ({
   qiuckDate,
   weekNumber,
-  offsets: {
-    dayOffset,
-    weekOffset
-  }
+  offsets: { dayOffset, weekOffset },
 }: {
-  qiuckDate: SessionData["quickDate"],
-  weekNumber: number,
+  qiuckDate: SessionData["quickDate"];
+  weekNumber: number;
   offsets: {
-    weekOffset: number,
-    dayOffset: number
-  }
+    weekOffset: number;
+    dayOffset: number;
+  };
 }) => {
   if (qiuckDate === "tomorrow") {
     return getTomorrow(weekNumber);
@@ -46,7 +43,7 @@ export const resolveQuickDate = ({
       dayIndex: getDayIndexForToday(),
       weekNumber,
       dayOffset: 0,
-    }
+    };
   }
 
   const week = weekNumber + weekOffset;
@@ -56,22 +53,22 @@ export const resolveQuickDate = ({
     dayIndex,
     dayOffset: 0,
     weekNumber: week,
-  }
-}
+  };
+};
 
 export const getTomorrow = (weekNumber: number) => {
   const currentIndex = getDayIndexForToday();
   if (DAY_NAMES_RU[currentIndex] === "Воскресенье") {
     return {
       dayIndex: 0,
-      weekNumber: weekNumber+1,
+      weekNumber: weekNumber + 1,
       dayOffset: 0,
-    }
+    };
   }
 
   return {
-    dayIndex: currentIndex+1,
+    dayIndex: currentIndex + 1,
     dayOffset: 1,
-    weekNumber
+    weekNumber,
   };
-}
+};

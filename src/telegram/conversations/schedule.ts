@@ -49,14 +49,14 @@ export const scheduleConversation = async (
   const {
     dayIndex,
     weekNumber: currentWeek,
-    dayOffset
+    dayOffset,
   } = resolveQuickDate({
     qiuckDate: session.quickDate,
     weekNumber: weekCalculator.getCurrentWeek(),
     offsets: {
       dayOffset: session.currentDayOffset,
-      weekOffset: session.currentWeekOffset
-    }
+      weekOffset: session.currentWeekOffset,
+    },
   });
 
   const dayName = DAY_NAMES_RU.at(dayIndex);
@@ -69,7 +69,7 @@ export const scheduleConversation = async (
   const currentGroup = defaultConfig;
   const schedule = new Schedule(currentGroup, currentWeek);
   await schedule.initializeCache();
-  
+
   const week = await schedule.getWeekSchedule();
   const day = week.days[dayName];
   const dayText =
@@ -110,8 +110,11 @@ export const scheduleConversation = async (
 
   const text = session.watchType === "day" ? dayText : weekText;
 
-  await conversation.external(({session}) => {
-    if (session.quickDate !== "none" && session.currentDayOffset !== dayOffset) {
+  await conversation.external(({ session }) => {
+    if (
+      session.quickDate !== "none" &&
+      session.currentDayOffset !== dayOffset
+    ) {
       session.currentDayOffset = dayOffset;
     }
 

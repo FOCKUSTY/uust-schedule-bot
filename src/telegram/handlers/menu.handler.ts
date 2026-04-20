@@ -47,7 +47,7 @@ export class MenuHandler {
       await sendOrEditMessage(ctx, "Главное меню", {
         keyboard: mainMenuKeyboard(),
       });
-      
+
       return ctx.answerCallbackQuery();
     });
   }
