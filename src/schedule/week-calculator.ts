@@ -44,12 +44,12 @@ export class WeekCalculator {
     baseUTC.setUTCDate(baseUTC.getUTCDate() + weekNumber * 7);
 
     const baseDayOfWeek = baseUTC.getUTCDay();
-    const baseMondayIndex = (baseDayOfWeek === 0 ? 6 : baseDayOfWeek - 1);
-    
+    const baseMondayIndex = baseDayOfWeek === 0 ? 6 : baseDayOfWeek - 1;
+
     const offset = dayIndex - baseMondayIndex;
     baseUTC.setUTCDate(baseUTC.getUTCDate() + offset);
     baseUTC.setUTCHours(0, 0, 0, 0);
-    
+
     return baseUTC;
   }
 
@@ -59,7 +59,7 @@ export class WeekCalculator {
    */
   private normalizeToUTCMidnight(date: DateLike): Date {
     const d = new Date(date);
-    
+
     const year = d.getUTCFullYear();
     const month = d.getUTCMonth();
     const day = d.getUTCDate();

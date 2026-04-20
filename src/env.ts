@@ -19,7 +19,7 @@ export const env = Env.create(process.env)({
 
       return parsed;
     },
-    PORT: isPort
+    PORT: isPort,
   },
   default: {},
 });

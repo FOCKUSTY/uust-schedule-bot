@@ -19,13 +19,13 @@ const DAY_NAMES_RU = [
 ];
 
 const toRussianDate = (date: Date) => {
-  return date.toLocaleDateString('ru-RU', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  return date.toLocaleDateString("ru-RU", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-}
+};
 
 const normalizeDays = (days: ScheduleWeek["days"]): ScheduleWeek["days"] => {
   const normalized: ScheduleWeek["days"] = {};
@@ -58,9 +58,7 @@ export const getWeekendText = (
   );
 
   return new StringBuilder()
-    .appendLine(
-      `${toRussianDate(date)}, выходной день (неделя ${weekNumber})`,
-    )
+    .appendLine(`${toRussianDate(date)}, выходной день (неделя ${weekNumber})`)
     .appendLine("Пар нет")
     .toString();
 };
