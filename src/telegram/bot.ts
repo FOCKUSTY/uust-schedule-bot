@@ -48,7 +48,7 @@ bot.on("callback_query:data", async (ctx) => {
     return;
   }
 
-  await ctx.answerCallbackQuery("Неизвестное действие");
+  return ctx.answerCallbackQuery("Неизвестное действие").catch(console.error);
 });
 
 bot.start({
