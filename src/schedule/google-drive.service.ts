@@ -1,4 +1,3 @@
-// google-drive.service.ts
 import type { FileInfo, ExcelSheetInfo, ExcelWorkbook } from "./google";
 import { Cache } from "../cache/cache";
 import { DriveReader, ExcelReader } from "./google";

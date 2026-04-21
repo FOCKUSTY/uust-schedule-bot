@@ -6,8 +6,9 @@ import { schedule } from "./schedule";
 import { today, tomorrow } from "./quick-date";
 import { help } from "./help";
 import { about } from "./about";
+import { clear } from "./clear";
 
-const COMMANDS = [start, schedule, today, tomorrow, help, about];
+const COMMANDS = [start, schedule, today, tomorrow, help, about, clear];
 
 export class CommandsRegister {
   public constructor(private readonly bot: Bot<Context>) {}
