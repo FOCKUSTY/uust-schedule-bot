@@ -116,7 +116,8 @@ export class RegistrationWizard {
     });
 
     if (result === CANCEL_SYMBOL) return null;
-    if (result === BACK_SYMBOL) return null; // вернёмся в selectCourse
+    if (result === BACK_SYMBOL) return null;
+
     return result as string;
   }
 
@@ -142,6 +143,7 @@ export class RegistrationWizard {
 
     if (result === CANCEL_SYMBOL) return null;
     if (result === BACK_SYMBOL) return null;
+    
     return result as string;
   }
 

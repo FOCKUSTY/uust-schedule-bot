@@ -11,7 +11,7 @@ export const mainMenuKeyboard = () => {
     .text("⬅️ Пред. неделя", CALLBACK_DATA.SCHEDULE_WEEK_PREV)
     .text("➡️ След. неделя", CALLBACK_DATA.SCHEDULE_WEEK_NEXT)
     .row()
-    .text("🔄 Сменить группу", CALLBACK_DATA.MENU_SWITCH_GROUP)
+    .text("🔄 Сменить группу", CALLBACK_DATA.SCHEDULE_SWITCH_GROUP)
     .row()
     .text("⚙️ Настройки", "menu:settings");
 };

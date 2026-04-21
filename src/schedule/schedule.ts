@@ -48,6 +48,7 @@ export class Schedule {
     }
 
     const weeks = await this.loader.loadFullSchedule(this.group);
+
     await this.cache.setWeeks(this.group, weeks, CACHE_TTL.WEEKS);
     await this.cache.saveAll();
 

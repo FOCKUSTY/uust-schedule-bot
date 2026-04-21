@@ -77,9 +77,12 @@ export class UserService {
         const specializationEquals = config.specialization === userConfig.specialization;
         const groupEquals = config.group === userConfig.group;
         
-        existedConfig = userConfig;
+        if (courseEquals && specializationEquals && groupEquals) {
+          existedConfig = userConfig;
+          return true;
+        }
 
-        return courseEquals && specializationEquals && groupEquals
+        return false;
       });
 
       return existedConfig as (GroupInformation & { id: number }) | null;

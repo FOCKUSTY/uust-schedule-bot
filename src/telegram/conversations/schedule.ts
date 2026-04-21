@@ -19,7 +19,7 @@ import {
 } from "../utils/format-schedule";
 
 import { sendOrEditMessage } from "../utils/send-or-edit";
-import { configSelectionKeyboard } from "../keyboards";
+import { configSelectionKeyboard, mainMenuKeyboard } from "../keyboards";
 
 const userService = new UserService();
 const weekCalculator = new WeekCalculator(env.START_DATE);
@@ -72,6 +72,14 @@ export const scheduleConversation = async (
 
   const week = await schedule.getWeekSchedule();
   const day = week.days[dayName];
+
+  if (!day) {
+    return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
+      conversation,
+      keyboard: mainMenuKeyboard()
+    });
+  }
+
   const dayText =
     dayName === "Воскресенье"
       ? getWeekendText(dayName, currentWeek, weekCalculator)
