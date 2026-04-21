@@ -10,10 +10,11 @@ const userService = new UserService();
 export class ConfigHandler {
   public constructor() {}
 
-  public verify(data: string): boolean
-  public verify(ctx: Context): boolean
-  public verify(ctx: Context|string): boolean {
-    const callbackData = typeof ctx === "string" ? ctx : ctx.callbackQuery?.data!;
+  public verify(data: string): boolean;
+  public verify(ctx: Context): boolean;
+  public verify(ctx: Context | string): boolean {
+    const callbackData =
+      typeof ctx === "string" ? ctx : ctx.callbackQuery?.data!;
     const [data] = callbackData.split(":");
     if (data !== CALLBACK_DATA.SELECT_CONFIG) {
       return false;

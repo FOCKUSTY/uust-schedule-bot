@@ -7,12 +7,15 @@ import {
 } from "./registration";
 import { SCHEDULE_CONVERSATION, scheduleConversation } from "./schedule";
 import { conversations, createConversation } from "@grammyjs/conversations";
-import { GROUPS_SCHEDULE_CONVERSATION, groupsScheduleConversation } from "./groups-schedule";
+import {
+  GROUPS_SCHEDULE_CONVERSATION,
+  groupsScheduleConversation,
+} from "./groups-schedule";
 
 const CONVERSATIONS = [
   [REGISTRATION_CONVERSATION, registrationConversation],
   [SCHEDULE_CONVERSATION, scheduleConversation],
-  [GROUPS_SCHEDULE_CONVERSATION, groupsScheduleConversation]
+  [GROUPS_SCHEDULE_CONVERSATION, groupsScheduleConversation],
 ] as const;
 
 export class ConversationsRegister {

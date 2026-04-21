@@ -65,10 +65,13 @@ export class ScheduleHandler {
   }
 
   private registerGroupSwitchHandlers() {
-    this.callbackHandlers.set(CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS, async (ctx) => {
-      return ctx.conversation.enter(GROUPS_SCHEDULE_CONVERSATION);
-    })
-    
+    this.callbackHandlers.set(
+      CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS,
+      async (ctx) => {
+        return ctx.conversation.enter(GROUPS_SCHEDULE_CONVERSATION);
+      },
+    );
+
     this.callbackHandlers.set(
       CALLBACK_DATA.SCHEDULE_SWITCH_GROUP,
       async (ctx) => {

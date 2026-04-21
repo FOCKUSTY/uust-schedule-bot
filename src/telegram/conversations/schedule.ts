@@ -76,7 +76,7 @@ export const scheduleConversation = async (
   if (!day) {
     return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
       conversation,
-      keyboard: mainMenuKeyboard()
+      keyboard: mainMenuKeyboard(),
     });
   }
 
@@ -114,7 +114,9 @@ export const scheduleConversation = async (
     .text(currentGroup.group, CALLBACK_DATA.SCHEDULE_WEEK_RESET)
     .row();
 
-  keyboard.text("Вывести все группы", CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS).row();
+  keyboard
+    .text("Вывести все группы", CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS)
+    .row();
 
   const text = session.watchType === "day" ? dayText : weekText;
 

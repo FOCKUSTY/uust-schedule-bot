@@ -30,5 +30,5 @@ export const CALLBACK_DATA = {
 
   SELECT_CONFIG: "select_config",
 
-  GROUPS_SCHEDULE: "groups-schedule"
+  GROUPS_SCHEDULE: "groups-schedule",
 } as const;

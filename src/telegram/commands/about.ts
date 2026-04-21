@@ -7,7 +7,9 @@ export const about = async (ctx: Context) => {
   builder
     .bold("👨‍💻 О разработчике")
     .appendLine()
-    .append("Backend‑разработчик (Full Stack), фокус на высоконагруженные системы.")
+    .append(
+      "Backend‑разработчик (Full Stack), фокус на высоконагруженные системы.",
+    )
     .appendLine()
     .appendLine()
     .bold("🛠️ Стек технологий")
@@ -26,11 +28,17 @@ export const about = async (ctx: Context) => {
     .bold("📌 Ключевые проекты")
     .appendLine()
     .append("• ")
-    .link("https://github.com/Lazy-And-Focused/BAD-template", "BAD Architecture")
+    .link(
+      "https://github.com/Lazy-And-Focused/BAD-template",
+      "BAD Architecture",
+    )
     .append(" – продакшен‑готовый шаблон для NestJS")
     .appendLine()
     .append("• ")
-    .link("https://github.com/The-Void-Community/tvc-hat", "Real‑time мессенджер")
+    .link(
+      "https://github.com/The-Void-Community/tvc-hat",
+      "Real‑time мессенджер",
+    )
     .append(" (NestJS + Socket.io + Next.js)")
     .appendLine()
     .append("• ")
@@ -61,12 +69,18 @@ export const about = async (ctx: Context) => {
     .append("• VK: ")
     .link("https://vk.com/fockusty", "fockusty")
     .appendLine()
-    .append("• Discord: ").code("#FOCKUSTY")
+    .append("• Discord: ")
+    .code("#FOCKUSTY")
     .appendLine()
     .appendLine()
-    .italic("Бот с открытым исходным кодом. Если есть вопросы или предложения – пишите!")
+    .italic(
+      "Бот с открытым исходным кодом. Если есть вопросы или предложения – пишите!",
+    )
     .appendLine()
-    .link("https://github.com/FOCKUSTY/uust-schedule-bot", "Публичный репозиторий бота");
+    .link(
+      "https://github.com/FOCKUSTY/uust-schedule-bot",
+      "Публичный репозиторий бота",
+    );
 
   await ctx.reply(builder.toString(), {
     parse_mode: "HTML",

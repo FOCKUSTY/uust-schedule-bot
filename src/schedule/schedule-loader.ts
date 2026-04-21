@@ -36,7 +36,7 @@ export class ScheduleLoader {
       endRow: dimensions.endRow + 1,
       endColumn: dimensions.endCol + 1,
     });
-    
+
     const { weeks } = this.formatter.format(rawData);
     await this.cache.set(cacheKey, weeks, CACHE_TTL.WEEKS);
     return weeks;

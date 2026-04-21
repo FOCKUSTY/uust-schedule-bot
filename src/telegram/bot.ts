@@ -34,7 +34,7 @@ new ScheduleHandler(callbackHandlers).execute();
 new MenuHandler(callbackHandlers).execute();
 
 const configHandler = new ConfigHandler();
-const groupsScheuldeHandler = new GroupsScheduleHandler()
+const groupsScheuldeHandler = new GroupsScheduleHandler();
 
 const handlers = [configHandler, groupsScheuldeHandler];
 
@@ -46,17 +46,19 @@ bot.on("callback_query:data", async (ctx) => {
     return handler(ctx);
   }
 
-  let verifiedHandler: (typeof handlers)[number]|null = null;
-  if (handlers.some(handler => {
-    const verified = handler.verify(data);
-    
-    if (verified) {
-      return verifiedHandler = handler;
-    }
+  let verifiedHandler: (typeof handlers)[number] | null = null;
+  if (
+    handlers.some((handler) => {
+      const verified = handler.verify(data);
 
-    return verified;
-  })) {
-    const h = verifiedHandler as (typeof handlers)[number]|null;
+      if (verified) {
+        return (verifiedHandler = handler);
+      }
+
+      return verified;
+    })
+  ) {
+    const h = verifiedHandler as (typeof handlers)[number] | null;
     if (!h) {
       return;
     }

@@ -10,7 +10,7 @@ export interface SessionData {
     specialization?: string;
   };
   watchType: "day" | "week";
-  quickConfigGroup: string|null;
+  quickConfigGroup: string | null;
   quickDate: "none" | "today" | "tomorrow";
   currentWeekOffset: number;
   currentDayOffset: number;

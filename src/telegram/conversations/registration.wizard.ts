@@ -143,7 +143,7 @@ export class RegistrationWizard {
 
     if (result === CANCEL_SYMBOL) return null;
     if (result === BACK_SYMBOL) return null;
-    
+
     return result as string;
   }
 

@@ -7,6 +7,6 @@ export const clear = (ctx: Context) => {
   ctx.session.lastChatId = undefined;
   ctx.session.quickDate = "none";
   ctx.session.watchType = "day";
-  
+
   return ctx.reply("Настройки сессии были сброшены");
-}
+};
