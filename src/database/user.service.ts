@@ -68,13 +68,47 @@ export class UserService {
     setAsDefault: boolean = true,
   ) {
     const user = await this.findOrCreate(telegramId);
-    const newConfig = await this.prisma.config.create({ data: config });
+    
+    const existedConfig = (() => {
+      let existedConfig: (GroupInformation & { id: number }) | null = null;
+      
+      user.userConfigs.forEach(({ config: userConfig }) => {
+        const courseEquals = config.course === userConfig.course;
+        const specializationEquals = config.specialization === userConfig.specialization;
+        const groupEquals = config.group === userConfig.group;
+        
+        existedConfig = userConfig;
+
+        return courseEquals && specializationEquals && groupEquals
+      });
+
+      return existedConfig as (GroupInformation & { id: number }) | null;
+    })();
+    
+    const newConfig = existedConfig || await this.prisma.config.create({ data: config });
 
     if (setAsDefault) {
       await this.prisma.userConfig.updateMany({
         where: { userId: user.id },
         data: { defaulted: false },
       });
+    }
+
+    if (existedConfig) {
+      await this.prisma.userConfig.update({
+        where: {
+          userId_configId: {
+            configId: existedConfig.id,
+            userId: user.id
+          },
+        },
+        data: {
+          actived: true,
+          defaulted: setAsDefault
+        }
+      });
+
+      return newConfig;
     }
 
     await this.prisma.userConfig.create({

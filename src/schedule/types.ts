@@ -1,5 +1,3 @@
-import type { FileInfo, ExcelSheetInfo } from "./google";
-
 export interface GroupInformation {
   course: string;
   specialization: string;
