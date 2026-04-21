@@ -10,12 +10,24 @@ const userService = new UserService();
 export class ConfigHandler {
   public constructor() {}
 
+  public verify(data: string): boolean
+  public verify(ctx: Context): boolean
+  public verify(ctx: Context|string): boolean {
+    const callbackData = typeof ctx === "string" ? ctx : ctx.callbackQuery?.data!;
+    const [data] = callbackData.split(":");
+    if (data !== CALLBACK_DATA.SELECT_CONFIG) {
+      return false;
+    }
+
+    return true;
+  }
+
   public async handle(ctx: Context) {
     const data = ctx.callbackQuery?.data!;
     const telegramId = ctx.from?.id!;
 
     const [callbackData, dataConfigId, type] = data.split(":");
-    if (callbackData !== CALLBACK_DATA.SELECT_CONFIG) {
+    if (!this.verify(callbackData)) {
       return "NON";
     }
 

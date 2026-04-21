@@ -1,32 +1,23 @@
-import { env } from "../../env";
+import { Conversation } from "@grammyjs/conversations";
+import { Context } from "../bot";
 
-import type { Conversation } from "@grammyjs/conversations";
-import type { Context } from "../bot";
-
-import { InlineKeyboard } from "grammy";
-
-import { UserService } from "../../database/user.service";
+import { UserService } from "../../database";
 import { Schedule, WeekCalculator } from "../../schedule";
-
-import { DAY_NAMES_RU, resolveDayOffset, resolveQuickDate } from "../schedule";
-
-import { CALLBACK_DATA } from "../constants/callback-data";
-
-import {
-  formatDay,
-  formatWeek,
-  getWeekendText,
-} from "../utils/format-schedule";
-
+import { env } from "../../env";
 import { sendOrEditMessage } from "../utils/send-or-edit";
 import { configSelectionKeyboard, mainMenuKeyboard } from "../keyboards";
+import { DAY_NAMES_RU, resolveQuickDate } from "../schedule";
+import { formatDay, formatWeek, getWeekendText } from "../utils/format-schedule";
+import { InlineKeyboard } from "grammy";
+import { CALLBACK_DATA } from "../constants/callback-data";
+import { SCHEDULE_CONVERSATION } from "./schedule";
 
 const userService = new UserService();
 const weekCalculator = new WeekCalculator(env.START_DATE);
 
-export const SCHEDULE_CONVERSATION = "schedule";
+export const GROUPS_SCHEDULE_CONVERSATION = "groups:schedule";
 
-export const scheduleConversation = async (
+export const groupsScheduleConversation = async (
   conversation: Conversation<Context, Context>,
   ctx: Context,
 ) => {
@@ -38,8 +29,9 @@ export const scheduleConversation = async (
 
   const configs = await userService.getActiveConfigs(telegramId);
   const defaultConfig = configs.find((config) => config.defaulted);
-
-  if (configs.length === 0 || !defaultConfig) {
+  const currentConfig = configs.find((config) => config.group === session.quickConfigGroup) || defaultConfig;
+    
+  if (configs.length === 0 || !currentConfig) {
     return sendOrEditMessage(ctx, "Выберите группу", {
       keyboard: configSelectionKeyboard(configs),
       conversation,
@@ -66,33 +58,33 @@ export const scheduleConversation = async (
     });
   }
 
-  const currentGroup = defaultConfig;
-  const schedule = new Schedule(currentGroup, currentWeek);
+  const schedule = new Schedule(currentConfig, currentWeek);
   await schedule.initializeCache();
-
+  
   const week = await schedule.getWeekSchedule();
   const day = week.days[dayName];
-
+  
   if (!day) {
     return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
       conversation,
       keyboard: mainMenuKeyboard()
     });
   }
+  
 
   const dayText =
     dayName === "Воскресенье"
       ? getWeekendText(dayName, currentWeek, weekCalculator)
-      : formatDay(day, currentWeek, weekCalculator, currentGroup.group);
+      : formatDay(day, currentWeek, weekCalculator, currentConfig.group);
 
   const weekText = formatWeek(
     { days: week.days, weekNumber: currentWeek },
     weekCalculator,
-    currentGroup.group,
+    currentConfig.group,
   );
-
+  
   const keyboard = new InlineKeyboard();
-
+  
   if (session.watchType === "day") {
     keyboard
       .text("⬅️", CALLBACK_DATA.SCHEDULE_DAY_PREV)
@@ -109,14 +101,16 @@ export const scheduleConversation = async (
     keyboard.text("🗓 На день", CALLBACK_DATA.SCHEDULE_SWITCH_TODAY).row();
   }
 
-  keyboard
-    .text("🔄 Сменить группу", CALLBACK_DATA.SCHEDULE_SWITCH_GROUP)
-    .text(currentGroup.group, CALLBACK_DATA.SCHEDULE_WEEK_RESET)
-    .row();
+  configs.filter((config) => config.id !== currentConfig.id).forEach((config, index) => {
+    keyboard.text(`🔎 ${config.group}`, `groups-schedule:${config.group}`);
+    if (index % 2 === 0) {
+      keyboard.row();
+    }
+  });
+  keyboard.row();
 
-  keyboard.text("Вывести все группы", CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS).row();
-
-  const text = session.watchType === "day" ? dayText : weekText;
+  keyboard.text("Обычное расписание", CALLBACK_DATA.SCHEDULE_SWITCH_TODAY).row();
+  keyboard.text("В главное меню", CALLBACK_DATA.MENU_BACK).row();
 
   await conversation.external(({ session }) => {
     if (
@@ -126,8 +120,10 @@ export const scheduleConversation = async (
       session.currentDayOffset = dayOffset;
     }
 
+    session.quickConfigGroup = null;
     session.quickDate = "none";
   });
 
+  const text = session.watchType === "day" ? dayText : weekText;
   await sendOrEditMessage(ctx, text, { keyboard, session, conversation });
-};
+}

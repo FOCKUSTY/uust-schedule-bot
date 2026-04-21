@@ -8,6 +8,8 @@ export const CALLBACK_DATA = {
 
   SCHEDULE_SWITCH_GROUP: "schedule:group:switch",
 
+  SCHEDULE_PRINT_ALL_GROUPS: "schedule:print:allgroups",
+
   SCHEDULE_WEEK_PREV: "schedule:week:previous",
   SCHEDULE_WEEK_NEXT: "schedule:week:next",
   SCHEDULE_WEEK_RESET: "schedule:week:reset",
@@ -27,4 +29,6 @@ export const CALLBACK_DATA = {
   REG_CANCEL: "reg:cancel",
 
   SELECT_CONFIG: "select_config",
+
+  GROUPS_SCHEDULE: "groups-schedule"
 } as const;

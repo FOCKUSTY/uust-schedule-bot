@@ -7,6 +7,7 @@ import { NavigationService } from "../services/navigation.service";
 import { UserService } from "../../database";
 import { sendOrEditMessage } from "../utils/send-or-edit";
 import { configSelectionKeyboard } from "../keyboards";
+import { GROUPS_SCHEDULE_CONVERSATION } from "../conversations/groups-schedule";
 
 const navigation = new NavigationService();
 const userService = new UserService();
@@ -64,6 +65,10 @@ export class ScheduleHandler {
   }
 
   private registerGroupSwitchHandlers() {
+    this.callbackHandlers.set(CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS, async (ctx) => {
+      return ctx.conversation.enter(GROUPS_SCHEDULE_CONVERSATION);
+    })
+    
     this.callbackHandlers.set(
       CALLBACK_DATA.SCHEDULE_SWITCH_GROUP,
       async (ctx) => {
