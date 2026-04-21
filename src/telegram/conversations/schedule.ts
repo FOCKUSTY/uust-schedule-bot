@@ -20,6 +20,7 @@ import {
 
 import { sendOrEditMessage } from "../utils/send-or-edit";
 import { configSelectionKeyboard, mainMenuKeyboard } from "../keyboards";
+import { GROUPS_SCHEDULE_CONVERSATION } from "./groups-schedule";
 
 const userService = new UserService();
 const weekCalculator = new WeekCalculator(env.START_DATE);

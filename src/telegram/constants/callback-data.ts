@@ -21,6 +21,8 @@ export const CALLBACK_DATA = {
   SCHEDULE_SWITCH_TODAY: "schedule:switch:today",
   SCHEDULE_SWITCH_TOWEEK: "schedule:switch:toweek",
 
+  SCHEDULE_STANDART: "schedule:standart",
+
   REG_COURSE_PREFIX: "reg:course",
   REG_SPEC_PREFIX: "reg:spec",
   REG_GROUP_PREFIX: "reg:group",

@@ -1,4 +1,4 @@
-import type { CallbackHandler } from "../bot";
+import type { CallbackHandler, Context } from "../bot";
 import { SCHEDULE_CONVERSATION } from "../conversations/schedule";
 
 import { CALLBACK_DATA } from "../constants/callback-data";
@@ -41,9 +41,17 @@ export class ScheduleHandler {
           key.includes("reset") ? undefined : key.includes("next") ? 1 : -1,
         );
 
-        return ctx.conversation.enter(SCHEDULE_CONVERSATION);
+        return this.enterConversation(ctx);
       });
     });
+  }
+
+  private enterConversation(ctx: Context) {
+    if (ctx.session.last.conversation === GROUPS_SCHEDULE_CONVERSATION && ctx.session.last.quickConfigGroup) {
+      return ctx.conversation.enter(GROUPS_SCHEDULE_CONVERSATION);
+    }
+    
+    return ctx.conversation.enter(SCHEDULE_CONVERSATION);
   }
 
   private registerDayWeekSwitchHandlers() {
@@ -51,7 +59,7 @@ export class ScheduleHandler {
       CALLBACK_DATA.SCHEDULE_SWITCH_TODAY,
       async (ctx) => {
         navigation.setWatchType(ctx.session, "day");
-        return ctx.conversation.enter(SCHEDULE_CONVERSATION);
+        return this.enterConversation(ctx);
       },
     );
 
@@ -59,6 +67,13 @@ export class ScheduleHandler {
       CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK,
       async (ctx) => {
         navigation.setWatchType(ctx.session, "week");
+        return this.enterConversation(ctx);
+      },
+    );
+
+    this.callbackHandlers.set(
+      CALLBACK_DATA.SCHEDULE_STANDART,
+      async (ctx) => {
         return ctx.conversation.enter(SCHEDULE_CONVERSATION);
       },
     );

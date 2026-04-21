@@ -25,6 +25,7 @@ export class GroupsScheduleHandler {
       return "NON";
     }
 
+    ctx.session.last.quickConfigGroup = null;
     ctx.session.quickConfigGroup = group;
 
     return ctx.conversation.enter(GROUPS_SCHEDULE_CONVERSATION);

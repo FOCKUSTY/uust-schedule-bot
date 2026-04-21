@@ -14,7 +14,6 @@ import {
 } from "../utils/format-schedule";
 import { InlineKeyboard } from "grammy";
 import { CALLBACK_DATA } from "../constants/callback-data";
-import { SCHEDULE_CONVERSATION } from "./schedule";
 
 const userService = new UserService();
 const weekCalculator = new WeekCalculator(env.START_DATE);
@@ -29,6 +28,10 @@ export const groupsScheduleConversation = async (
   const telegramId = ctx.from?.id;
   if (!telegramId) {
     throw new Error("id is not defined.");
+  }
+
+  if (session.last.conversation === GROUPS_SCHEDULE_CONVERSATION) {
+    session.quickConfigGroup = session.quickConfigGroup || session.last.quickConfigGroup;
   }
 
   const configs = await userService.getActiveConfigs(telegramId);
@@ -117,7 +120,7 @@ export const groupsScheduleConversation = async (
   keyboard.row();
 
   keyboard
-    .text("Обычное расписание", CALLBACK_DATA.SCHEDULE_SWITCH_TODAY)
+    .text("Обычное расписание", CALLBACK_DATA.SCHEDULE_STANDART)
     .row();
   keyboard.text("В главное меню", CALLBACK_DATA.MENU_BACK).row();
 
@@ -129,6 +132,8 @@ export const groupsScheduleConversation = async (
       session.currentDayOffset = dayOffset;
     }
 
+    session.last.conversation = GROUPS_SCHEDULE_CONVERSATION;
+    session.last.quickConfigGroup = currentConfig.group;
     session.quickConfigGroup = null;
     session.quickDate = "none";
   });
