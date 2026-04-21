@@ -57,8 +57,6 @@ export async function sendOrEditMessage(
     if (!ctx.message) {
       return;
     }
-
-    ctx.api.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
   } catch (error) {
     return reply();
   } finally {
