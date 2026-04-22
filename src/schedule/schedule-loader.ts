@@ -13,7 +13,7 @@ export class ScheduleLoader {
     private readonly formatter: ScheduleFormatter = new ScheduleFormatter(),
     cache?: Cache,
   ) {
-    this.cache = cache ?? new Cache("loader", "schedule");
+    this.cache = cache ?? new Cache("schedule:loader");
   }
 
   public async loadFullSchedule(

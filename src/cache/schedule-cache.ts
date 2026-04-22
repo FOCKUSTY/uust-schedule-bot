@@ -1,5 +1,3 @@
-import { join } from "node:path";
-
 import type {
   GroupInformation,
   ScheduleWeeks,
@@ -15,14 +13,10 @@ export class ScheduleCache {
 
   public constructor() {
     this.weeksCache = new Cache(
-      CACHE_FILE_NAME,
-      join(CACHE_FILE_NAME, "weeks"),
-      2000,
+      `${CACHE_FILE_NAME}:weeks`,
     );
     this.watcherCache = new Cache(
-      CACHE_FILE_NAME,
-      join(CACHE_FILE_NAME, "watcher"),
-      2000,
+      `${CACHE_FILE_NAME}:wather`,
     );
   }
 

@@ -32,6 +32,7 @@
     "googleapis": "^105.0.0",
     "grammy": "^1.42.0",
     "proper-lockfile": "^4.1.2",
+    "redis": "^5.12.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

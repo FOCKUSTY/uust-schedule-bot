@@ -1,20 +1,24 @@
+import { env } from "../env";
+
 import type { CacheStorage } from "./cache-storage.interface";
+
 import { FileCacheStorage } from "./file-cache-storage";
+import { RedisCacheStorage } from "./redis-cache-storage";
 import { TWO_HOURS_MS } from "./constants";
 
 export class Cache {
   private storage: CacheStorage;
   private operations: Record<string, number> = {};
 
-  public constructor(section: string, folder?: string, debounceMs?: number);
+  public constructor(section: string);
   public constructor(storage: CacheStorage);
   public constructor(
     storageOrSection: CacheStorage | string,
-    folder?: string,
-    debounceMs?: number,
   ) {
     if (typeof storageOrSection === "string") {
-      this.storage = new FileCacheStorage(storageOrSection, folder, debounceMs);
+      this.storage = env.CACHE_TYPE === "redis"
+        ? new RedisCacheStorage(storageOrSection)
+        : new FileCacheStorage(storageOrSection);
     } else {
       this.storage = storageOrSection;
     }

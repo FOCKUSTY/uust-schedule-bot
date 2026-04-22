@@ -1,8 +1,8 @@
-import { access, lstatSync, mkdirSync, readFileSync } from "node:fs";
 import type { CacheStorage } from "./cache-storage.interface";
 import type { SerializedCache } from "./types";
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import lockfile from "proper-lockfile";
@@ -17,12 +17,9 @@ export class FileCacheStorage implements CacheStorage {
 
   public constructor(
     section: string,
-    folder?: string,
     debounceMs: number = DEFAULT_DEBOUNCE_MS,
   ) {
-    const baseDir = folder
-      ? join(process.cwd(), "cache", folder)
-      : join(process.cwd(), "cache");
+    const baseDir = join(process.cwd(), "cache");
     const safeSection = section.replace(/[^a-zA-Z0-9-_]/g, "_");
     this.filePath = join(baseDir, `${safeSection}.cache`);
     this.debounceMs = debounceMs;
