@@ -10,9 +10,9 @@ export interface SessionData {
     specialization?: string;
   };
   last: {
-    conversation: string | null,
-    quickConfigGroup: string | null
-  },
+    conversation: string | null;
+    quickConfigGroup: string | null;
+  };
   watchType: "day" | "week";
   quickConfigGroup: string | null;
   quickDate: "none" | "today" | "tomorrow";
@@ -31,8 +31,8 @@ export function initial(): SessionData {
     quickDate: "today",
     last: {
       quickConfigGroup: null,
-      conversation: null
-    }
+      conversation: null,
+    },
   };
 }
 

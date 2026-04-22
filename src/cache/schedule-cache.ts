@@ -12,12 +12,8 @@ export class ScheduleCache {
   public readonly watcherCache: Cache;
 
   public constructor() {
-    this.weeksCache = new Cache(
-      `${CACHE_FILE_NAME}:weeks`,
-    );
-    this.watcherCache = new Cache(
-      `${CACHE_FILE_NAME}:wather`,
-    );
+    this.weeksCache = new Cache(`${CACHE_FILE_NAME}:weeks`);
+    this.watcherCache = new Cache(`${CACHE_FILE_NAME}:wather`);
   }
 
   public async loadAll(): Promise<void> {
@@ -75,7 +71,7 @@ export class ScheduleCache {
       lastModified: "",
       lastChecked: "",
     };
-    
+
     const updated = { ...current, ...entry };
     await this.watcherCache.set(groupKey, updated, ttlMs);
   }

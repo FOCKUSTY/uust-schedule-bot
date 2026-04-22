@@ -40,17 +40,20 @@ export class Schedule {
   }
 
   public async getWeekSchedule(): Promise<ScheduleWeek> {
-    return this.cache.weeksCache.use(this.cache.buildWeeksKey(this.group), async () => {
-      const weeks = await this.loader.loadFullSchedule(this.group);
-      const week = weeks[this.weekNumber];
-      if (!week) {
-        throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
-      }
+    return this.cache.weeksCache.use(
+      this.cache.buildWeeksKey(this.group),
+      async () => {
+        const weeks = await this.loader.loadFullSchedule(this.group);
+        const week = weeks[this.weekNumber];
+        if (!week) {
+          throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
+        }
 
-      await this.cache.saveAll();
+        await this.cache.saveAll();
 
-      return week;
-    });
+        return week;
+      },
+    );
   }
 
   public withWeek(newWeek: number): Schedule {

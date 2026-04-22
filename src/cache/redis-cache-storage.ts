@@ -48,7 +48,7 @@ export class RedisCacheStorage implements CacheStorage {
 
   public async set(key: string, value: unknown, ttlMs?: number): Promise<void> {
     await this.connect();
-    
+
     const serialized = JSON.stringify(value);
     const prefixedKey = this.prefixKey(key);
 

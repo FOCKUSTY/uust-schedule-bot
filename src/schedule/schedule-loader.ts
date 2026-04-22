@@ -20,22 +20,26 @@ export class ScheduleLoader {
     group: GroupInformation,
   ): Promise<ScheduleWeeks> {
     const key = this.buildWeeksKey(group);
-    return this.cache.use(key, async () => {
-      const workbook = await this.driveService.loadWorkbook(
-        group.course,
-        group.specialization,
-      );
-      const dimensions = workbook.getSheetDimensions(group.group);
-      const rawData = workbook.getSheetDataByRange(group.group, {
-        startRow: 1,
-        startColumn: 1,
-        endRow: dimensions.endRow + 1,
-        endColumn: dimensions.endCol + 1,
-      });
+    return this.cache.use(
+      key,
+      async () => {
+        const workbook = await this.driveService.loadWorkbook(
+          group.course,
+          group.specialization,
+        );
+        const dimensions = workbook.getSheetDimensions(group.group);
+        const rawData = workbook.getSheetDataByRange(group.group, {
+          startRow: 1,
+          startColumn: 1,
+          endRow: dimensions.endRow + 1,
+          endColumn: dimensions.endCol + 1,
+        });
 
-      const { weeks } = this.formatter.format(rawData);
-      return weeks;
-    }, CACHE_TTL.WEEKS);
+        const { weeks } = this.formatter.format(rawData);
+        return weeks;
+      },
+      CACHE_TTL.WEEKS,
+    );
   }
 
   public async loadWeekSchedule(
@@ -43,15 +47,19 @@ export class ScheduleLoader {
     weekNumber: number,
   ): Promise<ScheduleWeek> {
     const key = this.buildWeekKey(group, weekNumber);
-    return this.cache.use(key, async () => {
-      const weeks = await this.loadFullSchedule(group);
-      const week = weeks[weekNumber];
-      if (!week) {
-        throw new Error(`Неделя ${weekNumber} не найдена в расписании`);
-      }
+    return this.cache.use(
+      key,
+      async () => {
+        const weeks = await this.loadFullSchedule(group);
+        const week = weeks[weekNumber];
+        if (!week) {
+          throw new Error(`Неделя ${weekNumber} не найдена в расписании`);
+        }
 
-      return week;
-    }, CACHE_TTL.SINGLE_WEEK);
+        return week;
+      },
+      CACHE_TTL.SINGLE_WEEK,
+    );
   }
 
   private buildWeeksKey(group: GroupInformation): string {

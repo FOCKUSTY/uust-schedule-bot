@@ -12,13 +12,12 @@ export class Cache {
 
   public constructor(section: string);
   public constructor(storage: CacheStorage);
-  public constructor(
-    storageOrSection: CacheStorage | string,
-  ) {
+  public constructor(storageOrSection: CacheStorage | string) {
     if (typeof storageOrSection === "string") {
-      this.storage = env.CACHE_TYPE === "redis"
-        ? new RedisCacheStorage(storageOrSection)
-        : new FileCacheStorage(storageOrSection);
+      this.storage =
+        env.CACHE_TYPE === "redis"
+          ? new RedisCacheStorage(storageOrSection)
+          : new FileCacheStorage(storageOrSection);
     } else {
       this.storage = storageOrSection;
     }
@@ -28,16 +27,16 @@ export class Cache {
     key: string,
     callback: () => Promise<Value>,
     ttl: number = TWO_HOURS_MS,
-    maxCacheOperations: number = 10
+    maxCacheOperations: number = 10,
   ) {
     this.operations[key] ??= 0;
 
     return new Promise<Value>(async (resolve) => {
       let resolved: boolean = false;
-      
-      const cached = await this.storage.get(key) as Value|undefined;
+
+      const cached = (await this.storage.get(key)) as Value | undefined;
       if (cached !== undefined) {
-        this.operations[key] = this.operations[key]+1;
+        this.operations[key] = this.operations[key] + 1;
         resolved = true;
         resolve(cached);
 
@@ -48,7 +47,7 @@ export class Cache {
 
       const value = await callback();
       await this.storage.set(key, value, ttl);
-      
+
       if (!resolved) {
         this.operations[key] = 0;
         return resolve(value);

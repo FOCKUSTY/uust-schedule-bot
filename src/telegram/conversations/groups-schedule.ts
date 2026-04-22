@@ -31,7 +31,8 @@ export const groupsScheduleConversation = async (
   }
 
   if (session.last.conversation === GROUPS_SCHEDULE_CONVERSATION) {
-    session.quickConfigGroup = session.quickConfigGroup || session.last.quickConfigGroup;
+    session.quickConfigGroup =
+      session.quickConfigGroup || session.last.quickConfigGroup;
   }
 
   const configs = await userService.getActiveConfigs(telegramId);
@@ -119,9 +120,7 @@ export const groupsScheduleConversation = async (
     });
   keyboard.row();
 
-  keyboard
-    .text("Обычное расписание", CALLBACK_DATA.SCHEDULE_STANDART)
-    .row();
+  keyboard.text("Обычное расписание", CALLBACK_DATA.SCHEDULE_STANDART).row();
   keyboard.text("В главное меню", CALLBACK_DATA.MENU_BACK).row();
 
   await conversation.external(({ session }) => {

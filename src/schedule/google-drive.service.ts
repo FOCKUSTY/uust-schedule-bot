@@ -24,27 +24,35 @@ export class GoogleDriveService {
 
   public async getCourses(): Promise<FileInfo[]> {
     const key = `courses`;
-    return this.cache.use<FileInfo[]>(key, async () => {
-      const files = await this.drive.listAllFiles(this.rootFolderId);
-      const courses = files.filter((file) => file.isFolder);
-      
-      return courses;
-    }, CACHE_TTL.GROUPS);
+    return this.cache.use<FileInfo[]>(
+      key,
+      async () => {
+        const files = await this.drive.listAllFiles(this.rootFolderId);
+        const courses = files.filter((file) => file.isFolder);
+
+        return courses;
+      },
+      CACHE_TTL.GROUPS,
+    );
   }
 
   public async getSpecializations(courseName: string): Promise<FileInfo[]> {
     const key = `${courseName}:specializations`;
-    return this.cache.use<FileInfo[]>(key, async () => {
-      const courseFolder = await this.findFolderByName(
-        this.rootFolderId,
-        courseName,
-      );
+    return this.cache.use<FileInfo[]>(
+      key,
+      async () => {
+        const courseFolder = await this.findFolderByName(
+          this.rootFolderId,
+          courseName,
+        );
 
-      const files = await this.drive.listAllFiles(courseFolder.id);
-      const specializations = files.filter((file) => !file.isFolder);
+        const files = await this.drive.listAllFiles(courseFolder.id);
+        const specializations = files.filter((file) => !file.isFolder);
 
-      return specializations;
-    }, CACHE_TTL.SPECIALIZATIONS);
+        return specializations;
+      },
+      CACHE_TTL.SPECIALIZATIONS,
+    );
   }
 
   public async getGroups(
@@ -52,12 +60,19 @@ export class GoogleDriveService {
     specializationName: string,
   ): Promise<ExcelSheetInfo[]> {
     const key = `${courseName}:${specializationName}:groups`;
-    return this.cache.use<ExcelSheetInfo[]>(key, async () => {
-      const workbook = await this.loadWorkbook(courseName, specializationName);
-      const groups = workbook.listSheets();
+    return this.cache.use<ExcelSheetInfo[]>(
+      key,
+      async () => {
+        const workbook = await this.loadWorkbook(
+          courseName,
+          specializationName,
+        );
+        const groups = workbook.listSheets();
 
-      return groups;
-    }, CACHE_TTL.GROUPS);
+        return groups;
+      },
+      CACHE_TTL.GROUPS,
+    );
   }
 
   /**
@@ -75,7 +90,10 @@ export class GoogleDriveService {
         courseName,
       );
 
-      const file = await this.findFileByName(courseFolder.id, specializationName);
+      const file = await this.findFileByName(
+        courseFolder.id,
+        specializationName,
+      );
       return this.excelReader.loadWorkbook(file.id);
     });
   }
@@ -111,11 +129,11 @@ export class GoogleDriveService {
             file.name === `${name}.xls`)
         );
       });
-  
+
       if (!file) {
         throw new Error(`Файл "${name}" не найден`);
       }
-  
+
       return file;
     });
   }

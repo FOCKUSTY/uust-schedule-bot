@@ -47,10 +47,13 @@ export class ScheduleHandler {
   }
 
   private enterConversation(ctx: Context) {
-    if (ctx.session.last.conversation === GROUPS_SCHEDULE_CONVERSATION && ctx.session.last.quickConfigGroup) {
+    if (
+      ctx.session.last.conversation === GROUPS_SCHEDULE_CONVERSATION &&
+      ctx.session.last.quickConfigGroup
+    ) {
       return ctx.conversation.enter(GROUPS_SCHEDULE_CONVERSATION);
     }
-    
+
     return ctx.conversation.enter(SCHEDULE_CONVERSATION);
   }
 
@@ -71,12 +74,9 @@ export class ScheduleHandler {
       },
     );
 
-    this.callbackHandlers.set(
-      CALLBACK_DATA.SCHEDULE_STANDART,
-      async (ctx) => {
-        return ctx.conversation.enter(SCHEDULE_CONVERSATION);
-      },
-    );
+    this.callbackHandlers.set(CALLBACK_DATA.SCHEDULE_STANDART, async (ctx) => {
+      return ctx.conversation.enter(SCHEDULE_CONVERSATION);
+    });
   }
 
   private registerGroupSwitchHandlers() {

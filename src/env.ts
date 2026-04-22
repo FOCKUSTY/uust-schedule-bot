@@ -3,7 +3,12 @@ import { Env, isPort } from "fenviee";
 
 export const env = Env.create(process.env)({
   partial: [],
-  required: ["GOOGLE_DRIVE_FOLDER_URL", "DATABASE_URL", "TELEGRAM_BOT_TOKEN", "REDIS_URL"],
+  required: [
+    "GOOGLE_DRIVE_FOLDER_URL",
+    "DATABASE_URL",
+    "TELEGRAM_BOT_TOKEN",
+    "REDIS_URL",
+  ],
   unique: {
     START_DATE: (value?: string) => {
       if (!value) {
@@ -26,7 +31,7 @@ export const env = Env.create(process.env)({
       }
 
       return "file";
-    }
+    },
   },
   default: {},
 });
