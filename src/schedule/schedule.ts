@@ -8,7 +8,6 @@ import { GoogleDriveService } from "./google-drive.service";
 import { ScheduleLoader } from "./schedule-loader";
 import { WeekCalculator } from "./week-calculator";
 import { ScheduleCache } from "../cache/schedule-cache";
-import { CACHE_TTL } from "./constants";
 
 export class Schedule {
   public readonly loader: ScheduleLoader;
@@ -41,23 +40,17 @@ export class Schedule {
   }
 
   public async getWeekSchedule(): Promise<ScheduleWeek> {
-    const cachedWeeks = await this.cache.getWeeks(this.group);
-    const cachedWeek = cachedWeeks?.[this.weekNumber];
-    if (cachedWeek) {
-      return cachedWeek;
-    }
+    return this.cache.weeksCache.use(this.cache.buildWeeksKey(this.group), async () => {
+      const weeks = await this.loader.loadFullSchedule(this.group);
+      const week = weeks[this.weekNumber];
+      if (!week) {
+        throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
+      }
 
-    const weeks = await this.loader.loadFullSchedule(this.group);
+      await this.cache.saveAll();
 
-    await this.cache.setWeeks(this.group, weeks, CACHE_TTL.WEEKS);
-    await this.cache.saveAll();
-
-    const week = weeks[this.weekNumber];
-    if (!week) {
-      throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
-    }
-
-    return week;
+      return week;
+    });
   }
 
   public withWeek(newWeek: number): Schedule {

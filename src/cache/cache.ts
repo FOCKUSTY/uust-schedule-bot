@@ -4,6 +4,7 @@ import { TWO_HOURS_MS } from "./constants";
 
 export class Cache {
   private storage: CacheStorage;
+  private operations: Record<string, number> = {};
 
   public constructor(section: string, folder?: string, debounceMs?: number);
   public constructor(storage: CacheStorage);
@@ -17,6 +18,38 @@ export class Cache {
     } else {
       this.storage = storageOrSection;
     }
+  }
+
+  public use<Value>(
+    key: string,
+    callback: () => Promise<Value>,
+    ttl: number = TWO_HOURS_MS,
+    maxCacheOperations: number = 10
+  ) {
+    this.operations[key] ??= 0;
+
+    return new Promise<Value>(async (resolve) => {
+      let resolved: boolean = false;
+      
+      const cached = await this.storage.get(key) as Value|undefined;
+      if (cached !== undefined) {
+        this.operations[key] = this.operations[key]+1;
+        resolved = true;
+        resolve(cached);
+
+        if (maxCacheOperations > this.operations[key]) {
+          return;
+        }
+      }
+
+      const value = await callback();
+      await this.storage.set(key, value, ttl);
+      
+      if (!resolved) {
+        this.operations[key] = 0;
+        return resolve(value);
+      }
+    });
   }
 
   public async set<Value>(

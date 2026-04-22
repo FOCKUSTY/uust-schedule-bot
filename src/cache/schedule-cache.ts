@@ -10,8 +10,8 @@ import { Cache } from "./cache";
 import { CACHE_FILE_NAME, TWO_HOURS_MS } from "./constants";
 
 export class ScheduleCache {
-  private readonly weeksCache: Cache;
-  private readonly watcherCache: Cache;
+  public readonly weeksCache: Cache;
+  public readonly watcherCache: Cache;
 
   public constructor() {
     this.weeksCache = new Cache(
@@ -53,7 +53,6 @@ export class ScheduleCache {
   ): Promise<void> {
     const key = this.buildWeeksKey(group);
     await this.weeksCache.set(key, weeks, ttlMs);
-    // Автосохранение запустится внутри Cache.set
   }
 
   public async getAllCachedGroupKeys(): Promise<string[]> {
@@ -82,6 +81,7 @@ export class ScheduleCache {
       lastModified: "",
       lastChecked: "",
     };
+    
     const updated = { ...current, ...entry };
     await this.watcherCache.set(groupKey, updated, ttlMs);
   }
@@ -90,7 +90,7 @@ export class ScheduleCache {
     await this.watcherCache.delete(groupKey);
   }
 
-  private buildWeeksKey(group: GroupInformation): string {
+  public buildWeeksKey(group: GroupInformation): string {
     return `${group.course}:${group.specialization}:${group.group}`;
   }
 }
