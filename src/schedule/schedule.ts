@@ -29,8 +29,8 @@ export class Schedule {
     }
 
     const driveService = new GoogleDriveService(rootFolderId);
-    this.loader = deps?.loader ?? new ScheduleLoader(driveService);
-    this.cache = deps?.cache ?? new ScheduleCache();
+    this.loader = deps?.loader ?? new ScheduleLoader(driveService, group.group);
+    this.cache = deps?.cache ?? new ScheduleCache(group.group);
     this.weekCalculator =
       deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
   }

@@ -31,7 +31,7 @@ export class Cache {
   ) {
     this.operations[key] ??= 0;
 
-    return new Promise<Value>(async (resolve) => {
+    return new Promise<Value>(async (resolve, reject) => {
       let resolved: boolean = false;
 
       const cached = (await this.storage.get(key)) as Value | undefined;
@@ -45,12 +45,16 @@ export class Cache {
         }
       }
 
-      const value = await callback();
-      await this.storage.set(key, value, ttl);
-
-      if (!resolved) {
-        this.operations[key] = 0;
-        return resolve(value);
+      try {
+        const value = await callback();
+        await this.storage.set(key, value, ttl);
+  
+        if (!resolved) {
+          this.operations[key] = 0;
+          return resolve(value);
+        }
+      } catch (error) {
+        reject(error);
       }
     });
   }

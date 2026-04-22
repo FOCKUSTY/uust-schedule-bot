@@ -11,9 +11,9 @@ export class ScheduleCache {
   public readonly weeksCache: Cache;
   public readonly watcherCache: Cache;
 
-  public constructor() {
-    this.weeksCache = new Cache(`${CACHE_FILE_NAME}:weeks`);
-    this.watcherCache = new Cache(`${CACHE_FILE_NAME}:wather`);
+  public constructor(group: string) {
+    this.weeksCache = new Cache(`${CACHE_FILE_NAME}:weeks:${group}`);
+    this.watcherCache = new Cache(`${CACHE_FILE_NAME}:wather:${group}`);
   }
 
   public async loadAll(): Promise<void> {

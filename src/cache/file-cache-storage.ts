@@ -20,7 +20,7 @@ export class FileCacheStorage implements CacheStorage {
     debounceMs: number = DEFAULT_DEBOUNCE_MS,
   ) {
     const baseDir = join(process.cwd(), "cache");
-    const safeSection = section.replace(/[^a-zA-Z0-9-_]/g, "_");
+    const safeSection = section.replace(/[^а-яА-Яa-zA-Z0-9-_]/g, "_");
     this.filePath = join(baseDir, `${safeSection}.cache`);
     this.debounceMs = debounceMs;
 

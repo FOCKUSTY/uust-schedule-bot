@@ -10,10 +10,11 @@ export class ScheduleLoader {
 
   public constructor(
     private readonly driveService: GoogleDriveService,
+    group: string,
     private readonly formatter: ScheduleFormatter = new ScheduleFormatter(),
     cache?: Cache,
   ) {
-    this.cache = cache ?? new Cache("schedule:loader");
+    this.cache = cache ?? new Cache(`schedule:loader:${group}`);
   }
 
   public async loadFullSchedule(
