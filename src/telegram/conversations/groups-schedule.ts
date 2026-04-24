@@ -114,7 +114,7 @@ export const groupsScheduleConversation = async (
     .filter((config) => config.id !== currentConfig.id)
     .forEach((config, index) => {
       keyboard.text(`🔎 ${config.group}`, `groups-schedule:${config.group}`);
-      if (index % 2 === 0) {
+      if (index % 2 === 1) {
         keyboard.row();
       }
     });
