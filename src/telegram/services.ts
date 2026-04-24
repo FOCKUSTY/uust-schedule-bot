@@ -2,7 +2,12 @@ import { env } from "../env";
 import { ScheduleCache } from "../cache";
 
 import { NotificationService } from "../notifications/notification.service";
-import { GoogleDriveService, Schedule, ScheduleLoader, WeekCalculator } from "../schedule";
+import {
+  GoogleDriveService,
+  Schedule,
+  ScheduleLoader,
+  WeekCalculator,
+} from "../schedule";
 import { extractIdFromUrl } from "../schedule/google";
 
 import { ScheduleWatcher } from "../watcher/schedule-watcher";
@@ -41,15 +46,20 @@ export const cacheAll = async () => {
     for (const spec of specs) {
       const groups = await driveService.getGroups(course.name, spec.name);
       group: for (const group of groups) {
-        const schedule = new Schedule({
-          course: course.name,
-          specialization: spec.name,
-          group: group.name
-        }, weekCalculator.getCurrentWeek());
+        const schedule = new Schedule(
+          {
+            course: course.name,
+            specialization: spec.name,
+            group: group.name,
+          },
+          weekCalculator.getCurrentWeek(),
+        );
 
         try {
           await schedule.getWeekSchedule();
-          console.log(`Загружено расписание для ${course.name} ${spec.name} ${group.name}`);
+          console.log(
+            `Загружено расписание для ${course.name} ${spec.name} ${group.name}`,
+          );
         } catch (error) {
           console.log(`Ошибка в ${course.name} ${spec.name} ${group.name}`);
           continue group;
@@ -59,7 +69,7 @@ export const cacheAll = async () => {
   }
 
   console.log("Кэширование завершено");
-}
+};
 
 cache.loadAll().then(() => {
   watcher.start();

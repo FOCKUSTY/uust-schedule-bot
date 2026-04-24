@@ -24,7 +24,7 @@ export class Schedule {
       loader?: ScheduleLoader;
       cache?: ScheduleCache;
       weekCalculator?: WeekCalculator;
-      provider?: ScheduleProvider
+      provider?: ScheduleProvider;
     },
   ) {
     const rootFolderId = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL);

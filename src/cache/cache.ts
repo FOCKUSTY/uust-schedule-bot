@@ -48,7 +48,7 @@ export class Cache {
       try {
         const value = await callback();
         await this.storage.set(key, value, ttl);
-  
+
         if (!resolved) {
           this.operations[key] = 0;
           return resolve(value);
