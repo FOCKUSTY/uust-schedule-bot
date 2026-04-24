@@ -15,6 +15,8 @@ export class FileCacheStorage implements CacheStorage {
   private saveTimeout?: NodeJS.Timeout;
   private readonly debounceMs: number;
 
+  private loaded: boolean = false;
+
   public constructor(
     section: string,
     debounceMs: number = DEFAULT_DEBOUNCE_MS,
@@ -33,6 +35,8 @@ export class FileCacheStorage implements CacheStorage {
   }
 
   public async get(key: string): Promise<unknown | undefined> {
+    await this.load();
+
     const entry = this.memory.get(key);
     if (!entry) {
       return undefined;
@@ -88,6 +92,10 @@ export class FileCacheStorage implements CacheStorage {
   }
 
   public async load(): Promise<void> {
+    if (this.loaded) {
+      return;
+    }
+
     try {
       await mkdir(join(this.filePath, ".."), { recursive: true });
 
@@ -97,6 +105,8 @@ export class FileCacheStorage implements CacheStorage {
       for (const [key, serialized] of Object.entries(raw)) {
         this.memory.set(key, serialized);
       }
+
+      this.loaded = true;
     } catch (error) {
       if (
         error instanceof Error &&

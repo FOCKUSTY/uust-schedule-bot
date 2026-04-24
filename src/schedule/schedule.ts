@@ -1,6 +1,7 @@
 import { env } from "../env";
 
 import type { GroupInformation, ScheduleWeek } from "./types";
+import type { ScheduleProvider } from "./schedule-provider.interface";
 
 import { extractIdFromUrl } from "./google";
 import { GoogleDriveService } from "./google-drive.service";
@@ -8,8 +9,10 @@ import { GoogleDriveService } from "./google-drive.service";
 import { ScheduleLoader } from "./schedule-loader";
 import { WeekCalculator } from "./week-calculator";
 import { ScheduleCache } from "../cache/schedule-cache";
+import { WebsiteScheduleProvider } from "./website-schedule.provider";
 
 export class Schedule {
+  private readonly provider: ScheduleProvider;
   public readonly loader: ScheduleLoader;
   public readonly cache: ScheduleCache;
   public readonly weekCalculator: WeekCalculator;
@@ -21,6 +24,7 @@ export class Schedule {
       loader?: ScheduleLoader;
       cache?: ScheduleCache;
       weekCalculator?: WeekCalculator;
+      provider?: ScheduleProvider
     },
   ) {
     const rootFolderId = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL);
@@ -33,6 +37,7 @@ export class Schedule {
     this.cache = deps?.cache ?? new ScheduleCache(group.group);
     this.weekCalculator =
       deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
+    this.provider = deps?.provider ?? new WebsiteScheduleProvider();
   }
 
   public async initializeCache(): Promise<void> {
@@ -43,15 +48,7 @@ export class Schedule {
     return this.cache.weeksCache.use(
       this.cache.buildWeeksKey(this.group),
       async () => {
-        const weeks = await this.loader.loadFullSchedule(this.group);
-        const week = weeks[this.weekNumber];
-        if (!week) {
-          throw new Error(`Неделя ${this.weekNumber} отсутствует в расписании`);
-        }
-
-        await this.cache.saveAll();
-
-        return week;
+        return this.provider.getWeekSchedule(this.group, this.weekNumber);
       },
     );
   }
