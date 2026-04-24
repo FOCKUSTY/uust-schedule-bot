@@ -1,21 +1,38 @@
 import { GroupInformation, ScheduleWeek, ScheduleWeeks } from "./types";
 import { ScheduleProvider } from "./schedule-provider.interface";
 import { ScheduleUrlsExtractor } from "./schedule-urls-extractor";
+import { read, utils } from "xlsx";
+
+const DAYS_OF_WEEK = [
+  "Понедельник",
+  "Вторник",
+  "Среда",
+  "Четверг",
+  "Пятница",
+  "Суббота",
+] as const;
+
+const MAX_WEEK_NUMBER = 44;
+const MIN_WEEK_NUMBER = 1;
+const SINGLE_LETTER_WEEK_LIMIT = 25;
+const PAIRS_PER_DAY = 6;
+const DAYS_COUNT = 6;
+const CSV_COLUMN_INDEX = 0;
+const FIRST_CHAR_CODE_A = 64;
 
 export class WebsiteScheduleProvider implements ScheduleProvider {
-  public constructor(private urls?: Record<string, string>) {}
+  private readonly urlExtractor: ScheduleUrlsExtractor;
+  private cachedUrls: Record<string, string> | null = null;
+
+  public constructor(urlExtractor?: ScheduleUrlsExtractor) {
+    this.urlExtractor = urlExtractor ?? new ScheduleUrlsExtractor();
+  }
 
   public async getFullSchedule(
-    group: GroupInformation,
+    _group: GroupInformation,
   ): Promise<ScheduleWeeks> {
-    const urls = await this.loadUrls();
-    const baseUrl = urls[group.group];
-    if (!baseUrl) {
-      throw new Error(`URL для группы ${group.group} не найден`);
-    }
-
     throw new Error(
-      "getFullSchedule не поддерживается для WebsiteScheduleProvider",
+      `getFullSchedule is not supported for ${WebsiteScheduleProvider.name}`,
     );
   }
 
@@ -23,126 +40,102 @@ export class WebsiteScheduleProvider implements ScheduleProvider {
     group: GroupInformation,
     weekNumber: number,
   ): Promise<ScheduleWeek> {
-    const urls = await this.loadUrls();
-    const baseUrl = urls[group.group];
+    const scheduleUrls = await this.getScheduleUrls();
+    const baseUrl = scheduleUrls[group.group];
     if (!baseUrl) {
-      throw new Error(`URL для группы ${group.group} не найден`);
+      throw new Error(`URL for group ${group.group} not found`);
     }
 
-    const columnLetter = this.getColumnLetter(weekNumber + 1);
-    const url = `${baseUrl}&range=${columnLetter}3:${columnLetter}38`;
+    const requestedWeek = weekNumber + 1;
+    this.validateWeekNumber(requestedWeek);
 
+    const columnLetter = this.convertWeekNumberToColumnLetter(requestedWeek);
+    const csvUrl = `${baseUrl}&range=${columnLetter}3:${columnLetter}38`;
+
+    const csvText = await this.fetchCsv(csvUrl);
+    const parsedRows = this.parseCsv(csvText);
+    const scheduleWeek = this.convertRowsToScheduleWeek(parsedRows, weekNumber);
+
+    return scheduleWeek;
+  }
+
+  private async getScheduleUrls(): Promise<Record<string, string>> {
+    if (this.cachedUrls !== null) {
+      return this.cachedUrls;
+    }
+
+    const urls = await this.urlExtractor.getScheduleUrls();
+    this.cachedUrls = urls;
+
+    return urls;
+  }
+
+  private validateWeekNumber(weekNumber: number): void {
+    if (weekNumber < MIN_WEEK_NUMBER || weekNumber > MAX_WEEK_NUMBER) {
+      throw new Error(
+        `Week number must be between ${MIN_WEEK_NUMBER} and ${MAX_WEEK_NUMBER}`,
+      );
+    }
+  }
+
+  private convertWeekNumberToColumnLetter(weekNumber: number): string {
+    if (weekNumber <= SINGLE_LETTER_WEEK_LIMIT) {
+      const charCode = FIRST_CHAR_CODE_A + weekNumber + 1;
+      return String.fromCharCode(charCode);
+    }
+
+    const firstLetter = "A";
+    const secondLetterCode =
+      FIRST_CHAR_CODE_A + (weekNumber - SINGLE_LETTER_WEEK_LIMIT);
+    const secondLetter = String.fromCharCode(secondLetterCode);
+
+    return firstLetter + secondLetter;
+  }
+
+  private async fetchCsv(url: string): Promise<string> {
     const response = await fetch(url);
-    const csvText = await response.text();
-    const rows = this.parseCSV(csvText);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CSV: ${response.status}`);
+    }
 
-    return this.convertToScheduleWeek(rows, weekNumber);
+    return response.text();
   }
 
-  private getColumnLetter(weekNum: number): string {
-    if (weekNum < 1 || weekNum > 44) {
-      throw new Error("Неделя вне диапазона 1..44");
-    }
-
-    if (weekNum <= 25) {
-      return String.fromCharCode(64 + weekNum + 1);
-    }
-
-    const first = "A";
-    const second = String.fromCharCode(64 + (weekNum - 25));
-
-    return first + second;
+  private parseCsv(csvText: string): string[][] {
+    const workbook = read(csvText, { type: "string", raw: true });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+    return data as string[][];
   }
 
-  private parseCSV(csvText: string): string[][] {
-    const rows = [];
-    let currentRow = [];
-    let currentValue = "";
-    let inQuotes = false;
-    let i = 0;
-
-    while (i < csvText.length) {
-      const char = csvText[i];
-      const nextChar = csvText[i + 1];
-
-      if (char === '"' && !inQuotes) {
-        // Начало quoted значения
-        inQuotes = true;
-      } else if (char === '"' && nextChar === '"') {
-        // Экранированные кавычки внутри quoted значения
-        currentValue += '"';
-        i++; // Пропускаем следующую кавычку
-      } else if (char === '"' && inQuotes) {
-        // Конец quoted значения
-        inQuotes = false;
-      } else if (char === "," && !inQuotes) {
-        // Разделитель вне кавычек
-        currentRow.push(currentValue);
-        currentValue = "";
-      } else if (
-        (char === "\n" || (char === "\r" && nextChar === "\n")) &&
-        !inQuotes
-      ) {
-        // Конец строки вне кавычек
-        if (char === "\r") {
-          i++; // Пропускаем \n
-        }
-        currentRow.push(currentValue);
-        rows.push(currentRow);
-        currentRow = [];
-        currentValue = "";
-      } else {
-        // Обычный символ
-        currentValue += char;
-      }
-      i++;
-    }
-
-    // Добавляем последнее значение и строку, если они есть
-    if (currentValue !== "" || currentRow.length > 0) {
-      currentRow.push(currentValue);
-      rows.push(currentRow);
-    }
-
-    return rows;
-  }
-
-  private convertToScheduleWeek(
+  private convertRowsToScheduleWeek(
     rows: string[][],
     weekNumber: number,
   ): ScheduleWeek {
-    const days = [
-      "Понедельник",
-      "Вторник",
-      "Среда",
-      "Четверг",
-      "Пятница",
-      "Суббота",
-    ];
     const scheduleWeek: ScheduleWeek = { weekNumber, days: {} };
 
-    for (let dayIdx = 0; dayIdx < 6; dayIdx++) {
-      const dayName = days[dayIdx];
+    for (let dayIndex = 0; dayIndex < DAYS_COUNT; dayIndex++) {
+      const dayName = DAYS_OF_WEEK[dayIndex];
       scheduleWeek.days[dayName] = { dayName, pairs: {} };
-      for (let pairIdx = 0; pairIdx < 6; pairIdx++) {
-        const row = rows[dayIdx * 6 + pairIdx];
-        const cellValue = row?.[0]?.trim() || null;
-        if (cellValue) {
-          scheduleWeek.days[dayName].pairs[pairIdx + 1] = cellValue;
+
+      for (let pairIndex = 0; pairIndex < PAIRS_PER_DAY; pairIndex++) {
+        const rowIndex = dayIndex * PAIRS_PER_DAY + pairIndex;
+        const row = rows[rowIndex];
+
+        if (!row) {
+          continue;
+        }
+
+        const rawCellValue = row[CSV_COLUMN_INDEX];
+        const cellValue = rawCellValue?.trim() ?? null;
+
+        if (cellValue !== null) {
+          const pairNumber = pairIndex + 1;
+          scheduleWeek.days[dayName].pairs[pairNumber] = cellValue;
         }
       }
     }
 
     return scheduleWeek;
-  }
-
-  private async loadUrls() {
-    if (this.urls) {
-      return this.urls;
-    }
-
-    const urls = await new ScheduleUrlsExtractor().getScheduleUrls();
-    this.urls = urls;
-    return urls;
   }
 }

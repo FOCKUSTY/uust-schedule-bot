@@ -1,17 +1,17 @@
+import { createContext, Script } from "vm";
 import { Cache } from "../cache";
-import vm from "vm";
 
 export class ScheduleUrlsExtractor {
   private cache: Cache;
 
-  constructor(cache?: Cache) {
+  public constructor(cache?: Cache) {
     this.cache = cache ?? new Cache("schedule-urls");
   }
 
   /**
    * Возвращает объект scheduleUrls (из кэша или с сайта)
    */
-  async getScheduleUrls(): Promise<Record<string, string>> {
+  public async getScheduleUrls(): Promise<Record<string, string>> {
     return this.cache.use("schedule-urls", async () => {
       const html = await this.fetchHtml();
       const urls = this.extractScheduleUrls(html);
@@ -19,7 +19,7 @@ export class ScheduleUrlsExtractor {
     });
   }
 
-  async refresh(): Promise<Record<string, string>> {
+  public async refresh(): Promise<Record<string, string>> {
     await this.cache.delete("schedule-urls");
     return this.getScheduleUrls();
   }
@@ -42,14 +42,16 @@ export class ScheduleUrlsExtractor {
 
     const objectString = match[1];
     const sandbox = { result: null };
-    const script = new vm.Script(`result = ${objectString}`);
-    const context = vm.createContext(sandbox);
+    const script = new Script(`result = ${objectString}`);
+    const context = createContext(sandbox);
+
     script.runInContext(context);
 
     const urls = sandbox.result;
     if (typeof urls !== "object" || urls === null) {
       throw new Error("scheduleUrls не является объектом");
     }
+
     return urls as Record<string, string>;
   }
 }
