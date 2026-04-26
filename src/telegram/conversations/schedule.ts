@@ -8,7 +8,7 @@ import { InlineKeyboard } from "grammy";
 import { UserService } from "../../database/user.service";
 import { Schedule, WeekCalculator } from "../../schedule";
 
-import { DAY_NAMES_RU, resolveDayOffset, resolveQuickDate } from "../schedule";
+import { DAY_NAMES_RU, resolveQuickDate } from "../schedule";
 
 import { CALLBACK_DATA } from "../constants/callback-data";
 
@@ -20,7 +20,6 @@ import {
 
 import { sendOrEditMessage } from "../utils/send-or-edit";
 import { configSelectionKeyboard, mainMenuKeyboard } from "../keyboards";
-import { GROUPS_SCHEDULE_CONVERSATION } from "./groups-schedule";
 
 const userService = new UserService();
 const weekCalculator = new WeekCalculator(env.START_DATE);

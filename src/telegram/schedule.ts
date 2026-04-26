@@ -15,11 +15,16 @@ export const getDayIndexForToday = (): number => {
   return (day + 6) % 7;
 };
 
-export const resolveDayOffset = (currentOffset: number): number => {
+const resolveDayOffset = (currentOffset: number) => {
   const length = DAY_NAMES_RU.length;
   const currentIndex = getDayIndexForToday();
 
-  return (((currentIndex + currentOffset) % length) + length) % length;
+  const day = currentIndex + currentOffset;
+
+  return {
+    dayIndex: ((day % length) + length) % length,
+    weekOffset: Math.trunc(day / length)
+  };
 };
 
 export const resolveQuickDate = ({
@@ -47,28 +52,24 @@ export const resolveQuickDate = ({
   }
 
   const week = weekNumber + weekOffset;
-  const dayIndex = resolveDayOffset(dayOffset);
+  const { dayIndex, weekOffset: resolvedWeekOffset } = resolveDayOffset(dayOffset);
 
   return {
     dayIndex,
     dayOffset: 0,
-    weekNumber: week,
+    weekNumber: week + resolvedWeekOffset,
   };
 };
 
 export const getTomorrow = (weekNumber: number) => {
-  const currentIndex = getDayIndexForToday();
-  if (DAY_NAMES_RU[currentIndex] === "Воскресенье") {
-    return {
-      dayIndex: 0,
-      weekNumber: weekNumber + 1,
-      dayOffset: 0,
-    };
-  }
+  const {
+    dayIndex,
+    weekOffset
+  } = resolveDayOffset(1);
 
   return {
-    dayIndex: currentIndex + 1,
-    dayOffset: 1,
-    weekNumber,
+    dayIndex: dayIndex,
+    dayOffset: 0,
+    weekNumber: weekNumber+weekOffset,
   };
 };
