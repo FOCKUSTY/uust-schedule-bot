@@ -63,6 +63,7 @@ export const groupsScheduleConversation = async (
 
   const dayName = DAY_NAMES_RU.at(dayIndex);
   if (!dayName) {
+    console.log(`dayName (${dayName}) is not defined`);
     return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
       conversation,
     });
@@ -74,7 +75,8 @@ export const groupsScheduleConversation = async (
   const week = await schedule.getWeekSchedule();
   const day = week.days[dayName];
 
-  if (!day) {
+  if (!day && dayName !== "Воскресенье") {
+    console.log(`day (${day}) is not defined`);
     return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
       conversation,
       keyboard: mainMenuKeyboard(),
