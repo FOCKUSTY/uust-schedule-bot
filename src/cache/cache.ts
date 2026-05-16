@@ -29,12 +29,12 @@ export class Cache {
     {
       maxCacheOperations = 10,
       ttl = TWO_HOURS_MS,
-      skip = false
+      skip = false,
     }: {
-      ttl?: number,
-      maxCacheOperations?: number,
-      skip?: boolean
-    }
+      ttl?: number;
+      maxCacheOperations?: number;
+      skip?: boolean;
+    },
   ) {
     if (skip) {
       return callback();

@@ -1,4 +1,8 @@
-import type { GroupInformation, ScheduleWeek, WeekCalculator } from "../schedule";
+import type {
+  GroupInformation,
+  ScheduleWeek,
+  WeekCalculator,
+} from "../schedule";
 import type { GoogleDriveService } from "../schedule/google-drive.service";
 import { ScheduleCache } from "../cache";
 import { ScheduleLoader } from "../schedule/schedule-loader";
@@ -16,7 +20,7 @@ export class ScheduleWatcher {
     private readonly cache: ScheduleCache,
     private readonly notificationService: NotificationService,
     private readonly options: WatcherOptions,
-    private readonly weekCalculator: WeekCalculator
+    private readonly weekCalculator: WeekCalculator,
   ) {}
 
   /**
@@ -61,8 +65,8 @@ export class ScheduleWatcher {
     const groupKeys = await cache.keys();
     for (const key of groupKeys) {
       const value = await cache.get<{
-        enabled: boolean,
-        group: GroupInformation
+        enabled: boolean;
+        group: GroupInformation;
       }>(key);
 
       if (!value || !value.enabled) {
@@ -79,9 +83,11 @@ export class ScheduleWatcher {
   private async checkGroup(group: GroupInformation): Promise<void> {
     const week = this.weekCalculator.getCurrentWeek();
     const scheduleLoader = new ScheduleLoader(group.group);
-    
+
     const schedule = await scheduleLoader.loadWeekSchedule(group, week, true);
-    const cachedSchedule = await this.cache.watcherCache.get<ScheduleWeek>(group.group);
+    const cachedSchedule = await this.cache.watcherCache.get<ScheduleWeek>(
+      group.group,
+    );
     if (!cachedSchedule) {
       return;
     }

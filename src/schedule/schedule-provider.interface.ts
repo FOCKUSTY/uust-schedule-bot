@@ -5,6 +5,6 @@ export interface ScheduleProvider {
   getWeekSchedule(
     group: GroupInformation,
     weekNumber: number,
-    skipCache: boolean
+    skipCache: boolean,
   ): Promise<ScheduleWeek>;
 }

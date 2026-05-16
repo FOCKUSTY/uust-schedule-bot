@@ -79,7 +79,9 @@ export class RegistrationWizard {
     conversation: MyConversation,
     ctx: Context,
   ): Promise<string | null> {
-    const driveService = new GoogleDriveService(extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!);
+    const driveService = new GoogleDriveService(
+      extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!,
+    );
     const result = await this.promptForSelection({
       conversation,
       ctx,
@@ -99,7 +101,9 @@ export class RegistrationWizard {
     ctx: Context,
     course: string,
   ): Promise<string | null> {
-    const driveService = new GoogleDriveService(extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!);
+    const driveService = new GoogleDriveService(
+      extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!,
+    );
     const result = await this.promptForSelection({
       conversation,
       ctx,
@@ -124,7 +128,9 @@ export class RegistrationWizard {
     course: string,
     specialization: string,
   ): Promise<string | null> {
-    const driveService = new GoogleDriveService(extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!);
+    const driveService = new GoogleDriveService(
+      extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!,
+    );
     const result = await this.promptForSelection({
       conversation,
       ctx,

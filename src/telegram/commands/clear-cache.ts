@@ -11,15 +11,21 @@ export const clearCache = (ctx: Context) => {
 
   const cachePath = join(process.cwd(), "cache");
 
-  const files = readdirSync(cachePath);  
+  const files = readdirSync(cachePath);
   for (const file of files) {
     writeFileSync(join(cachePath, file), "{}");
   }
 
-  const builder = new StringBuilder().code(JSON.stringify({
-    text: "Очищены следующие файлы",
-    files
-  }, undefined, 2));
+  const builder = new StringBuilder().code(
+    JSON.stringify(
+      {
+        text: "Очищены следующие файлы",
+        files,
+      },
+      undefined,
+      2,
+    ),
+  );
 
   return ctx.reply(builder.toString());
-}
+};

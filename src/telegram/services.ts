@@ -2,11 +2,7 @@ import { env } from "../env";
 import { ScheduleCache } from "../cache";
 
 import { NotificationService } from "../notifications/notification.service";
-import {
-  GoogleDriveService,
-  Schedule,
-  WeekCalculator,
-} from "../schedule";
+import { GoogleDriveService, Schedule, WeekCalculator } from "../schedule";
 import { extractIdFromUrl } from "../schedule/google";
 
 import { ScheduleWatcher } from "../watcher/schedule-watcher";
@@ -31,7 +27,7 @@ const watcher = new ScheduleWatcher(
   {
     intervalMs: env.WATCHER_INTERVAL_MINUTES * 60 * 1000,
   },
-  new WeekCalculator(env.START_DATE)
+  new WeekCalculator(env.START_DATE),
 );
 
 export const cacheAll = async () => {

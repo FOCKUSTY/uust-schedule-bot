@@ -31,14 +31,18 @@ export class GoogleDriveService {
         const courses = files.filter((file) => file.isFolder);
 
         return courses;
-      }, {
+      },
+      {
         ttl: CACHE_TTL.GROUPS,
-        skip: skipCache
-      }
+        skip: skipCache,
+      },
     );
   }
 
-  public async getSpecializations(courseName: string, skipCache: boolean): Promise<FileInfo[]> {
+  public async getSpecializations(
+    courseName: string,
+    skipCache: boolean,
+  ): Promise<FileInfo[]> {
     const key = `${courseName}:specializations`;
     return this.cache.use<FileInfo[]>(
       key,
@@ -46,24 +50,25 @@ export class GoogleDriveService {
         const courseFolder = await this.findFolderByName(
           this.rootFolderId,
           courseName,
-          skipCache
+          skipCache,
         );
 
         const files = await this.drive.listAllFiles(courseFolder.id);
         const specializations = files.filter((file) => !file.isFolder);
 
         return specializations;
-      }, {
+      },
+      {
         ttl: CACHE_TTL.SPECIALIZATIONS,
-        skip: skipCache
-      }
+        skip: skipCache,
+      },
     );
   }
 
   public async getGroups(
     courseName: string,
     specializationName: string,
-    skipCache: boolean
+    skipCache: boolean,
   ): Promise<ExcelSheetInfo[]> {
     const key = `${courseName}:${specializationName}:groups`;
     return this.cache.use<ExcelSheetInfo[]>(
@@ -72,15 +77,16 @@ export class GoogleDriveService {
         const workbook = await this.loadWorkbook(
           courseName,
           specializationName,
-          skipCache
+          skipCache,
         );
         const groups = workbook.listSheets();
 
         return groups;
-      }, {
+      },
+      {
         ttl: CACHE_TTL.GROUPS,
-        skip: skipCache
-      }
+        skip: skipCache,
+      },
     );
   }
 
@@ -91,70 +97,84 @@ export class GoogleDriveService {
   public async loadWorkbook(
     courseName: string,
     specializationName: string,
-    skipCache: boolean
+    skipCache: boolean,
   ): Promise<ExcelWorkbook> {
     const key = `workbook:${courseName}:${specializationName}`;
-    return this.cache.use<ExcelWorkbook>(key, async () => {
-      const courseFolder = await this.findFolderByName(
-        this.rootFolderId,
-        courseName,
-        skipCache
-      );
+    return this.cache.use<ExcelWorkbook>(
+      key,
+      async () => {
+        const courseFolder = await this.findFolderByName(
+          this.rootFolderId,
+          courseName,
+          skipCache,
+        );
 
-      const file = await this.findFileByName(
-        courseFolder.id,
-        specializationName,
-        skipCache
-      );
-      return this.excelReader.loadWorkbook(file.id);
-    }, {
-      skip: skipCache
-    });
+        const file = await this.findFileByName(
+          courseFolder.id,
+          specializationName,
+          skipCache,
+        );
+        return this.excelReader.loadWorkbook(file.id);
+      },
+      {
+        skip: skipCache,
+      },
+    );
   }
 
   private async findFolderByName(
     parentId: string,
     name: string,
-    skipCache: boolean
+    skipCache: boolean,
   ): Promise<FileInfo> {
     const key = `folder:${parentId}:${name}`;
-    return this.cache.use<FileInfo>(key, async () => {
-      const files = await this.drive.listAllFiles(parentId);
-      const folder = files.find((file) => file.isFolder && file.name === name);
-      if (!folder) {
-        throw new Error(`Папка "${name}" не найдена`);
-      }
+    return this.cache.use<FileInfo>(
+      key,
+      async () => {
+        const files = await this.drive.listAllFiles(parentId);
+        const folder = files.find(
+          (file) => file.isFolder && file.name === name,
+        );
+        if (!folder) {
+          throw new Error(`Папка "${name}" не найдена`);
+        }
 
-      return folder;
-    }, {
-      skip: skipCache
-    });
+        return folder;
+      },
+      {
+        skip: skipCache,
+      },
+    );
   }
 
   private async findFileByName(
     parentId: string,
     name: string,
-    skipCache: boolean
+    skipCache: boolean,
   ): Promise<FileInfo> {
     const key = `file:${parentId}:${name}`;
-    return this.cache.use<FileInfo>(key, async () => {
-      const files = await this.drive.listAllFiles(parentId);
-      const file = files.find((file) => {
-        return (
-          !file.isFolder &&
-          (file.name === name ||
-            file.name === `${name}.xlsx` ||
-            file.name === `${name}.xls`)
-        );
-      });
+    return this.cache.use<FileInfo>(
+      key,
+      async () => {
+        const files = await this.drive.listAllFiles(parentId);
+        const file = files.find((file) => {
+          return (
+            !file.isFolder &&
+            (file.name === name ||
+              file.name === `${name}.xlsx` ||
+              file.name === `${name}.xls`)
+          );
+        });
 
-      if (!file) {
-        throw new Error(`Файл "${name}" не найден`);
-      }
+        if (!file) {
+          throw new Error(`Файл "${name}" не найден`);
+        }
 
-      return file;
-    }, {
-      skip: skipCache
-    });
+        return file;
+      },
+      {
+        skip: skipCache,
+      },
+    );
   }
 }

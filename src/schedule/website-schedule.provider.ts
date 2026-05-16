@@ -39,7 +39,7 @@ export class WebsiteScheduleProvider implements ScheduleProvider {
   public async getWeekSchedule(
     group: GroupInformation,
     weekNumber: number,
-    skipCache: boolean
+    skipCache: boolean,
   ): Promise<ScheduleWeek> {
     const scheduleUrls = await this.getScheduleUrls(skipCache);
     const baseUrl = scheduleUrls[group.group];
@@ -60,7 +60,9 @@ export class WebsiteScheduleProvider implements ScheduleProvider {
     return scheduleWeek;
   }
 
-  private async getScheduleUrls(skipCache: boolean): Promise<Record<string, string>> {
+  private async getScheduleUrls(
+    skipCache: boolean,
+  ): Promise<Record<string, string>> {
     if (this.cachedUrls !== null) {
       return this.cachedUrls;
     }

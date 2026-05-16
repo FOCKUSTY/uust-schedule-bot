@@ -23,7 +23,7 @@ const resolveDayOffset = (currentOffset: number) => {
 
   return {
     dayIndex: ((day % length) + length) % length,
-    weekOffset: Math.trunc(day / length)
+    weekOffset: Math.trunc(day / length),
   };
 };
 
@@ -52,7 +52,8 @@ export const resolveQuickDate = ({
   }
 
   const week = weekNumber + weekOffset;
-  const { dayIndex, weekOffset: resolvedWeekOffset } = resolveDayOffset(dayOffset);
+  const { dayIndex, weekOffset: resolvedWeekOffset } =
+    resolveDayOffset(dayOffset);
 
   return {
     dayIndex,
@@ -62,14 +63,11 @@ export const resolveQuickDate = ({
 };
 
 export const getTomorrow = (weekNumber: number) => {
-  const {
-    dayIndex,
-    weekOffset
-  } = resolveDayOffset(1);
+  const { dayIndex, weekOffset } = resolveDayOffset(1);
 
   return {
     dayIndex: dayIndex,
     dayOffset: 0,
-    weekNumber: weekNumber+weekOffset,
+    weekNumber: weekNumber + weekOffset,
   };
 };

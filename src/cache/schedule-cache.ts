@@ -11,17 +11,26 @@ import { ONE_DAY_MS } from "../schedule";
 const ONE_WEEK_MS = ONE_DAY_MS * 7;
 
 export class ScheduleCache {
-  private static readonly GROUPS_CACHE = new Cache(`${CACHE_FILE_NAME}:watcher:groups`);
-  
-  public static updateGlobalGroupInfo(group: GroupInformation|"global", enabled: boolean = true) {
+  private static readonly GROUPS_CACHE = new Cache(
+    `${CACHE_FILE_NAME}:watcher:groups`,
+  );
+
+  public static updateGlobalGroupInfo(
+    group: GroupInformation | "global",
+    enabled: boolean = true,
+  ) {
     if (group === "global") {
       return null;
     }
 
-    return this.GROUPS_CACHE.set(group.group, {
-      enabled,
-      group,
-    }, ONE_WEEK_MS);
+    return this.GROUPS_CACHE.set(
+      group.group,
+      {
+        enabled,
+        group,
+      },
+      ONE_WEEK_MS,
+    );
   }
 
   public static getGlobalGroupsCache() {

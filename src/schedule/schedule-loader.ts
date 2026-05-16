@@ -9,10 +9,7 @@ export class ScheduleLoader {
   private readonly cache: Cache;
   private readonly provider: ScheduleProvider;
 
-  public constructor(
-    group: string,
-    cache?: Cache,
-  ) {
+  public constructor(group: string, cache?: Cache) {
     this.cache = cache ?? new Cache(`schedule:loader:${group}`);
     this.provider = new WebsiteScheduleProvider();
   }
@@ -20,21 +17,26 @@ export class ScheduleLoader {
   public async loadWeekSchedule(
     group: GroupInformation,
     weekNumber: number,
-    skipCache: boolean = true
-  ): Promise<ScheduleWeek> {    
+    skipCache: boolean = true,
+  ): Promise<ScheduleWeek> {
     const key = this.buildWeekKey(group, weekNumber);
     return this.cache.use(
       key,
       async () => {
-        const week = await this.provider.getWeekSchedule(group, weekNumber, skipCache);
+        const week = await this.provider.getWeekSchedule(
+          group,
+          weekNumber,
+          skipCache,
+        );
         if (!week) {
           throw new Error(`Неделя ${weekNumber} не найдена в расписании`);
         }
 
         return week;
-      }, {
+      },
+      {
         ttl: CACHE_TTL.SINGLE_WEEK,
-        skip: skipCache
+        skip: skipCache,
       },
     );
   }

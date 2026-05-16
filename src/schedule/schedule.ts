@@ -28,7 +28,7 @@ export class Schedule {
     },
   ) {
     ScheduleCache.updateGlobalGroupInfo(group);
-    
+
     this.loader = deps?.loader ?? new ScheduleLoader(group.group);
     this.cache = deps?.cache ?? new ScheduleCache(group.group);
     this.weekCalculator =
@@ -44,10 +44,15 @@ export class Schedule {
     return this.cache.weeksCache.use(
       this.cache.buildWeeksKey(this.group),
       async () => {
-        return this.provider.getWeekSchedule(this.group, this.weekNumber, skipCache);
-      }, {
-        skip: skipCache
-      }
+        return this.provider.getWeekSchedule(
+          this.group,
+          this.weekNumber,
+          skipCache,
+        );
+      },
+      {
+        skip: skipCache,
+      },
     );
   }
 
