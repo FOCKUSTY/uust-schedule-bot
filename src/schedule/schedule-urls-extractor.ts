@@ -11,17 +11,19 @@ export class ScheduleUrlsExtractor {
   /**
    * Возвращает объект scheduleUrls (из кэша или с сайта)
    */
-  public async getScheduleUrls(): Promise<Record<string, string>> {
+  public async getScheduleUrls(skipCache: boolean): Promise<Record<string, string>> {
     return this.cache.use("schedule-urls", async () => {
       const html = await this.fetchHtml();
       const urls = this.extractScheduleUrls(html);
       return urls;
+    }, {
+      skip: skipCache
     });
   }
 
-  public async refresh(): Promise<Record<string, string>> {
+  public async refresh(skipCache: boolean): Promise<Record<string, string>> {
     await this.cache.delete("schedule-urls");
-    return this.getScheduleUrls();
+    return this.getScheduleUrls(skipCache);
   }
 
   private async fetchHtml(): Promise<string> {

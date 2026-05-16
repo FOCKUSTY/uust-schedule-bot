@@ -71,7 +71,7 @@ export const scheduleConversation = async (
   const schedule = new Schedule(currentGroup, currentWeek);
   await schedule.initializeCache();
 
-  const week = await schedule.getWeekSchedule();
+  const week = await schedule.getWeekSchedule(false);
   const day = week.days[dayName];
 
   if (!day && dayName !== "Воскресенье") {

@@ -34,7 +34,7 @@ app.get("/:course/:specialization/:group/:week", async (request, response) => {
       Number(week),
     );
 
-    const scheduleWeek = await schedule.getWeekSchedule();
+    const scheduleWeek = await schedule.getWeekSchedule(false);
 
     return response.send(JSON.stringify(scheduleWeek.days, undefined, 2));
   } catch {

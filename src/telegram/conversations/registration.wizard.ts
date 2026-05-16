@@ -1,13 +1,14 @@
 import type { Context, MyConversation } from "../bot";
-import type { FileInfo, ExcelSheetInfo } from "../../schedule/google";
+import { extractIdFromUrl } from "../../schedule/google";
 
 import { InlineKeyboard } from "grammy";
 
-import { Schedule } from "../../schedule/schedule";
 import { UserService } from "../../database/user.service";
 import { CALLBACK_DATA } from "../constants/callback-data";
 import { mainMenuKeyboard } from "../keyboards";
 import { sendOrEditMessage } from "../utils/send-or-edit";
+import { GoogleDriveService } from "../../schedule";
+import { env } from "../../env";
 
 const BACK_SYMBOL = Symbol("back");
 const CANCEL_SYMBOL = Symbol("cancel");
@@ -27,12 +28,10 @@ interface SelectionPromptParams {
 }
 
 export class RegistrationWizard {
-  private readonly schedule: Schedule; // нужен только для доступа к getLoader()
   private readonly userService: UserService;
 
-  public constructor(userService: UserService, schedule: Schedule) {
+  public constructor(userService: UserService) {
     this.userService = userService;
-    this.schedule = schedule;
   }
 
   public async start(
@@ -80,15 +79,14 @@ export class RegistrationWizard {
     conversation: MyConversation,
     ctx: Context,
   ): Promise<string | null> {
-    const loader = this.schedule.getLoader();
-    const driveService = loader["driveService"];
+    const driveService = new GoogleDriveService(extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!);
     const result = await this.promptForSelection({
       conversation,
       ctx,
       step: 1,
       totalSteps: 3,
       promptPrefix: "выберите курс",
-      fetchItems: () => driveService.getCourses(),
+      fetchItems: () => driveService.getCourses(false),
       callbackPrefix: CALLBACK_DATA.REG_COURSE_PREFIX,
     });
 
@@ -101,15 +99,14 @@ export class RegistrationWizard {
     ctx: Context,
     course: string,
   ): Promise<string | null> {
-    const loader = this.schedule.getLoader();
-    const driveService = loader["driveService"];
+    const driveService = new GoogleDriveService(extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!);
     const result = await this.promptForSelection({
       conversation,
       ctx,
       step: 2,
       totalSteps: 3,
       promptPrefix: "выберите специальность",
-      fetchItems: () => driveService.getSpecializations(course),
+      fetchItems: () => driveService.getSpecializations(course, false),
       callbackPrefix: CALLBACK_DATA.REG_SPEC_PREFIX,
       backData: CALLBACK_DATA.REG_BACK_TO_COURSE,
       currentSelectionInfo: `📖 Курс: ${course}`,
@@ -127,15 +124,14 @@ export class RegistrationWizard {
     course: string,
     specialization: string,
   ): Promise<string | null> {
-    const loader = this.schedule.getLoader();
-    const driveService = loader["driveService"];
+    const driveService = new GoogleDriveService(extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL)!);
     const result = await this.promptForSelection({
       conversation,
       ctx,
       step: 3,
       totalSteps: 3,
       promptPrefix: "выберите группу",
-      fetchItems: () => driveService.getGroups(course, specialization),
+      fetchItems: () => driveService.getGroups(course, specialization, false),
       callbackPrefix: CALLBACK_DATA.REG_GROUP_PREFIX,
       backData: CALLBACK_DATA.REG_BACK_TO_SPEC,
       currentSelectionInfo: `📌 Курс: ${course}, специальность: ${specialization}`,

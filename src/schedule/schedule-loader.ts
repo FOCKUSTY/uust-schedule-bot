@@ -1,70 +1,42 @@
-import type { GroupInformation, ScheduleWeek, ScheduleWeeks } from "./types";
+import type { GroupInformation, ScheduleWeek } from "./types";
+import type { ScheduleProvider } from "./schedule-provider.interface";
 
-import { GoogleDriveService } from "./google-drive.service";
-import { ScheduleFormatter } from "./formatter";
+import { WebsiteScheduleProvider } from "./website-schedule.provider";
 import { Cache } from "../cache";
 import { CACHE_TTL } from "./constants";
 
 export class ScheduleLoader {
   private readonly cache: Cache;
+  private readonly provider: ScheduleProvider;
 
   public constructor(
-    private readonly driveService: GoogleDriveService,
     group: string,
-    private readonly formatter: ScheduleFormatter = new ScheduleFormatter(),
     cache?: Cache,
   ) {
     this.cache = cache ?? new Cache(`schedule:loader:${group}`);
-  }
-
-  public async loadFullSchedule(
-    group: GroupInformation,
-  ): Promise<ScheduleWeeks> {
-    const key = this.buildWeeksKey(group);
-    return this.cache.use(
-      key,
-      async () => {
-        const workbook = await this.driveService.loadWorkbook(
-          group.course,
-          group.specialization,
-        );
-        const dimensions = workbook.getSheetDimensions(group.group);
-        const rawData = workbook.getSheetDataByRange(group.group, {
-          startRow: 1,
-          startColumn: 1,
-          endRow: dimensions.endRow + 1,
-          endColumn: dimensions.endCol + 1,
-        });
-
-        const { weeks } = this.formatter.format(rawData);
-        return weeks;
-      },
-      CACHE_TTL.WEEKS,
-    );
+    this.provider = new WebsiteScheduleProvider();
   }
 
   public async loadWeekSchedule(
     group: GroupInformation,
     weekNumber: number,
-  ): Promise<ScheduleWeek> {
+    skipCache: boolean = true
+  ): Promise<ScheduleWeek> {    
     const key = this.buildWeekKey(group, weekNumber);
     return this.cache.use(
       key,
       async () => {
-        const weeks = await this.loadFullSchedule(group);
-        const week = weeks[weekNumber];
+        const week = await this.provider.getWeekSchedule(group, weekNumber, skipCache);
         if (!week) {
           throw new Error(`Неделя ${weekNumber} не найдена в расписании`);
         }
 
         return week;
+      }, {
+        ttl: CACHE_TTL.SINGLE_WEEK,
+        skip: skipCache
       },
-      CACHE_TTL.SINGLE_WEEK,
     );
-  }
-
-  private buildWeeksKey(group: GroupInformation): string {
-    return `weeks:${group.course}:${group.specialization}:${group.group}`;
   }
 
   private buildWeekKey(group: GroupInformation, weekNumber: number): string {

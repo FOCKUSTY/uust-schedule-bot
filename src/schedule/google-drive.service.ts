@@ -22,7 +22,7 @@ export class GoogleDriveService {
     this.excelReader = new ExcelReader(this.drive);
   }
 
-  public async getCourses(): Promise<FileInfo[]> {
+  public async getCourses(skipCache: boolean): Promise<FileInfo[]> {
     const key = `courses`;
     return this.cache.use<FileInfo[]>(
       key,
@@ -31,12 +31,14 @@ export class GoogleDriveService {
         const courses = files.filter((file) => file.isFolder);
 
         return courses;
-      },
-      CACHE_TTL.GROUPS,
+      }, {
+        ttl: CACHE_TTL.GROUPS,
+        skip: skipCache
+      }
     );
   }
 
-  public async getSpecializations(courseName: string): Promise<FileInfo[]> {
+  public async getSpecializations(courseName: string, skipCache: boolean): Promise<FileInfo[]> {
     const key = `${courseName}:specializations`;
     return this.cache.use<FileInfo[]>(
       key,
@@ -44,20 +46,24 @@ export class GoogleDriveService {
         const courseFolder = await this.findFolderByName(
           this.rootFolderId,
           courseName,
+          skipCache
         );
 
         const files = await this.drive.listAllFiles(courseFolder.id);
         const specializations = files.filter((file) => !file.isFolder);
 
         return specializations;
-      },
-      CACHE_TTL.SPECIALIZATIONS,
+      }, {
+        ttl: CACHE_TTL.SPECIALIZATIONS,
+        skip: skipCache
+      }
     );
   }
 
   public async getGroups(
     courseName: string,
     specializationName: string,
+    skipCache: boolean
   ): Promise<ExcelSheetInfo[]> {
     const key = `${courseName}:${specializationName}:groups`;
     return this.cache.use<ExcelSheetInfo[]>(
@@ -66,12 +72,15 @@ export class GoogleDriveService {
         const workbook = await this.loadWorkbook(
           courseName,
           specializationName,
+          skipCache
         );
         const groups = workbook.listSheets();
 
         return groups;
-      },
-      CACHE_TTL.GROUPS,
+      }, {
+        ttl: CACHE_TTL.GROUPS,
+        skip: skipCache
+      }
     );
   }
 
@@ -82,25 +91,31 @@ export class GoogleDriveService {
   public async loadWorkbook(
     courseName: string,
     specializationName: string,
+    skipCache: boolean
   ): Promise<ExcelWorkbook> {
     const key = `workbook:${courseName}:${specializationName}`;
     return this.cache.use<ExcelWorkbook>(key, async () => {
       const courseFolder = await this.findFolderByName(
         this.rootFolderId,
         courseName,
+        skipCache
       );
 
       const file = await this.findFileByName(
         courseFolder.id,
         specializationName,
+        skipCache
       );
       return this.excelReader.loadWorkbook(file.id);
+    }, {
+      skip: skipCache
     });
   }
 
   private async findFolderByName(
     parentId: string,
     name: string,
+    skipCache: boolean
   ): Promise<FileInfo> {
     const key = `folder:${parentId}:${name}`;
     return this.cache.use<FileInfo>(key, async () => {
@@ -111,12 +126,15 @@ export class GoogleDriveService {
       }
 
       return folder;
+    }, {
+      skip: skipCache
     });
   }
 
   private async findFileByName(
     parentId: string,
     name: string,
+    skipCache: boolean
   ): Promise<FileInfo> {
     const key = `file:${parentId}:${name}`;
     return this.cache.use<FileInfo>(key, async () => {
@@ -135,6 +153,8 @@ export class GoogleDriveService {
       }
 
       return file;
+    }, {
+      skip: skipCache
     });
   }
 }

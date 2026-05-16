@@ -26,9 +26,20 @@ export class Cache {
   public use<Value>(
     key: string,
     callback: () => Promise<Value>,
-    ttl: number = TWO_HOURS_MS,
-    maxCacheOperations: number = 10,
+    {
+      maxCacheOperations = 10,
+      ttl = TWO_HOURS_MS,
+      skip = false
+    }: {
+      ttl?: number,
+      maxCacheOperations?: number,
+      skip?: boolean
+    }
   ) {
+    if (skip) {
+      return callback();
+    }
+
     this.operations[key] ??= 0;
 
     return new Promise<Value>(async (resolve, reject) => {

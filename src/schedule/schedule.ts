@@ -27,13 +27,9 @@ export class Schedule {
       provider?: ScheduleProvider;
     },
   ) {
-    const rootFolderId = extractIdFromUrl(env.GOOGLE_DRIVE_FOLDER_URL);
-    if (!rootFolderId) {
-      throw new Error("Invalid GOOGLE_DRIVE_FOLDER_URL");
-    }
-
-    const driveService = new GoogleDriveService(rootFolderId);
-    this.loader = deps?.loader ?? new ScheduleLoader(driveService, group.group);
+    ScheduleCache.updateGlobalGroupInfo(group);
+    
+    this.loader = deps?.loader ?? new ScheduleLoader(group.group);
     this.cache = deps?.cache ?? new ScheduleCache(group.group);
     this.weekCalculator =
       deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
@@ -44,12 +40,14 @@ export class Schedule {
     await this.cache.loadAll();
   }
 
-  public async getWeekSchedule(): Promise<ScheduleWeek> {
+  public async getWeekSchedule(skipCache: boolean): Promise<ScheduleWeek> {
     return this.cache.weeksCache.use(
       this.cache.buildWeeksKey(this.group),
       async () => {
-        return this.provider.getWeekSchedule(this.group, this.weekNumber);
-      },
+        return this.provider.getWeekSchedule(this.group, this.weekNumber, skipCache);
+      }, {
+        skip: skipCache
+      }
     );
   }
 

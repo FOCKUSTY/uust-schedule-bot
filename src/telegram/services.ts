@@ -5,7 +5,6 @@ import { NotificationService } from "../notifications/notification.service";
 import {
   GoogleDriveService,
   Schedule,
-  ScheduleLoader,
   WeekCalculator,
 } from "../schedule";
 import { extractIdFromUrl } from "../schedule/google";
@@ -24,27 +23,25 @@ if (!rootFolderId) {
 
 const driveService = new GoogleDriveService(rootFolderId);
 const cache = new ScheduleCache("global");
-const loader = new ScheduleLoader(driveService, "global");
 const notificationService = new NotificationService(bot, userService);
 
 const watcher = new ScheduleWatcher(
-  driveService,
   cache,
-  loader,
   notificationService,
   {
     intervalMs: env.WATCHER_INTERVAL_MINUTES * 60 * 1000,
   },
+  new WeekCalculator(env.START_DATE)
 );
 
 export const cacheAll = async () => {
   const weekCalculator = new WeekCalculator(env.START_DATE);
 
-  const courses = driveService.getCourses();
+  const courses = driveService.getCourses(true);
   for (const course of await courses) {
-    const specs = await driveService.getSpecializations(course.name);
+    const specs = await driveService.getSpecializations(course.name, true);
     for (const spec of specs) {
-      const groups = await driveService.getGroups(course.name, spec.name);
+      const groups = await driveService.getGroups(course.name, spec.name, true);
       group: for (const group of groups) {
         const schedule = new Schedule(
           {
@@ -56,7 +53,7 @@ export const cacheAll = async () => {
         );
 
         try {
-          await schedule.getWeekSchedule();
+          await schedule.getWeekSchedule(true);
           console.log(
             `Загружено расписание для ${course.name} ${spec.name} ${group.name}`,
           );

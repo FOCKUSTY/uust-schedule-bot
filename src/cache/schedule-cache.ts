@@ -6,14 +6,34 @@ import type {
 
 import { Cache } from "./cache";
 import { CACHE_FILE_NAME, TWO_HOURS_MS } from "./constants";
+import { ONE_DAY_MS } from "../schedule";
+
+const ONE_WEEK_MS = ONE_DAY_MS * 7;
 
 export class ScheduleCache {
+  private static readonly GROUPS_CACHE = new Cache(`${CACHE_FILE_NAME}:watcher:groups`);
+  
+  public static updateGlobalGroupInfo(group: GroupInformation|"global", enabled: boolean = true) {
+    if (group === "global") {
+      return null;
+    }
+
+    return this.GROUPS_CACHE.set(group.group, {
+      enabled,
+      group,
+    }, ONE_WEEK_MS);
+  }
+
+  public static getGlobalGroupsCache() {
+    return this.GROUPS_CACHE;
+  }
+
   public readonly weeksCache: Cache;
   public readonly watcherCache: Cache;
 
   public constructor(group: string) {
     this.weeksCache = new Cache(`${CACHE_FILE_NAME}:weeks:${group}`);
-    this.watcherCache = new Cache(`${CACHE_FILE_NAME}:wather:${group}`);
+    this.watcherCache = new Cache(`${CACHE_FILE_NAME}:watсher:${group}`);
   }
 
   public async loadAll(): Promise<void> {
@@ -33,6 +53,7 @@ export class ScheduleCache {
     group: GroupInformation,
   ): Promise<ScheduleWeeks | undefined> {
     const key = this.buildWeeksKey(group);
+    await this.updateGlobalCacheInfo(group);
     return this.weeksCache.get<ScheduleWeeks>(key);
   }
 
@@ -42,45 +63,15 @@ export class ScheduleCache {
     ttlMs: number = TWO_HOURS_MS,
   ): Promise<void> {
     const key = this.buildWeeksKey(group);
+    await this.updateGlobalCacheInfo(group);
     await this.weeksCache.set(key, weeks, ttlMs);
-  }
-
-  public async getAllCachedGroupKeys(): Promise<string[]> {
-    return this.weeksCache.keys();
-  }
-
-  public async getWatcherData(): Promise<WatcherData> {
-    const entries = await this.watcherCache.keys();
-    const result: WatcherData = {};
-    for (const key of entries) {
-      const value = await this.watcherCache.get(key);
-      if (value) {
-        result[key] = value as WatcherData[string];
-      }
-    }
-    return result;
-  }
-
-  public async updateWatcherEntry(
-    groupKey: string,
-    entry: Partial<WatcherData[string]>,
-    ttlMs?: number,
-  ): Promise<void> {
-    const current = (await this.watcherCache.get(groupKey)) ?? {
-      fileId: "",
-      lastModified: "",
-      lastChecked: "",
-    };
-
-    const updated = { ...current, ...entry };
-    await this.watcherCache.set(groupKey, updated, ttlMs);
-  }
-
-  public async deleteWatcherEntry(groupKey: string): Promise<void> {
-    await this.watcherCache.delete(groupKey);
   }
 
   public buildWeeksKey(group: GroupInformation): string {
     return `${group.course}:${group.specialization}:${group.group}`;
+  }
+
+  public updateGlobalCacheInfo(group: GroupInformation) {
+    return ScheduleCache.updateGlobalGroupInfo(group);
   }
 }
