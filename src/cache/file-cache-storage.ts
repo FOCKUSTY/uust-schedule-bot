@@ -28,7 +28,11 @@ export class FileCacheStorage implements CacheStorage {
 
     try {
       mkdirSync(join(this.filePath, ".."), { recursive: true });
-      readFileSync(this.filePath, "utf-8");
+      const data = readFileSync(this.filePath, "utf-8");
+      const json = JSON.parse(data);
+      Object.keys(json).forEach(key => {
+        this.memory.set(key, json[key]);
+      });
     } catch {
       writeFile(this.filePath, "{}", "utf-8");
     }
@@ -80,15 +84,7 @@ export class FileCacheStorage implements CacheStorage {
   }
 
   public async keys(): Promise<string[]> {
-    const validKeys: string[] = [];
-    for (const [key, entry] of this.memory.entries()) {
-      if (!this.isExpired(entry)) {
-        validKeys.push(key);
-      } else {
-        this.memory.delete(key);
-      }
-    }
-    return validKeys;
+    return Array.from(this.memory.keys());
   }
 
   public async load(): Promise<void> {

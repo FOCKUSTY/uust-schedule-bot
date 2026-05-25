@@ -1,12 +1,14 @@
-import type {
-  GroupInformation,
-  ScheduleWeek,
-  WeekCalculator,
+import type { NotificationService } from "../notifications/notification.service";
+import {
+  ONE_DAY_MS,
+  type GroupInformation,
+  type ScheduleWeek,
+  type WeekCalculator,
 } from "../schedule";
-import type { GoogleDriveService } from "../schedule/google-drive.service";
+
+import { UserService } from "../database";
 import { ScheduleCache } from "../cache";
 import { ScheduleLoader } from "../schedule/schedule-loader";
-import type { NotificationService } from "../notifications/notification.service";
 
 export interface WatcherOptions {
   intervalMs: number;
@@ -51,6 +53,8 @@ export class ScheduleWatcher {
       return;
     }
 
+    console.log("Checking...");
+
     this.timer = setTimeout(async () => {
       await this.checkAllGroups();
       this.scheduleNextCheck();
@@ -63,6 +67,7 @@ export class ScheduleWatcher {
   private async checkAllGroups(): Promise<void> {
     const cache = ScheduleCache.getGlobalGroupsCache();
     const groupKeys = await cache.keys();
+    
     for (const key of groupKeys) {
       const value = await cache.get<{
         enabled: boolean;
@@ -85,12 +90,12 @@ export class ScheduleWatcher {
     const scheduleLoader = new ScheduleLoader(group.group);
 
     const schedule = await scheduleLoader.loadWeekSchedule(group, week, true);
-    const cachedSchedule = await this.cache.watcherCache.get<ScheduleWeek>(
-      group.group,
-    );
-    if (!cachedSchedule) {
-      return;
-    }
+    const cachedSchedule = await this.cache.watcherCache.use(`${group.group}:${week}`, async () => {
+      return schedule;
+    }, {
+      ttl: ONE_DAY_MS,
+      maxCacheOperations: 1
+    });
 
     const scheduleJson = JSON.stringify(schedule);
     const cachedScheduleJson = JSON.stringify(cachedSchedule);
@@ -98,7 +103,8 @@ export class ScheduleWatcher {
       return;
     }
 
-    this.cache.watcherCache.set(group.group, schedule);
+    console.log("Изменения расписания у " + group.group);
+
     await this.notificationService.notifyGroupChange(group);
   }
 }
