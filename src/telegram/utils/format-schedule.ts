@@ -51,16 +51,24 @@ export const getWeekendText = (
   dayName: string,
   weekNumber: number,
   weekCalculator: WeekCalculator,
+  groupName?: string,
 ): string => {
   const date = weekCalculator.getDateFromWeekNumber(
     weekNumber,
     DAY_NAMES_RU.indexOf(dayName),
   );
 
-  return new StringBuilder()
-    .appendLine(`${toRussianDate(date)}, выходной день (неделя ${weekNumber})`)
-    .appendLine("Пар нет")
-    .toString();
+  const builder = new StringBuilder()
+  if (groupName) {
+    builder.append(`${groupName} `);
+  }
+
+  builder
+    .appendLine(`🎩 на ${toRussianDate(date)}:`)
+    .appendLine(`Выходной день (неделя ${weekNumber})`)
+    .quote("🎉 Пар нет");
+
+  return builder.toString();
 };
 
 export const formatDay = (
@@ -86,17 +94,19 @@ export const formatDay = (
     .map(Number)
     .sort((a, b) => a - b);
 
-  if (pairKeys.length === 0) {
-    return getWeekendText(day.dayName, weekNumber, weekCalculator);
+  const isWeekend = pairKeys.map(key => pairs[key]).filter(Boolean).length === 0;
+  if (pairKeys.length === 0 || isWeekend) {
+    return getWeekendText(day.dayName, weekNumber, weekCalculator, groupName);
   }
 
   for (let number = 1; number <= MAX_PAIRS; number++) {
     const timeRange = getPairTimes(day.dayName, number);
     const pairInfo = pairs[number] || null;
-
+  
     builder.append(`⏰ ${timeRange} (${number} пара)`).appendLine();
 
-    if (pairInfo) {
+    const isPairInfo = pairInfo && pairInfo !== "Выходной";
+    if (isPairInfo) {
       builder.quote(`📝 ${pairInfo}`).appendLine();
     } else {
       builder.quote(`❌ Нет пары`).appendLine();

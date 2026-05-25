@@ -3,9 +3,6 @@ import { env } from "../env";
 import type { GroupInformation, ScheduleWeek } from "./types";
 import type { ScheduleProvider } from "./schedule-provider.interface";
 
-import { extractIdFromUrl } from "./google";
-import { GoogleDriveService } from "./google-drive.service";
-
 import { ScheduleLoader } from "./schedule-loader";
 import { WeekCalculator } from "./week-calculator";
 import { ScheduleCache } from "../cache/schedule-cache";
@@ -42,7 +39,7 @@ export class Schedule {
 
   public async getWeekSchedule(skipCache: boolean): Promise<ScheduleWeek> {
     return this.cache.weeksCache.use(
-      this.cache.buildWeeksKey(this.group),
+      this.cache.buildWeekKey(this.group, this.weekNumber),
       async () => {
         return this.provider.getWeekSchedule(
           this.group,

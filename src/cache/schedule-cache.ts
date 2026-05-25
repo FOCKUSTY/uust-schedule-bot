@@ -79,6 +79,10 @@ export class ScheduleCache {
   public buildWeeksKey(group: GroupInformation): string {
     return `${group.course}:${group.specialization}:${group.group}`;
   }
+  
+  public buildWeekKey(group: GroupInformation, week: number): string {
+    return this.buildWeeksKey(group) + ":" + week;
+  }
 
   public updateGlobalCacheInfo(group: GroupInformation) {
     return ScheduleCache.updateGlobalGroupInfo(group);
