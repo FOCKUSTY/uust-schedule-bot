@@ -25,7 +25,7 @@ const watcher = new ScheduleWatcher(
   cache,
   notificationService,
   {
-    intervalMs: env.WATCHER_INTERVAL_MINUTES * 60 * 1000
+    intervalMs: env.WATCHER_INTERVAL_MINUTES * 60 * 1000,
   },
   new WeekCalculator(env.START_DATE),
 );

@@ -58,7 +58,7 @@ export const getWeekendText = (
     DAY_NAMES_RU.indexOf(dayName),
   );
 
-  const builder = new StringBuilder()
+  const builder = new StringBuilder();
   if (groupName) {
     builder.append(`${groupName} `);
   }
@@ -94,7 +94,8 @@ export const formatDay = (
     .map(Number)
     .sort((a, b) => a - b);
 
-  const isWeekend = pairKeys.map(key => pairs[key]).filter(Boolean).length === 0;
+  const isWeekend =
+    pairKeys.map((key) => pairs[key]).filter(Boolean).length === 0;
   if (pairKeys.length === 0 || isWeekend) {
     return getWeekendText(day.dayName, weekNumber, weekCalculator, groupName);
   }
@@ -102,7 +103,7 @@ export const formatDay = (
   for (let number = 1; number <= MAX_PAIRS; number++) {
     const timeRange = getPairTimes(day.dayName, number);
     const pairInfo = pairs[number] || null;
-  
+
     builder.append(`⏰ ${timeRange} (${number} пара)`).appendLine();
 
     const isPairInfo = pairInfo && pairInfo !== "Выходной";

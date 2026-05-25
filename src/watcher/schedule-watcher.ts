@@ -67,7 +67,7 @@ export class ScheduleWatcher {
   private async checkAllGroups(): Promise<void> {
     const cache = ScheduleCache.getGlobalGroupsCache();
     const groupKeys = await cache.keys();
-    
+
     for (const key of groupKeys) {
       const value = await cache.get<{
         enabled: boolean;
@@ -90,12 +90,16 @@ export class ScheduleWatcher {
     const scheduleLoader = new ScheduleLoader(group.group);
 
     const schedule = await scheduleLoader.loadWeekSchedule(group, week, true);
-    const cachedSchedule = await this.cache.watcherCache.use(`${group.group}:${week}`, async () => {
-      return schedule;
-    }, {
-      ttl: ONE_DAY_MS,
-      maxCacheOperations: 1
-    });
+    const cachedSchedule = await this.cache.watcherCache.use(
+      `${group.group}:${week}`,
+      async () => {
+        return schedule;
+      },
+      {
+        ttl: ONE_DAY_MS,
+        maxCacheOperations: 1,
+      },
+    );
 
     const scheduleJson = JSON.stringify(schedule);
     const cachedScheduleJson = JSON.stringify(cachedSchedule);

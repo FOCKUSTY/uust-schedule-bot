@@ -30,7 +30,7 @@ export class FileCacheStorage implements CacheStorage {
       mkdirSync(join(this.filePath, ".."), { recursive: true });
       const data = readFileSync(this.filePath, "utf-8");
       const json = JSON.parse(data);
-      Object.keys(json).forEach(key => {
+      Object.keys(json).forEach((key) => {
         this.memory.set(key, json[key]);
       });
     } catch {
