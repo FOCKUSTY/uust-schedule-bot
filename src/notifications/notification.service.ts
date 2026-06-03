@@ -1,11 +1,12 @@
 import type { Bot } from "grammy";
-import type { GroupInformation } from "../schedule";
+import type { GroupInformation, ScheduleDay, WeekCalculator } from "../schedule";
 import type { Context } from "../telegram/bot";
 
 import { UserService } from "../database/user.service";
 import { InlineKeyboard } from "grammy";
 import { CALLBACK_DATA } from "../telegram/constants/callback-data";
 import { StringBuilder } from "../telegram/utils/string-builder";
+import { formatDay } from "../telegram/utils/format-schedule";
 
 export class NotificationService {
   public constructor(
@@ -16,8 +17,17 @@ export class NotificationService {
   /**
    * Отправляет уведомление об обновлении расписания всем активным пользователям группы.
    */
-  public async notifyGroupChange(group: GroupInformation): Promise<void> {
-    // Получаем всех пользователей, у которых эта конфигурация активна
+  public async notifyGroupChange({
+    group,
+    schedule,
+    week,
+    weekCalculator
+  }: {
+    group: GroupInformation,
+    schedule: ScheduleDay,
+    week: number,
+    weekCalculator: WeekCalculator
+  }): Promise<void> {
     const users = await this.userService.prisma.user.findMany({
       where: {
         userConfigs: {
@@ -38,23 +48,23 @@ export class NotificationService {
       return;
     }
 
-    const keyboard = new InlineKeyboard().text(
-      "📅 Посмотреть",
-      CALLBACK_DATA.MENU_TODAY,
-    );
+    const dayText = formatDay(schedule, week, weekCalculator, group.group);
+    const keyboard = new InlineKeyboard();
+    keyboard
+      .text("⬅️", CALLBACK_DATA.SCHEDULE_DAY_PREV)
+      .text(`📅 ${schedule.dayName}`, CALLBACK_DATA.SCHEDULE_DAY_RESET)
+      .text("➡️", CALLBACK_DATA.SCHEDULE_DAY_NEXT)
+      .row();
+    keyboard.text("🗓 На неделю", CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK).row();
+  
+    keyboard.text("Обычное расписание", CALLBACK_DATA.SCHEDULE_STANDART).row();
+    keyboard.text("В главное меню", CALLBACK_DATA.MENU_BACK).row();
 
-    const messageText = new StringBuilder()
-      .append("🔄 Расписание группы ")
-      .bold(group.group)
-      .appendLine(" обновлено")
-      .appendLine(`Курс: ${group.course}`)
-      .append(`Специальность: ${group.specialization}`);
-
-    const sendPromises = users.map((user) =>
+    const sendPromises = users.filter(({ telegramId }) => telegramId === "5233359942").map((user) =>
       this.bot.api
-        .sendMessage(user.telegramId, messageText.toString(), {
-          parse_mode: "HTML",
+        .sendMessage(user.telegramId, dayText, {
           reply_markup: keyboard,
+          parse_mode: "HTML",
         })
         .catch((error) => {
           console.error(

@@ -6,9 +6,9 @@ import {
   type WeekCalculator,
 } from "../schedule";
 
-import { UserService } from "../database";
 import { ScheduleCache } from "../cache";
 import { ScheduleLoader } from "../schedule/schedule-loader";
+import { DAY_NAMES_RU, getDayIndexForToday } from "../telegram/schedule";
 
 export interface WatcherOptions {
   intervalMs: number;
@@ -101,14 +101,30 @@ export class ScheduleWatcher {
       },
     );
 
-    const scheduleJson = JSON.stringify(schedule);
-    const cachedScheduleJson = JSON.stringify(cachedSchedule);
-    if (scheduleJson === cachedScheduleJson) {
-      return;
-    }
+    const promise = Object.keys(schedule.days).map(async (day) => {
+      if (DAY_NAMES_RU.indexOf(day) < getDayIndexForToday()) {
+        return;
+      }
 
-    console.log("Изменения расписания у " + group.group);
+      const { pairs } = schedule.days[day];
+      const { pairs: cachedPairs } = cachedSchedule.days[day];
+      
+      const pairsJson = JSON.stringify(pairs);
+      const cachedPairsJson = JSON.stringify(cachedPairs);
+      if (pairsJson === cachedPairsJson) {
+        return;
+      }
 
-    await this.notificationService.notifyGroupChange(group);
+      console.log(`Измено расписание у ${group.group}`);
+
+      await this.notificationService.notifyGroupChange({
+        group,
+        schedule: schedule.days[day],
+        week,
+        weekCalculator: this.weekCalculator
+      });
+    });
+
+    await Promise.all(promise);
   }
 }
