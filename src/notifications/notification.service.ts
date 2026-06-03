@@ -1,5 +1,9 @@
 import type { Bot } from "grammy";
-import type { GroupInformation, ScheduleDay, WeekCalculator } from "../schedule";
+import type {
+  GroupInformation,
+  ScheduleDay,
+  WeekCalculator,
+} from "../schedule";
 import type { Context } from "../telegram/bot";
 
 import { UserService } from "../database/user.service";
@@ -21,12 +25,12 @@ export class NotificationService {
     group,
     schedule,
     week,
-    weekCalculator
+    weekCalculator,
   }: {
-    group: GroupInformation,
-    schedule: ScheduleDay,
-    week: number,
-    weekCalculator: WeekCalculator
+    group: GroupInformation;
+    schedule: ScheduleDay;
+    week: number;
+    weekCalculator: WeekCalculator;
   }): Promise<void> {
     const users = await this.userService.prisma.user.findMany({
       where: {
@@ -56,23 +60,25 @@ export class NotificationService {
       .text("➡️", CALLBACK_DATA.SCHEDULE_DAY_NEXT)
       .row();
     keyboard.text("🗓 На неделю", CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK).row();
-  
+
     keyboard.text("Обычное расписание", CALLBACK_DATA.SCHEDULE_STANDART).row();
     keyboard.text("В главное меню", CALLBACK_DATA.MENU_BACK).row();
 
-    const sendPromises = users.filter(({ telegramId }) => telegramId === "5233359942").map((user) =>
-      this.bot.api
-        .sendMessage(user.telegramId, dayText, {
-          reply_markup: keyboard,
-          parse_mode: "HTML",
-        })
-        .catch((error) => {
-          console.error(
-            `Failed to send notification to ${user.telegramId}:`,
-            error,
-          );
-        }),
-    );
+    const sendPromises = users
+      .filter(({ telegramId }) => telegramId === "5233359942")
+      .map((user) =>
+        this.bot.api
+          .sendMessage(user.telegramId, dayText, {
+            reply_markup: keyboard,
+            parse_mode: "HTML",
+          })
+          .catch((error) => {
+            console.error(
+              `Failed to send notification to ${user.telegramId}:`,
+              error,
+            );
+          }),
+      );
 
     await Promise.allSettled(sendPromises);
   }

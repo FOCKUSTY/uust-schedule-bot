@@ -108,7 +108,7 @@ export class ScheduleWatcher {
 
       const { pairs } = schedule.days[day];
       const { pairs: cachedPairs } = cachedSchedule.days[day];
-      
+
       const pairsJson = JSON.stringify(pairs);
       const cachedPairsJson = JSON.stringify(cachedPairs);
       if (pairsJson === cachedPairsJson) {
@@ -121,7 +121,7 @@ export class ScheduleWatcher {
         group,
         schedule: schedule.days[day],
         week,
-        weekCalculator: this.weekCalculator
+        weekCalculator: this.weekCalculator,
       });
     });
 
