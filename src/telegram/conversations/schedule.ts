@@ -105,7 +105,7 @@ export const scheduleConversation = async (
   } else {
     keyboard
       .text("⬅️", CALLBACK_DATA.SCHEDULE_WEEK_PREV)
-      .text(`📅 Неделя ${currentWeek}`)
+      .text(`📅 Неделя ${currentWeek}`, CALLBACK_DATA.SCHEDULE_WEEK_RESET)
       .text("➡️", CALLBACK_DATA.SCHEDULE_WEEK_NEXT)
       .row();
     keyboard.text("🗓 На день", CALLBACK_DATA.SCHEDULE_SWITCH_TODAY).row();
@@ -113,7 +113,7 @@ export const scheduleConversation = async (
 
   keyboard
     .text("🔄 Сменить группу", CALLBACK_DATA.SCHEDULE_SWITCH_GROUP)
-    .text(currentGroup.group, CALLBACK_DATA.SCHEDULE_WEEK_RESET)
+    .text(currentGroup.group, CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS)
     .row();
 
   keyboard

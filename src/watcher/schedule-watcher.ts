@@ -101,6 +101,14 @@ export class ScheduleWatcher {
       },
     );
 
+    const scheduleJson = JSON.stringify(schedule);
+    const cachedScheduleJson = JSON.stringify(cachedSchedule);
+    if (scheduleJson === cachedScheduleJson) {
+      return;
+    }
+
+    await this.cache.watcherCache.set(`${group.group}:${week}`, schedule);
+
     const promise = Object.keys(schedule.days).map(async (day) => {
       if (DAY_NAMES_RU.indexOf(day) < getDayIndexForToday()) {
         return;

@@ -10,7 +10,7 @@ import { clear } from "./clear";
 import { menu } from "./menu";
 import { clearCache } from "./clear-cache";
 
-const COMMANDS = [
+export const COMMANDS = [
   start,
   schedule,
   today,

@@ -52,7 +52,7 @@ export class NotificationService {
       return;
     }
 
-    const dayText = formatDay(schedule, week, weekCalculator, group.group);
+    const dayText = formatDay(schedule, week, weekCalculator);
     const keyboard = new InlineKeyboard();
     keyboard
       .text("⬅️", CALLBACK_DATA.SCHEDULE_DAY_PREV)
@@ -64,11 +64,15 @@ export class NotificationService {
     keyboard.text("Обычное расписание", CALLBACK_DATA.SCHEDULE_STANDART).row();
     keyboard.text("В главное меню", CALLBACK_DATA.MENU_BACK).row();
 
+    const text = new StringBuilder()
+      .append(`Изменено расписание у ${group.group} `)
+      .appendRawLine(dayText)
+      .toString();
+
     const sendPromises = users
-      .filter(({ telegramId }) => telegramId === "5233359942")
       .map((user) =>
         this.bot.api
-          .sendMessage(user.telegramId, dayText, {
+          .sendMessage(user.telegramId, text, {
             reply_markup: keyboard,
             parse_mode: "HTML",
           })

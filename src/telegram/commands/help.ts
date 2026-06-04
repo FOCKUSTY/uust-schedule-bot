@@ -1,6 +1,21 @@
 import type { Context } from "../bot";
 import { StringBuilder } from "../utils/string-builder";
 
+const commands: Record<string, string> = {
+  start: "начало работы, выбор группы, просмотр расписания",
+  schedule: "показать расписание на текущий день/неделю",
+  today: "расписание на сегодня",
+  tomorrow: "расписание на завтра",
+  help: "эта справка",
+  about: "информация об авторе",
+  clear: "сбросить настройки сессии",
+  menu: "главное меню",
+};
+
+const adminCommands: Record<string, string> = {
+  clearCache: "очистка кэша",
+}
+
 export const help = async (ctx: Context) => {
   const builder = new StringBuilder();
 
@@ -9,26 +24,21 @@ export const help = async (ctx: Context) => {
     .appendLine()
     .appendLine()
     .bold("🔹 Основные команды")
-    .appendLine()
-    .append("• /start – ")
-    .append("начало работы, выбор группы, просмотр расписания")
-    .appendLine()
-    .append("• /schedule – ")
-    .append("показать расписание на текущий день/неделю")
-    .appendLine()
-    .append("• /today – ")
-    .append("расписание на сегодня")
-    .appendLine()
-    .append("• /tomorrow – ")
-    .append("расписание на завтра")
-    .appendLine()
-    .append("• /help – ")
-    .append("эта справка")
-    .appendLine()
-    .append("• /about – ")
-    .append("информация об авторе")
-    .appendLine()
-    .appendLine()
+    .appendLine();
+
+  Object.keys(commands).forEach(name => {
+    builder.append(`• /${name} – `).appendLine(commands[name]);
+  });
+
+  if (`${ctx.from?.id}` === "5233359942") {
+    Object.keys(adminCommands).forEach(name => {
+      builder.append(`• /${name} – `).appendLine(adminCommands[name]);
+    })
+  }
+
+  builder.appendLine();
+
+  builder
     .bold("🔸 Интерактивные кнопки")
     .appendLine()
     .append("• 📅 Сегодня / 📆 Завтра – быстрый просмотр")
@@ -61,7 +71,11 @@ export const help = async (ctx: Context) => {
     .append("• Выходные дни отображаются как «Пар нет»")
     .appendLine()
     .append("• Для связи писать ")
-    .link("https://t.me/fockusty", "@fockusty");
+    .link("https://t.me/fockusty", "@fockusty").appendLine()
+    .appendLine("• Или мне в анонимку:")
+    .append("  • ").link("https://t.me/fockusty_anon_bot", "лично")
+    .appendLine()
+    .append("  • ").link("https://t.me/thevanon_bot", "в канал");
 
   await ctx.reply(builder.toString(), {
     parse_mode: "HTML",
