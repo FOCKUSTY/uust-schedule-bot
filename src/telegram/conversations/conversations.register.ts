@@ -12,10 +12,13 @@ import {
   groupsScheduleConversation,
 } from "./groups-schedule";
 
+import { BROADCAST_CONVERSATION, broadcastConversation } from "./broadcast";
+
 const CONVERSATIONS = [
   [REGISTRATION_CONVERSATION, registrationConversation],
   [SCHEDULE_CONVERSATION, scheduleConversation],
   [GROUPS_SCHEDULE_CONVERSATION, groupsScheduleConversation],
+  [BROADCAST_CONVERSATION, broadcastConversation]
 ] as const;
 
 export class ConversationsRegister {

@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Env, isInteger, isNumber, isPort } from "fenviee";
+import { Env, isInteger, isPort } from "fenviee";
 
 export const env = Env.create(process.env)({
   partial: [],

@@ -9,6 +9,7 @@ import { about } from "./about";
 import { clear } from "./clear";
 import { menu } from "./menu";
 import { clearCache } from "./clear-cache";
+import { broadcast } from "./broadcast";
 
 export const COMMANDS = [
   start,
@@ -20,6 +21,7 @@ export const COMMANDS = [
   clear,
   menu,
   clearCache,
+  broadcast
 ];
 
 export class CommandsRegister {
