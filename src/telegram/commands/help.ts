@@ -1,3 +1,4 @@
+import { env } from "../../env";
 import type { Context } from "../bot";
 import { StringBuilder } from "../utils/string-builder";
 
@@ -14,6 +15,7 @@ const commands: Record<string, string> = {
 
 const adminCommands: Record<string, string> = {
   clearCache: "очистка кэша",
+  boradcast: "отправка сообщения всем пользователям"
 }
 
 export const help = async (ctx: Context) => {
@@ -30,7 +32,7 @@ export const help = async (ctx: Context) => {
     builder.append(`• /${name} – `).appendLine(commands[name]);
   });
 
-  if (`${ctx.from?.id}` === "5233359942") {
+  if (ctx.from?.id === env.BOT_CREATOR_ID) {
     Object.keys(adminCommands).forEach(name => {
       builder.append(`• /${name} – `).appendLine(adminCommands[name]);
     })

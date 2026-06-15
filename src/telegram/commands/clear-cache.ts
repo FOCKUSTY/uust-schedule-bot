@@ -3,9 +3,10 @@ import type { Context } from "../bot";
 import { readdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { StringBuilder } from "../utils/string-builder";
+import { env } from "../../env";
 
 export const clearCache = (ctx: Context) => {
-  if (`${ctx.from?.id}` !== "5233359942") {
+  if (ctx.from?.id !== env.BOT_CREATOR_ID) {
     return ctx.reply("Нет прав");
   }
 

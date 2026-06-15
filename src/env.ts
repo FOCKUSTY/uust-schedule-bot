@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Env, isPort } from "fenviee";
+import { Env, isInteger, isNumber, isPort } from "fenviee";
 
 export const env = Env.create(process.env)({
   partial: [],
@@ -32,6 +32,7 @@ export const env = Env.create(process.env)({
 
       return "file";
     },
+    BOT_CREATOR_ID: isInteger
   },
   default: {},
 });
