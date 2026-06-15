@@ -23,7 +23,7 @@ export const COMMANDS = [
   menu,
   clearCache,
   broadcast,
-  send
+  send,
 ];
 
 export class CommandsRegister {

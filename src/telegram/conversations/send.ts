@@ -18,10 +18,14 @@ export const sendConversation = async (
     .append("Введите сообщение, которые вы хотите оправить ")
     .link("https://t.me/fockusty", "создателю")
     .appendLine()
-    .quote("Создателю будет доступен ваш идентификатор пользователя для обратной связи")
+    .quote(
+      "Создателю будет доступен ваш идентификатор пользователя для обратной связи",
+    )
     .toString();
 
-  await ctx.reply(helpMessage);
+  await ctx.reply(helpMessage, {
+    parse_mode: "HTML",
+  });
 
   const message = await conversation.waitFor(":text");
   const rawText = message.message?.text?.trim();
@@ -31,33 +35,45 @@ export const sendConversation = async (
 
   const text = new StringBuilder()
     .appendLine(`Пришло сообщение`)
-    .append("user:").code(`${ctx.from.id}`).newLine()
-    .append("message:").code(`${message.message.message_id}`).newLine()
+    .append("user:")
+    .code(`${ctx.from.id}`)
+    .newLine()
+    .append("message:")
+    .code(`${message.message.message_id}`)
+    .newLine()
+    .append("data")
+    .code(`${ctx.from.id},${message.message.message_id}`)
+    .newLine()
     .quote(rawText)
     .toString();
 
-  bot.api.sendMessage(env.BOT_CREATOR_ID, text, {
-    parse_mode: "HTML"
-  }).then(() => {
-    return bot.api.sendMessage(telegramId!, "Сообщение было доставлено", {
-      reply_parameters: {
-        message_id: message.message.message_id
-      }
-    }).then(deleteMessage(telegramId)).catch(console.error);
-  });
+  bot.api
+    .sendMessage(env.BOT_CREATOR_ID, text, {
+      parse_mode: "HTML",
+    })
+    .then(() => {
+      return bot.api
+        .sendMessage(telegramId, "Сообщение было доставлено", {
+          reply_parameters: {
+            message_id: message.message.message_id,
+          },
+        })
+        .then(deleteMessage(telegramId))
+        .catch(console.error);
+    });
 
   const messageToDelete = await ctx.reply("Сообщение было отправлено.");
   deleteMessage(telegramId)(messageToDelete);
-  
+
   return;
-}
+};
 
 export const CREATOR_SEND_CONVERSATION = "creator:send";
 export const creatorSendConversation = async (
   conversation: Conversation<Context, Context>,
   ctx: Context,
 ) => {
-  const telegramId = ctx.from?.id
+  const telegramId = ctx.from?.id;
   if (!telegramId) {
     return ctx.reply("Not access.");
   }
@@ -77,9 +93,14 @@ export const creatorSendConversation = async (
     return ctx.reply("Текст не был найден");
   }
 
-  const [ userId, messageId ] = id.split(",");
+  const [userId, messageId] = id.split(",");
   if (!userId) {
     return ctx.reply("id пользователя не было найдено");
+  }
+
+  const messageIdExistsAndNumber = messageId && !Number.isNaN(+messageId);
+  if (Number.isNaN(+userId) || !messageIdExistsAndNumber) {
+    return ctx.reply("Не удалось получить идентификаторы");
   }
 
   const text = new StringBuilder()
@@ -87,22 +108,30 @@ export const creatorSendConversation = async (
     .quote(rawText)
     .toString();
 
-  const options = messageId ? {
-    reply_parameters: {
-      message_id: +messageId
-    }
-  } : undefined;
-
-  bot.api.sendMessage(+userId, text, options).then(() => {
-    return bot.api.sendMessage(telegramId, "Сообщение было доставлено", {
-      reply_parameters: {
-        message_id: messageWithText.message.message_id
+  const reply_parameters = messageId
+    ? {
+        message_id: +messageId,
       }
-    }).then(deleteMessage(telegramId)).catch(console.error);
-  });
+    : undefined;
+
+  bot.api
+    .sendMessage(+userId, text, {
+      reply_parameters,
+      parse_mode: "HTML",
+    })
+    .then(() => {
+      return bot.api
+        .sendMessage(telegramId, "Сообщение было доставлено", {
+          reply_parameters: {
+            message_id: messageWithText.message.message_id,
+          },
+        })
+        .then(deleteMessage(telegramId))
+        .catch(console.error);
+    });
 
   const messageToDelete = await ctx.reply("Сообщение было отправлено");
   deleteMessage(telegramId)(messageToDelete);
 
   return;
-}
+};

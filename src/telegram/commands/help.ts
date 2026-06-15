@@ -12,7 +12,7 @@ const commands: Record<string, string> = {
   about: "информация об авторе",
   clear: "сбросить настройки сессии",
   menu: "главное меню",
-  send: "отправить сообщение создателю"
+  send: "отправить сообщение создателю",
 };
 
 const adminCommands: Record<string, string> = {

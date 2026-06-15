@@ -1,6 +1,9 @@
 import { env } from "../../env";
 import { Context } from "../bot";
-import { CREATOR_SEND_CONVERSATION, SEND_CONVERSATION } from "../conversations/send";
+import {
+  CREATOR_SEND_CONVERSATION,
+  SEND_CONVERSATION,
+} from "../conversations/send";
 
 export const send = (ctx: Context) => {
   if (ctx.from!.id === env.BOT_CREATOR_ID) {
@@ -8,4 +11,4 @@ export const send = (ctx: Context) => {
   }
 
   return ctx.conversation.enter(SEND_CONVERSATION);
-}
+};
