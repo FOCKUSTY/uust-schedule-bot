@@ -15,8 +15,8 @@ const commands: Record<string, string> = {
 
 const adminCommands: Record<string, string> = {
   clearCache: "очистка кэша",
-  boardcast: "отправка сообщения всем пользователям"
-}
+  boardcast: "отправка сообщения всем пользователям",
+};
 
 export const help = async (ctx: Context) => {
   const builder = new StringBuilder();
@@ -28,14 +28,14 @@ export const help = async (ctx: Context) => {
     .bold("🔹 Основные команды")
     .appendLine();
 
-  Object.keys(commands).forEach(name => {
+  Object.keys(commands).forEach((name) => {
     builder.append(`• /${name} – `).appendLine(commands[name]);
   });
 
   if (ctx.from?.id === env.BOT_CREATOR_ID) {
-    Object.keys(adminCommands).forEach(name => {
+    Object.keys(adminCommands).forEach((name) => {
       builder.append(`• /${name} – `).appendLine(adminCommands[name]);
-    })
+    });
   }
 
   builder.appendLine();
@@ -73,11 +73,14 @@ export const help = async (ctx: Context) => {
     .append("• Выходные дни отображаются как «Пар нет»")
     .appendLine()
     .append("• Для связи писать ")
-    .link("https://t.me/fockusty", "@fockusty").appendLine()
-    .appendLine("• Или мне в анонимку:")
-    .append("  • ").link("https://t.me/fockusty_anon_bot", "лично")
+    .link("https://t.me/fockusty", "@fockusty")
     .appendLine()
-    .append("  • ").link("https://t.me/thevanon_bot", "в канал");
+    .appendLine("• Или мне в анонимку:")
+    .append("  • ")
+    .link("https://t.me/fockusty_anon_bot", "лично")
+    .appendLine()
+    .append("  • ")
+    .link("https://t.me/thevanon_bot", "в канал");
 
   await ctx.reply(builder.toString(), {
     parse_mode: "HTML",

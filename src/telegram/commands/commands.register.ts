@@ -21,7 +21,7 @@ export const COMMANDS = [
   clear,
   menu,
   clearCache,
-  broadcast
+  broadcast,
 ];
 
 export class CommandsRegister {

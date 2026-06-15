@@ -69,20 +69,19 @@ export class NotificationService {
       .appendRawLine(dayText)
       .toString();
 
-    const sendPromises = users
-      .map((user) =>
-        this.bot.api
-          .sendMessage(user.telegramId, text, {
-            reply_markup: keyboard,
-            parse_mode: "HTML",
-          })
-          .catch((error) => {
-            console.error(
-              `Failed to send notification to ${user.telegramId}:`,
-              error,
-            );
-          }),
-      );
+    const sendPromises = users.map((user) =>
+      this.bot.api
+        .sendMessage(user.telegramId, text, {
+          reply_markup: keyboard,
+          parse_mode: "HTML",
+        })
+        .catch((error) => {
+          console.error(
+            `Failed to send notification to ${user.telegramId}:`,
+            error,
+          );
+        }),
+    );
 
     await Promise.allSettled(sendPromises);
   }

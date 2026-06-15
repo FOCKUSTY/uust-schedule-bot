@@ -32,7 +32,7 @@ export const env = Env.create(process.env)({
 
       return "file";
     },
-    BOT_CREATOR_ID: isInteger
+    BOT_CREATOR_ID: isInteger,
   },
   default: {},
 });

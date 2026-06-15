@@ -18,7 +18,7 @@ const CONVERSATIONS = [
   [REGISTRATION_CONVERSATION, registrationConversation],
   [SCHEDULE_CONVERSATION, scheduleConversation],
   [GROUPS_SCHEDULE_CONVERSATION, groupsScheduleConversation],
-  [BROADCAST_CONVERSATION, broadcastConversation]
+  [BROADCAST_CONVERSATION, broadcastConversation],
 ] as const;
 
 export class ConversationsRegister {
