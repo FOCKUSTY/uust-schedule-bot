@@ -1,5 +1,6 @@
-import { env } from "../../env";
 import type { Context } from "../bot";
+
+import { env } from "../../env";
 import { StringBuilder } from "../utils/string-builder";
 
 const commands: Record<string, string> = {
@@ -11,6 +12,7 @@ const commands: Record<string, string> = {
   about: "информация об авторе",
   clear: "сбросить настройки сессии",
   menu: "главное меню",
+  send: "отправить сообщение создателю"
 };
 
 const adminCommands: Record<string, string> = {
