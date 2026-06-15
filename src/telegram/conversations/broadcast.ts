@@ -1,5 +1,5 @@
 import { Conversation } from "@grammyjs/conversations";
-import { Context } from "../bot";
+import { bot, Context } from "../bot";
 import { env } from "../../env";
 import { Prisma } from "../../database";
 
@@ -23,15 +23,18 @@ async function broadcastInBackground(text: string, api: Context['api']) {
       break;
     }
 
-    await Promise.all(
-      batch.map(({ telegramId }) =>
-        limit(() =>
-          api.sendMessage(telegramId, text).catch((err) => {
-            console.error(`Failed to send to ${telegramId}:`, err.message);
-          })
-        )
-      )
-    );
+    const query = batch.map(({ telegramId }) => {
+      return limit(() => {
+        try {
+          return api.sendMessage(+telegramId, text);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : `${error}`;
+          console.error(`Failed to send to ${telegramId}:`, message);
+        }
+      });
+    });
+
+    await Promise.all(query);
 
     cursor = batch[batch.length - 1].telegramId;
   } while (true);
@@ -54,7 +57,7 @@ export const broadcastConversation = async (
     return ctx.reply('Сообщение не может быть пустым.');
   }
 
-  broadcastInBackground(text, ctx.api);
-
+  broadcastInBackground(text, bot.api);
+  
   return ctx.reply('Рассылка запущена. Это займёт некоторое время.');
 };

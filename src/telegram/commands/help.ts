@@ -15,7 +15,7 @@ const commands: Record<string, string> = {
 
 const adminCommands: Record<string, string> = {
   clearCache: "очистка кэша",
-  boradcast: "отправка сообщения всем пользователям"
+  boardcast: "отправка сообщения всем пользователям"
 }
 
 export const help = async (ctx: Context) => {
