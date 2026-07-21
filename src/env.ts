@@ -8,6 +8,7 @@ export const env = Env.create(process.env)({
     "DATABASE_URL",
     "TELEGRAM_BOT_TOKEN",
     "REDIS_URL",
+    "PRISMA_CONNECTION_TYPE",
   ],
   unique: {
     START_DATE: (value?: string) => {

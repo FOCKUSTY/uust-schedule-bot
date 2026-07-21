@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: uust-postgres
+    environment:
+      POSTGRES_USER: uust
+      POSTGRES_PASSWORD: uustpass
+      POSTGRES_DB: uust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uust -d uust"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: uust-redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DATABASE_URL=postgresql://uust:uustpass@postgres:5432/uust
+    container_name: uust-bot
+    environment:
+      - GOOGLE_DRIVE_FOLDER_URL=${GOOGLE_DRIVE_FOLDER_URL}
+      - START_DATE=${START_DATE}
+      - BOT_CREATOR_ID=${BOT_CREATOR_ID}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - WATCHER_INTERVAL_MINUTES=${WATCHER_INTERVAL_MINUTES}
+      - PORT=${PORT}
+      - DATABASE_URL=postgresql://uust:uustpass@postgres:5432/uust?connect_timeout=300
+      - REDIS_URL=redis://redis:6379
+      - PRISMA_CONNECTION_TYPE=adapter
+      - CACHE_TYPE=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./credentials.json:/app/credentials.json:ro
+      - ./cache:/app/cache
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
