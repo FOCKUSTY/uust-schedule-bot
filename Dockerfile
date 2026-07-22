@@ -22,7 +22,7 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/credentials.json ./
+COPY --from=builder /app/credentials.json /app/prisma.config.ts ./
 COPY --from=builder /app/src/database/schema.prisma ./src/database/schema.prisma
 COPY --from=builder /app/src/database/migrations ./src/database/migrations
 
@@ -33,6 +33,4 @@ RUN mkdir -p /app/cache
 
 EXPOSE 8080
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+CMD npx prisma migrate deploy --schema ./src/database/schema.prisma && node dist/telegram/start.js
