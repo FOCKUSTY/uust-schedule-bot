@@ -26,24 +26,28 @@
     "dev": "ts-node ./src/telegram/start.ts"
   },
   "dependencies": {
-    "@grammyjs/conversations": "^2.1.1",
+    "@angulyjs/conversations": "^2.1.1",
     "express": "^5.2.1",
     "fenviee": "^0.1.2",
     "googleapis": "^105.0.0",
-    "grammy": "^1.42.0",
-    "p-limit": "^7.3.0",
+    "grammy": "^1.45.1",
+    "netlify-cli": "^27.0.0",
+    "node-gyp": "^13.0.1",
+    "p-limit": "^7.3.1",
+    "prettier": "^3.9.6",
     "proper-lockfile": "^4.1.2",
     "redis": "^5.12.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "^7.7.0",
+    "@prisma/adapter-pg": "^7.9.0",
+    "@prisma/client": "^7.9.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.5",
     "@types/proper-lockfile": "^4.1.4",
     "dotenv": "^17.4.2",
-    "prisma": "^7.7.0",
-    "typescript": "^6.0.2"
+    "prisma": "^7.9.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
   }
 }
