@@ -6,7 +6,7 @@ import type { ScheduleProvider } from "./schedule-provider.interface";
 import { ScheduleLoader } from "./schedule-loader";
 import { WeekCalculator } from "./week-calculator";
 import { ScheduleCache } from "../cache/schedule-cache";
-import { WebsiteScheduleProvider } from "./website-schedule.provider";
+import { IsuScheduleProvider } from "./providers/isu-schedule.provider";
 
 export class Schedule {
   private readonly provider: ScheduleProvider;
@@ -30,7 +30,7 @@ export class Schedule {
     this.cache = deps?.cache ?? new ScheduleCache(group.group);
     this.weekCalculator =
       deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
-    this.provider = deps?.provider ?? new WebsiteScheduleProvider();
+    this.provider = deps?.provider ?? new IsuScheduleProvider();
   }
 
   public async initializeCache(): Promise<void> {

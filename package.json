@@ -26,11 +26,15 @@
     "dev": "ts-node ./src/telegram/start.ts"
   },
   "dependencies": {
-    "@angulyjs/conversations": "^2.1.1",
+    "@grammyjs/conversations": "^2.1.1",
+    "cheerio": "^1.2.0",
     "express": "^5.2.1",
     "fenviee": "^0.1.2",
     "googleapis": "^105.0.0",
     "grammy": "^1.45.1",
+    "http-proxy": "^1.18.1",
+    "https-proxy-agent": "^9.1.0",
+    "jsdom": "^30.0.1",
     "netlify-cli": "^27.0.0",
     "node-gyp": "^13.0.1",
     "p-limit": "^7.3.1",
@@ -43,11 +47,12 @@
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
     "@types/express": "^5.0.6",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^25.9.5",
     "@types/proper-lockfile": "^4.1.4",
     "dotenv": "^17.4.2",
     "prisma": "^7.9.0",
     "ts-node": "^10.9.2",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }
