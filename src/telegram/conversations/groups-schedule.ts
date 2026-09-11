@@ -54,7 +54,7 @@ export const groupsScheduleConversation = async (
     dayOffset,
   } = resolveQuickDate({
     qiuckDate: session.quickDate,
-    weekNumber: weekCalculator.getCurrentWeek(),
+    weekNumber: await weekCalculator.getCurrentWeekFromApi(),
     offsets: {
       dayOffset: session.currentDayOffset,
       weekOffset: session.currentWeekOffset,

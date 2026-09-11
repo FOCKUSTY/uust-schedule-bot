@@ -45,7 +45,7 @@ export const cacheAll = async () => {
             specialization: spec.name,
             group: group.name,
           },
-          weekCalculator.getCurrentWeek(),
+          await weekCalculator.getCurrentWeekFromApi(),
         );
 
         try {

@@ -6,9 +6,16 @@ import type { ScheduleProvider } from "./schedule-provider.interface";
 import { ScheduleLoader } from "./schedule-loader";
 import { WeekCalculator } from "./week-calculator";
 import { ScheduleCache } from "../cache/schedule-cache";
-import { IsuScheduleProvider } from "./providers/isu-schedule.provider";
+import { ScheduleApiProvider } from "./providers/aparkit-schedule.provider";
 
 export class Schedule {
+  private static readonly apiProvider = new ScheduleApiProvider();
+
+  /** Номер текущей недели по данным сервера. */
+  public static async getCurrentWeek(): Promise<number> {
+    return Schedule.apiProvider.getCurrentWeek();
+  }
+  
   private readonly provider: ScheduleProvider;
   public readonly loader: ScheduleLoader;
   public readonly cache: ScheduleCache;
@@ -21,7 +28,6 @@ export class Schedule {
       loader?: ScheduleLoader;
       cache?: ScheduleCache;
       weekCalculator?: WeekCalculator;
-      provider?: ScheduleProvider;
     },
   ) {
     ScheduleCache.updateGlobalGroupInfo(group);
@@ -30,7 +36,7 @@ export class Schedule {
     this.cache = deps?.cache ?? new ScheduleCache(group.group);
     this.weekCalculator =
       deps?.weekCalculator ?? new WeekCalculator(env.START_DATE);
-    this.provider = deps?.provider ?? new IsuScheduleProvider();
+    this.provider = new ScheduleApiProvider();
   }
 
   public async initializeCache(): Promise<void> {

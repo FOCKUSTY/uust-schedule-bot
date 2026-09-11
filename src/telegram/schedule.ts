@@ -1,13 +1,13 @@
 import type { SessionData } from "./session";
 
 export const DAY_NAMES_RU = [
-  "Понедельник",
-  "Вторник",
-  "Среда",
-  "Четверг",
-  "Пятница",
-  "Суббота",
-  "Воскресенье",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
 ];
 
 export const getDayIndexForToday = (): number => {

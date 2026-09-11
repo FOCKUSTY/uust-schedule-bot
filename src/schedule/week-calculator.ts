@@ -1,3 +1,4 @@
+import { ScheduleApiProvider } from "./providers/aparkit-schedule.provider";
 import type { DateLike } from "./types";
 
 /**
@@ -6,6 +7,7 @@ import type { DateLike } from "./types";
  */
 export class WeekCalculator {
   private readonly startDateUTC: Date; // хранит момент времени, соответствующий началу дня (00:00 UTC)
+  private apiProvider: ScheduleApiProvider = new ScheduleApiProvider();
 
   /**
    * @param startDate Дата начала первого учебного дня (обычно START_DATE из .env)
@@ -14,6 +16,10 @@ export class WeekCalculator {
    */
   public constructor(startDate: Date) {
     this.startDateUTC = this.normalizeToUTCMidnight(startDate);
+  }
+
+  public async getCurrentWeekFromApi(): Promise<number> {
+    return await this.apiProvider.getCurrentWeek();
   }
 
   /**

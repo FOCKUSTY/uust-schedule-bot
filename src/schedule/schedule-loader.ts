@@ -1,9 +1,9 @@
 import type { GroupInformation, ScheduleWeek } from "./types";
 import type { ScheduleProvider } from "./schedule-provider.interface";
 
-import { WebsiteScheduleProvider } from "./website-schedule.provider";
 import { Cache } from "../cache";
 import { CACHE_TTL } from "./constants";
+import { ScheduleApiProvider } from "./providers/aparkit-schedule.provider";
 
 export class ScheduleLoader {
   private readonly cache: Cache;
@@ -11,7 +11,7 @@ export class ScheduleLoader {
 
   public constructor(group: string, cache?: Cache) {
     this.cache = cache ?? new Cache(`schedule:loader:${group}`);
-    this.provider = new WebsiteScheduleProvider();
+    this.provider = new ScheduleApiProvider();
   }
 
   public async loadWeekSchedule(

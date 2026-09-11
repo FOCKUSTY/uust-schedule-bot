@@ -52,7 +52,7 @@ export const scheduleConversation = async (
     dayOffset,
   } = resolveQuickDate({
     qiuckDate: session.quickDate,
-    weekNumber: weekCalculator.getCurrentWeek(),
+    weekNumber: await weekCalculator.getCurrentWeekFromApi(),
     offsets: {
       dayOffset: session.currentDayOffset,
       weekOffset: session.currentWeekOffset,
@@ -61,7 +61,7 @@ export const scheduleConversation = async (
 
   const dayName = DAY_NAMES_RU.at(dayIndex);
   if (!dayName) {
-    console.log(`dayName (${dayName}) is not defined`);
+    console.log(`dayName (${dayName}) is not defined, index: ${dayIndex}`);
     return sendOrEditMessage(ctx, "Произошла ошибка, извините", {
       conversation,
     });

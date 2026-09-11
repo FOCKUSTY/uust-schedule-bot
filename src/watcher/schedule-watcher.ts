@@ -86,7 +86,7 @@ export class ScheduleWatcher {
    * Проверяет одну группу на наличие изменений.
    */
   private async checkGroup(group: GroupInformation): Promise<void> {
-    const week = this.weekCalculator.getCurrentWeek();
+    const week = await this.weekCalculator.getCurrentWeekFromApi();
     const scheduleLoader = new ScheduleLoader(group.group);
 
     const schedule = await scheduleLoader.loadWeekSchedule(group, week, true);
