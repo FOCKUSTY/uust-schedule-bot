@@ -13,8 +13,10 @@ datasource db {
 model Config {
   id             Int          @id @default(autoincrement())
   course         String
+  faculty        String
   specialization String
   group          String
+  groupId        Int
   userConfigs    UserConfig[]
 }
 

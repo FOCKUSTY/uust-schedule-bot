@@ -1,5 +1,4 @@
-import type { GroupInformation } from "../schedule";
-
+import { GroupInformation } from "@/types";
 import { Prisma } from "./prisma";
 
 type TelegramId = number | string;

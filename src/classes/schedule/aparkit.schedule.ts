@@ -1,22 +1,13 @@
-import {
+import type {
   DaySchedule,
   DayScheduleInfo,
   Pair,
   WeekScheduleInfo,
   WeeksSchedule,
 } from "@/types";
+
 import { AparkitApi } from "../api";
 import { MemoryCache } from "../cache";
-
-const WEEKDAY_NAMES: Record<number, string> = {
-  1: "Понедельник",
-  2: "Вторник",
-  3: "Среда",
-  4: "Четверг",
-  5: "Пятница",
-  6: "Суббота",
-  7: "Воскресенье",
-};
 
 export const LESSON_NUMBERS: Record<string, number> = {
   "08:00-09:30": 1,

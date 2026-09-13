@@ -2,8 +2,10 @@
 CREATE TABLE "Config" (
     "id" SERIAL NOT NULL,
     "course" TEXT NOT NULL,
+    "faculty" TEXT NOT NULL,
     "specialization" TEXT NOT NULL,
     "group" TEXT NOT NULL,
+    "groupId" INTEGER NOT NULL,
 
     CONSTRAINT "Config_pkey" PRIMARY KEY ("id")
 );
@@ -20,8 +22,8 @@ CREATE TABLE "User" (
 CREATE TABLE "UserConfig" (
     "userId" INTEGER NOT NULL,
     "configId" INTEGER NOT NULL,
-    "isActived" BOOLEAN NOT NULL DEFAULT true,
-    "isDefault" BOOLEAN NOT NULL,
+    "actived" BOOLEAN NOT NULL DEFAULT true,
+    "defaulted" BOOLEAN NOT NULL,
     "assignedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "UserConfig_pkey" PRIMARY KEY ("userId","configId")
