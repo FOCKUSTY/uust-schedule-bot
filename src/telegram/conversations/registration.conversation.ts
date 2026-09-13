@@ -11,6 +11,7 @@ import { AparkitApi } from "@/classes";
 import { UserService } from "@/database";
 import { CALLBACK_DATA } from "@/telegram/callback-data";
 import { Conversation } from "@/interfaces";
+import { sendOrEditMessage } from "../utils";
 
 const FACULTY_PREFIX = "reg:faculty";
 const COURSE_PREFIX = "reg:course";
@@ -31,10 +32,10 @@ export class RegistrationConversation implements Conversation {
     if (!telegramId) return;
 
     const faculty = await this.promptFaculty(conversation, context);
-    if (!faculty) return this.cancel(context);
+    if (!faculty) return this.cancel(context, conversation);
 
     const course = await this.promptCourse(conversation, context, faculty);
-    if (!course) return this.cancel(context);
+    if (!course) return this.cancel(context, conversation);
 
     const specialization = await this.promptSpecialization(
       conversation,
@@ -42,7 +43,7 @@ export class RegistrationConversation implements Conversation {
       faculty,
       course,
     );
-    if (!specialization) return this.cancel(context);
+    if (!specialization) return this.cancel(context, conversation);
 
     const group = await this.promptGroup(
       conversation,
@@ -51,26 +52,30 @@ export class RegistrationConversation implements Conversation {
       course,
       specialization,
     );
-    if (!group) return this.cancel(context);
+    if (!group) return this.cancel(context, conversation);
 
     const info: GroupInformation = {
       faculty,
       course,
       specialization,
       group: group.title,
-      groupId: group.uust_api_id,
+      groupId: group.id,
     };
 
     await conversation.external(() =>
       this._user_service.addConfig(telegramId, info, true),
     );
 
-    await context.reply(
+    await sendOrEditMessage(
+      context,
       `✅ Группа сохранена\n\n` +
         `🎓 Факультет: ${faculty}\n` +
         `📚 Курс: ${course}\n` +
         `🏷 Специализация: ${specialization}\n` +
         `👥 Группа: ${group.title}`,
+      {
+        conversation,
+      },
     );
   }
 
@@ -83,11 +88,18 @@ export class RegistrationConversation implements Conversation {
     );
 
     if (faculties.length === 0) {
-      await context.reply("Не удалось получить список факультетов.");
+      await sendOrEditMessage(
+        context,
+        "Не удалось получить список факультетов.",
+        {
+          conversation,
+        },
+      );
       return null;
     }
 
     await this.sendPicker(
+      conversation,
       context,
       "🎓 Выберите факультет:",
       faculties,
@@ -113,11 +125,21 @@ export class RegistrationConversation implements Conversation {
     );
 
     if (courses.length === 0) {
-      await context.reply("Для этого факультета нет доступных курсов.");
+      await sendOrEditMessage(
+        context,
+        "Для этого факультета нет доступных курсов.",
+        { conversation },
+      );
       return null;
     }
 
-    await this.sendPicker(context, "📚 Выберите курс:", courses, COURSE_PREFIX);
+    await this.sendPicker(
+      conversation,
+      context,
+      "📚 Выберите курс:",
+      courses,
+      COURSE_PREFIX,
+    );
 
     const data = await this.waitForCallback(
       conversation,
@@ -139,13 +161,18 @@ export class RegistrationConversation implements Conversation {
     );
 
     if (specs.length === 0) {
-      await context.reply("Для этого курса нет доступных специализаций.");
+      await sendOrEditMessage(
+        context,
+        "Для этого курса нет доступных специальностей.",
+        { conversation },
+      );
       return null;
     }
 
     await this.sendPicker(
+      conversation,
       context,
-      "🏷 Выберите специализацию:",
+      "🏷 Выберите специальность:",
       specs,
       SPEC_PREFIX,
     );
@@ -167,12 +194,20 @@ export class RegistrationConversation implements Conversation {
     );
 
     if (groups.length === 0) {
-      await context.reply("Группы не найдены.");
+      await sendOrEditMessage(context, "Группы не найдены", {
+        conversation,
+      });
       return null;
     }
 
     const titles = groups.map((g) => g.title);
-    await this.sendPicker(context, "👥 Выберите группу:", titles, GROUP_PREFIX);
+    await this.sendPicker(
+      conversation,
+      context,
+      "👥 Выберите группу:",
+      titles,
+      GROUP_PREFIX,
+    );
 
     const data = await this.waitForCallback(
       conversation,
@@ -184,6 +219,7 @@ export class RegistrationConversation implements Conversation {
   }
 
   private async sendPicker(
+    conversation: MyConversation,
     context: Context,
     text: string,
     items: string[],
@@ -195,7 +231,7 @@ export class RegistrationConversation implements Conversation {
     });
     keyboard.text("❌ Отмена", CALLBACK_DATA.REG_CANCEL);
 
-    await context.reply(text, { reply_markup: keyboard });
+    await sendOrEditMessage(context, text, { keyboard, conversation });
   }
 
   private async waitForCallback(
@@ -224,7 +260,12 @@ export class RegistrationConversation implements Conversation {
     return string.length > max ? `${string.slice(0, max - 1)}…` : string;
   }
 
-  private async cancel(ctx: Context): Promise<void> {
-    await ctx.reply("❌ Регистрация отменена.");
+  private async cancel(
+    context: Context,
+    conversation: MyConversation,
+  ): Promise<void> {
+    await sendOrEditMessage(context, "❌ Регистрация отменена.", {
+      conversation,
+    });
   }
 }

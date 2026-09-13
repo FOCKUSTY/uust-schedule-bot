@@ -5,3 +5,5 @@ import type { SessionData } from "./session.types";
 export type Context = SessionFlavor<SessionData> &
   ConversationFlavor<GrammyContext>;
 export type MyConversation = Conversation<Context, Context>;
+
+export type CallbackHandler = (context: Context) => Promise<unknown>;

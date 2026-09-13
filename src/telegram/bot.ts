@@ -1,19 +1,20 @@
 import { env } from "@/env";
 
-import type { Context, MyConversation } from "@/types";
+import type { CallbackHandler, Context, MyConversation } from "@/types";
 
 import { Bot, session } from "grammy";
 import { initialSession } from "./session";
 
-import {
-  CONVERSATIONS,
-  RegistrationConversation,
-  ScheduleConversation,
-} from "./conversations";
+import { CONVERSATIONS } from "./conversations";
+
 import { conversations, createConversation } from "@grammyjs/conversations";
-import { UserService } from "@/database";
-import { sendOrEditMessage } from "./utils";
-import { configSelectionKeyboard } from "./keyboards";
+import {
+  ConfigHandler,
+  GroupsScheduleHandler,
+  MenuHandler,
+  ScheduleHandler,
+} from "./handlers";
+import { COMMANDS } from "./commands";
 
 export const bot = new Bot<Context>(env.TELEGRAM_BOT_TOKEN);
 
@@ -30,27 +31,46 @@ CONVERSATIONS.forEach(([name, conversation]) => {
   );
 });
 
-const userService = new UserService();
+COMMANDS.forEach((command) => {
+  bot.command(command.name, command);
+});
 
-bot.command("start", async (ctx) => {
-  const id = ctx.from?.id;
-  if (!id) {
-    throw new Error("id is not defined.");
+export const callbackHandlers = new Map<string, CallbackHandler>();
+
+new ScheduleHandler(callbackHandlers).execute();
+new MenuHandler(callbackHandlers).execute();
+
+const handlers = [new ConfigHandler(), new GroupsScheduleHandler()];
+
+bot.on("callback_query:data", async (ctx) => {
+  const data = ctx.callbackQuery.data;
+
+  const handler = callbackHandlers.get(data);
+  if (handler) {
+    return handler(ctx);
   }
 
-  const configs = await userService.getUserConfigs(id);
-  if (configs.length === 0) {
-    return ctx.conversation.enter(RegistrationConversation.name);
+  let verifiedHandler: (typeof handlers)[number] | null = null;
+  if (
+    handlers.some((handler) => {
+      const verified = handler.verify(data);
+
+      if (verified) {
+        return (verifiedHandler = handler);
+      }
+
+      return verified;
+    })
+  ) {
+    const handler = verifiedHandler as (typeof handlers)[number] | null;
+    if (!handler) {
+      return;
+    }
+
+    return handler.handle(ctx);
   }
 
-  const activeConfigs = configs.filter(({ actived }) => actived);
-  if (activeConfigs.length === 0) {
-    return sendOrEditMessage(ctx, "Выберите группу", {
-      keyboard: configSelectionKeyboard(configs),
-    });
-  }
-
-  return ctx.conversation.enter(ScheduleConversation.name);
+  return ctx.answerCallbackQuery("Неизвестное действие").catch(console.error);
 });
 
 bot.start({

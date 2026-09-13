@@ -1,10 +1,17 @@
 import { AparkitSchedule } from "@/classes";
 import { UserService } from "@/database";
 import { Conversation } from "@/interfaces";
-import { MyConversation, Context } from "@/types";
-import { getWeekendText, sendOrEditMessage } from "../utils";
+import { MyConversation, Context, SessionData } from "@/types";
+import {
+  getDayText,
+  getWeekendText,
+  getWeekText,
+  sendOrEditMessage,
+} from "../utils";
 import { configSelectionKeyboard } from "../keyboards";
-import { WEEKEND } from "@/constants";
+import { WEEKDAY_NAMES, WEEKEND } from "@/constants";
+import { InlineKeyboard } from "grammy";
+import { CALLBACK_DATA } from "../callback-data";
 
 export class ScheduleConversation implements Conversation {
   private readonly _schedule: AparkitSchedule = new AparkitSchedule();
@@ -14,10 +21,10 @@ export class ScheduleConversation implements Conversation {
 
   public async execute(
     conversation: MyConversation,
-    ctx: Context,
+    context: Context,
   ): Promise<void> {
     const session = await conversation.external(({ session }) => session);
-    const telegramId = ctx.from?.id;
+    const telegramId = context.from?.id;
     if (!telegramId) {
       throw new Error("id is not defined.");
     }
@@ -26,22 +33,181 @@ export class ScheduleConversation implements Conversation {
     const defaultConfig = configs.find((config) => config.defaulted);
 
     if (configs.length === 0 || !defaultConfig) {
-      return sendOrEditMessage(ctx, "Выберите группу", {
+      return sendOrEditMessage(context, "Выберите группу", {
         keyboard: configSelectionKeyboard(configs),
         conversation,
       });
     }
 
-    const weekNumber = await this._schedule.api.getCurrentWeek();
-    const dayNumber = await this._schedule.api.getCurrentDay();
-    if (dayNumber === WEEKEND) {
-      const text = getWeekendText({
-        dayNumber,
-        weekNumber,
-        group: defaultConfig,
-      });
+    const currentDayNumber = await this._schedule.api.getCurrentDay();
+    const currentWeekNumber = await this._schedule.api.getCurrentWeek();
+    const { dayNumber, dayOffset, weekNumber } = this.resolveQuickDate({
+      quickDate: session.quickDate,
+      dayNumber: currentDayNumber,
+      weekNumber: currentWeekNumber,
+      offsets: {
+        weekOffset: session.currentWeekOffset,
+        dayOffset: session.currentDayOffset,
+      },
+    });
 
-      return sendOrEditMessage(ctx, text, { conversation });
+    const week = await this._schedule.getWeekSchedule({
+      groupId: defaultConfig.groupId,
+      weekNumber,
+    });
+    const day = week?.[dayNumber] ?? {};
+    const dayName = WEEKDAY_NAMES[dayNumber];
+
+    const text = (() => {
+      if (session.watchType === "day") {
+        if (dayNumber === WEEKEND) {
+          return getWeekendText({
+            dayNumber,
+            weekNumber,
+            group: defaultConfig,
+          });
+        }
+
+        return getDayText({
+          day,
+          dayNumber,
+          weekNumber,
+          group: defaultConfig,
+        });
+      }
+
+      return getWeekText({
+        group: defaultConfig,
+        weekNumber,
+        week,
+      });
+    })();
+
+    const keyboard = (() => {
+      const inlineKeyboard = new InlineKeyboard();
+
+      if (session.watchType === "day") {
+        inlineKeyboard
+          .text("⬅️", CALLBACK_DATA.SCHEDULE_DAY_PREV)
+          .text(`📅 ${dayName}`, CALLBACK_DATA.SCHEDULE_DAY_RESET)
+          .text("➡️", CALLBACK_DATA.SCHEDULE_DAY_NEXT)
+          .row();
+        inlineKeyboard
+          .text("🗓 На неделю", CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK)
+          .row();
+      } else {
+        inlineKeyboard
+          .text("⬅️", CALLBACK_DATA.SCHEDULE_WEEK_PREV)
+          .text(`📅 Неделя ${weekNumber}`, CALLBACK_DATA.SCHEDULE_WEEK_RESET)
+          .text("➡️", CALLBACK_DATA.SCHEDULE_WEEK_NEXT)
+          .row();
+        inlineKeyboard
+          .text("🗓 На день", CALLBACK_DATA.SCHEDULE_SWITCH_TODAY)
+          .row();
+      }
+
+      inlineKeyboard
+        .text("🔄 Сменить группу", CALLBACK_DATA.SCHEDULE_SWITCH_GROUP)
+        .text(defaultConfig.group, CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS)
+        .row();
+
+      inlineKeyboard
+        .text("Вывести все группы", CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS)
+        .row();
+
+      return inlineKeyboard;
+    })();
+
+    await conversation.external(({ session }) => {
+      if (session.quickDate !== "none") {
+        session.currentDayOffset = dayOffset;
+        // session.currentWeekOffset = weekOffset; // Нужен ли?
+      }
+
+      session.quickDate = "none";
+    });
+
+    await sendOrEditMessage(context, text, {
+      keyboard,
+      session,
+      conversation,
+    });
+  }
+
+  private resolveQuickDate({
+    quickDate,
+    weekNumber,
+    dayNumber,
+    offsets,
+  }: {
+    quickDate: SessionData["quickDate"];
+    weekNumber: number;
+    dayNumber: number;
+    offsets: {
+      weekOffset: number;
+      dayOffset: number;
+    };
+  }): {
+    dayNumber: number;
+    weekNumber: number;
+    dayOffset: number;
+    weekOffset: number;
+  } {
+    if (quickDate === "tomorrow") {
+      return this.resolveTomorrow(weekNumber);
     }
+
+    if (quickDate === "today") {
+      return this.resolveToday(weekNumber);
+    }
+
+    return this.resolveDayOffset(weekNumber, dayNumber, offsets);
+  }
+
+  private resolveToday(weekNumber: number) {
+    const today = this.getCurrentDay();
+    return this.resolveDayOffset(weekNumber, today, {
+      dayOffset: 0,
+      weekOffset: 0,
+    });
+  }
+
+  private resolveTomorrow(weekNumber: number) {
+    const today = this.getCurrentDay();
+    return this.resolveDayOffset(weekNumber, today, {
+      dayOffset: 1,
+      weekOffset: 0,
+    });
+  }
+
+  private resolveDayOffset(
+    weekNumber: number,
+    dayNumber: number,
+    offsets: {
+      weekOffset: number;
+      dayOffset: number;
+    },
+  ): {
+    dayNumber: number;
+    dayOffset: number;
+    weekNumber: number;
+    weekOffset: number;
+  } {
+    const week = weekNumber + offsets.weekOffset;
+    const length = Object.keys(WEEKDAY_NAMES).length;
+    const day = (((dayNumber + offsets.dayOffset) % length) + length) % length;
+
+    return {
+      dayNumber: day === 0 ? 7 : day,
+      dayOffset: offsets.dayOffset,
+      weekNumber: week,
+      weekOffset: offsets.weekOffset + Math.trunc(day / length),
+    };
+  }
+
+  private getCurrentDay() {
+    const date = new Date();
+    const day = date.getDay() === 0 ? 7 : date.getDay();
+    return day;
   }
 }
