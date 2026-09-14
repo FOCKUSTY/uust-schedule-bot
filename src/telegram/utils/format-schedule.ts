@@ -78,7 +78,9 @@ export const getDayText = ({
     builder.append(`⏰ ${time} (${number} пара)`).appendLine();
     if (pair) {
       builder
-        .quote(`📝 ${pair.title}: ${pair.teacher.name}, ${pair.location}`)
+        .quote(
+          `📝 ${pair.type} ${pair.title}: ${pair.teacher.name}, ${pair.location}`,
+        )
         .appendLine();
     } else {
       builder.quote("❌ Нет пары").appendLine();

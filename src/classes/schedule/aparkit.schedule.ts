@@ -62,6 +62,7 @@ export class AparkitSchedule {
       const teacherName = lesson.teacher?.fullname || "TEACHER SERVER ERROR";
       const pair: Pair = {
         title: lesson.title,
+        type: lesson.type,
         location: lesson.location ?? "LOCATION SERVER ERROR",
         teacher: {
           name: teacherName,

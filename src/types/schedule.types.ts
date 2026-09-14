@@ -12,6 +12,7 @@ export type Teacher = {
 
 export type Pair = {
   title: string;
+  type: string;
   teacher: Teacher;
   location: string;
 };
