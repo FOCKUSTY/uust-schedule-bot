@@ -12,6 +12,7 @@ import { UserService } from "@/database";
 import { CALLBACK_DATA } from "@/telegram/callback-data";
 import { Conversation } from "@/interfaces";
 import { sendOrEditMessage } from "../utils";
+import { mainMenuKeyboard } from "../keyboards";
 
 const FACULTY_PREFIX = "reg:faculty";
 const COURSE_PREFIX = "reg:course";
@@ -75,6 +76,7 @@ export class RegistrationConversation implements Conversation {
         `👥 Группа: ${group.title}`,
       {
         conversation,
+        keyboard: mainMenuKeyboard(),
       },
     );
   }

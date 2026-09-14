@@ -20,7 +20,7 @@ export const LESSON_NUMBERS: Record<string, number> = {
 };
 
 export class AparkitSchedule {
-  private readonly _memory: MemoryCache = new MemoryCache();
+  private readonly _memory: MemoryCache = new MemoryCache("aparkit-schedule");
   public readonly api: AparkitApi = new AparkitApi();
 
   public constructor() {}
@@ -34,7 +34,7 @@ export class AparkitSchedule {
     }
 
     const week = await this.getWeekSchedule(weekInfo);
-    const day = week[dayNumber];
+    const day = week?.[dayNumber];
     return day;
   }
 

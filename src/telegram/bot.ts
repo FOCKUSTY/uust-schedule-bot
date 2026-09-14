@@ -15,6 +15,7 @@ import {
   ScheduleHandler,
 } from "./handlers";
 import { COMMANDS } from "./commands";
+import { CallbackRegister } from "./handlers/callback.register";
 
 export const bot = new Bot<Context>(env.TELEGRAM_BOT_TOKEN);
 
@@ -35,43 +36,15 @@ COMMANDS.forEach((command) => {
   bot.command(command.name, command);
 });
 
-export const callbackHandlers = new Map<string, CallbackHandler>();
+export const callbackRegistry = new CallbackRegister();
+callbackRegistry.add(
+  ScheduleHandler,
+  MenuHandler,
+  ConfigHandler,
+  GroupsScheduleHandler,
+);
 
-new ScheduleHandler(callbackHandlers).execute();
-new MenuHandler(callbackHandlers).execute();
-
-const handlers = [new ConfigHandler(), new GroupsScheduleHandler()];
-
-bot.on("callback_query:data", async (ctx) => {
-  const data = ctx.callbackQuery.data;
-
-  const handler = callbackHandlers.get(data);
-  if (handler) {
-    return handler(ctx);
-  }
-
-  let verifiedHandler: (typeof handlers)[number] | null = null;
-  if (
-    handlers.some((handler) => {
-      const verified = handler.verify(data);
-
-      if (verified) {
-        return (verifiedHandler = handler);
-      }
-
-      return verified;
-    })
-  ) {
-    const handler = verifiedHandler as (typeof handlers)[number] | null;
-    if (!handler) {
-      return;
-    }
-
-    return handler.handle(ctx);
-  }
-
-  return ctx.answerCallbackQuery("Неизвестное действие").catch(console.error);
-});
+bot.on("callback_query:data", (ctx) => callbackRegistry.dispatch(ctx));
 
 bot.start({
   onStart: (botInfo) => {

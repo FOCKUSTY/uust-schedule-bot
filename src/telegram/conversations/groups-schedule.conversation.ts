@@ -1,20 +1,22 @@
+import type { Conversation } from "@/interfaces";
+import type { Context, MyConversation, SessionData } from "@/types";
+
+import { InlineKeyboard } from "grammy";
+
 import { AparkitSchedule } from "@/classes";
 import { UserService } from "@/database";
-import { Conversation } from "@/interfaces";
-import { MyConversation, Context } from "@/types";
+import { WEEKDAY_NAMES, WEEKEND } from "@/constants";
+import { CALLBACK_DATA } from "../callback-data";
+import { configSelectionKeyboard } from "../keyboards";
 import {
-  getDayText,
-  getWeekendText,
-  getWeekText,
   ScheduleResolver,
+  getDayText,
+  getWeekText,
+  getWeekendText,
   sendOrEditMessage,
 } from "../utils";
-import { configSelectionKeyboard } from "../keyboards";
-import { WEEKDAY_NAMES, WEEKEND } from "@/constants";
-import { InlineKeyboard } from "grammy";
-import { CALLBACK_DATA } from "../callback-data";
 
-export class ScheduleConversation implements Conversation {
+export class GroupsScheduleConversation implements Conversation {
   private readonly _schedule: AparkitSchedule = new AparkitSchedule();
   private readonly _user_service: UserService = new UserService();
 
@@ -30,10 +32,18 @@ export class ScheduleConversation implements Conversation {
       throw new Error("id is not defined.");
     }
 
+    if (session.last.conversation === GroupsScheduleConversation.name) {
+      session.quickConfigGroup =
+        session.quickConfigGroup || session.last.quickConfigGroup;
+    }
+
     const configs = await this._user_service.getActiveConfigs(telegramId);
     const defaultConfig = configs.find((config) => config.defaulted);
+    const currentConfig =
+      configs.find((config) => config.group === session.quickConfigGroup) ||
+      defaultConfig;
 
-    if (configs.length === 0 || !defaultConfig) {
+    if (configs.length === 0 || !currentConfig) {
       return sendOrEditMessage(context, "Выберите группу", {
         keyboard: configSelectionKeyboard(configs),
         conversation,
@@ -54,7 +64,7 @@ export class ScheduleConversation implements Conversation {
       });
 
     const week = await this._schedule.getWeekSchedule({
-      groupId: defaultConfig.groupId,
+      groupId: currentConfig.groupId,
       weekNumber,
     });
     const day = week?.[dayNumber] ?? {};
@@ -66,7 +76,7 @@ export class ScheduleConversation implements Conversation {
           return getWeekendText({
             dayNumber,
             weekNumber,
-            group: defaultConfig,
+            group: currentConfig,
           });
         }
 
@@ -74,12 +84,12 @@ export class ScheduleConversation implements Conversation {
           day,
           dayNumber,
           weekNumber,
-          group: defaultConfig,
+          group: currentConfig,
         });
       }
 
       return getWeekText({
-        group: defaultConfig,
+        group: currentConfig,
         weekNumber,
         week,
       });
@@ -108,24 +118,39 @@ export class ScheduleConversation implements Conversation {
           .row();
       }
 
-      inlineKeyboard
-        .text("🔄 Сменить группу", CALLBACK_DATA.SCHEDULE_SWITCH_GROUP)
-        .text(defaultConfig.group, CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS)
-        .row();
+      const others = configs.filter((config) => config.id !== currentConfig.id);
+      others.forEach((config, index) => {
+        inlineKeyboard.text(
+          `🔎 ${config.group}`,
+          `${CALLBACK_DATA.GROUPS_SCHEDULE}:${config.group}`,
+        );
+        if (index % 2 === 1) {
+          inlineKeyboard.row();
+        }
+      });
+      if (others.length > 0) {
+        inlineKeyboard.row();
+      }
 
       inlineKeyboard
-        .text("Вывести все группы", CALLBACK_DATA.SCHEDULE_PRINT_ALL_GROUPS)
+        .text("Обычное расписание", CALLBACK_DATA.SCHEDULE_STANDART)
         .row();
+      inlineKeyboard.text("В главное меню", CALLBACK_DATA.MENU_BACK).row();
 
       return inlineKeyboard;
     })();
 
     await conversation.external(({ session }) => {
-      if (session.quickDate !== "none") {
+      if (
+        session.quickDate !== "none" &&
+        session.currentDayOffset !== dayOffset
+      ) {
         session.currentDayOffset = dayOffset;
-        // session.currentWeekOffset = weekOffset; // Нужен ли?
       }
 
+      session.last.conversation = GroupsScheduleConversation.name;
+      session.last.quickConfigGroup = currentConfig.group;
+      session.quickConfigGroup = null;
       session.quickDate = "none";
     });
 

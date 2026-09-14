@@ -1,6 +1,12 @@
-import type { CurrentWeekSo, GroupLessonSo, GroupSo } from "@/types";
+import type {
+  CurrentWeekSo,
+  GroupInformation,
+  GroupLessonSo,
+  GroupSo,
+} from "@/types";
 import { MemoryCache } from "../cache";
 import { env } from "@/env";
+import { DateCalculator } from "@/telegram/utils/date-calculator";
 
 const UNKNOWN_FACULTY = "Без факультета";
 const UNKNOWN_SPECIALIZATION = "Прочее";
@@ -9,7 +15,7 @@ const INFO_TIME_TO_LIVE_MS = 24 * 60 * 60 * 1000;
 
 export class AparkitApi {
   private readonly _url = "https://api.schedule-uust.arpakit.com";
-  private readonly _memory: MemoryCache = new MemoryCache(false);
+  private readonly _memory: MemoryCache = new MemoryCache("aparkit-api");
 
   public constructor() {}
 
@@ -20,12 +26,21 @@ export class AparkitApi {
   }
 
   public async getCurrentWeek() {
-    const response = await this.request<CurrentWeekSo>(
-      "/api/v1/get_current_week",
-      undefined,
-      60 * 60 * 1000,
-    );
-    return response.value;
+    return new DateCalculator().getCurrentWeek();
+    // const response = await this.request<CurrentWeekSo>(
+    //   "/api/v1/get_current_week",
+    //   undefined,
+    //   60 * 60 * 1000,
+    // );
+    // return response.value;
+  }
+
+  public async getGroupId(
+    group: GroupInformation,
+  ): Promise<number | undefined> {
+    const groups = await this.getAllGroups();
+    const groupSo = groups.find((groupSo) => groupSo.title === group.group);
+    return groupSo?.id;
   }
 
   public async getGroupLessons(groupId: number): Promise<GroupLessonSo[]> {

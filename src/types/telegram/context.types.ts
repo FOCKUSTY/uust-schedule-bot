@@ -7,3 +7,12 @@ export type Context = SessionFlavor<SessionData> &
 export type MyConversation = Conversation<Context, Context>;
 
 export type CallbackHandler = (context: Context) => Promise<unknown>;
+
+export type CallbackMatcher = {
+  verify(data: string): boolean;
+  handle(context: Context): Promise<unknown>;
+};
+
+export type CallbackHandlerModule = {
+  execute(): void;
+};

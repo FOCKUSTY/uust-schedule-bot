@@ -1,36 +1,36 @@
-import type { Context } from "@/types";
+import type { CallbackHandlerModule, CallbackMatcher, Context } from "@/types";
 import { UserService } from "../../database";
 import { CALLBACK_DATA } from "../callback-data";
 import { configSelectionKeyboard, mainMenuKeyboard } from "../keyboards";
 import { sendOrEditMessage } from "../utils";
+import { CallbackRegister } from "./callback.register";
 
-export class ConfigHandler {
+export class ConfigHandler implements CallbackMatcher, CallbackHandlerModule {
   private readonly _user_service = new UserService();
 
-  public constructor() {}
+  public constructor(private readonly registry: CallbackRegister) {}
 
-  public verify(data: string): boolean;
-  public verify(ctx: Context): boolean;
-  public verify(ctx: Context | string): boolean {
-    const callbackData =
-      typeof ctx === "string" ? ctx : ctx.callbackQuery?.data!;
-    const [data] = callbackData.split(":");
-    if (data !== CALLBACK_DATA.SELECT_CONFIG) {
-      return false;
-    }
+  public execute() {
+    this.registry.matcher(this);
+  }
 
-    return true;
+  public verify(data: string): boolean {
+    const [prefix] = data.split(":");
+    return prefix === CALLBACK_DATA.SELECT_CONFIG;
   }
 
   public async handle(ctx: Context) {
-    const data = ctx.callbackQuery?.data!;
-    const telegramId = ctx.from?.id!;
-
-    const [callbackData, dataConfigId, type] = data.split(":");
-    if (!this.verify(callbackData)) {
-      return "NON";
+    const data = ctx.callbackQuery?.data;
+    if (!data) {
+      return;
     }
 
+    const telegramId = ctx.from?.id;
+    if (!telegramId) {
+      return;
+    }
+
+    const [, dataConfigId, type] = data.split(":");
     const configId = parseInt(dataConfigId);
 
     try {

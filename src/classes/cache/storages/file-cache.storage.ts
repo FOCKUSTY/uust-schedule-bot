@@ -14,7 +14,7 @@ export class FileCacheStorage implements CacheStorage {
 
   public constructor(
     private readonly filePath: string,
-    private readonly debounceMs: number = 2000, // TODO: перенести в constants/
+    private readonly debounceMs: number = 5000, // TODO: перенести в constants/
   ) {
     this._dir = dirname(filePath);
   }
@@ -44,6 +44,8 @@ export class FileCacheStorage implements CacheStorage {
 
     const expiresAt = this.getExpiresAt(timeToLiveMs);
     this._memory.set(key, { value, expiresAt });
+    await this.scheduleSave();
+
     return value;
   }
 
