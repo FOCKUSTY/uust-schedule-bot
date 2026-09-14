@@ -1,79 +1,54 @@
-import { env } from "../env";
+import { env } from "@/env";
 
-import type { Context as GrammyContext, SessionFlavor } from "grammy";
-import type { Conversation, ConversationFlavor } from "@grammyjs/conversations";
-import type { SessionData } from "./session";
+import type { CallbackHandler, Context, MyConversation } from "@/types";
 
-import { Bot } from "grammy";
+import { Bot, session } from "grammy";
+import { initialSession } from "./session";
 
-import { ScheduleHandler } from "./handlers/schedule.handler";
-import { MenuHandler } from "./handlers/menu.handler";
-import { ConfigHandler } from "./handlers/config.handler";
+import { CONVERSATIONS } from "./conversations";
 
-import { ConversationsRegister } from "./conversations/conversations.register";
-import { CommandsRegister } from "./commands/commands.register";
-import { SessionRegister } from "./session";
-
-import { listen } from "./app";
-import { GroupsScheduleHandler } from "./handlers/groups-schedule.handler";
-
-export type Context = SessionFlavor<SessionData> &
-  ConversationFlavor<GrammyContext>;
-export type MyConversation = Conversation<Context, Context>;
+import { conversations, createConversation } from "@grammyjs/conversations";
+import {
+  ConfigHandler,
+  GroupsScheduleHandler,
+  MenuHandler,
+  ScheduleHandler,
+} from "./handlers";
+import { COMMANDS } from "./commands";
+import { CallbackRegister } from "./handlers/callback.register";
 
 export const bot = new Bot<Context>(env.TELEGRAM_BOT_TOKEN);
 
-export type CallbackHandler = (ctx: Context) => Promise<unknown>;
-export const callbackHandlers = new Map<string, CallbackHandler>();
+bot.use(session({ initial: () => initialSession }));
 
-new SessionRegister(bot).execute();
-new ConversationsRegister(bot).execute();
-new CommandsRegister(bot).execute();
-
-new ScheduleHandler(callbackHandlers).execute();
-new MenuHandler(callbackHandlers).execute();
-
-const configHandler = new ConfigHandler();
-const groupsScheuldeHandler = new GroupsScheduleHandler();
-
-const handlers = [configHandler, groupsScheuldeHandler];
-
-bot.on("callback_query:data", async (ctx) => {
-  const data = ctx.callbackQuery.data;
-
-  const handler = callbackHandlers.get(data);
-  if (handler) {
-    return handler(ctx);
-  }
-
-  let verifiedHandler: (typeof handlers)[number] | null = null;
-  if (
-    handlers.some((handler) => {
-      const verified = handler.verify(data);
-
-      if (verified) {
-        return (verifiedHandler = handler);
-      }
-
-      return verified;
-    })
-  ) {
-    const h = verifiedHandler as (typeof handlers)[number] | null;
-    if (!h) {
-      return;
-    }
-
-    return h.handle(ctx);
-  }
-
-  return ctx.answerCallbackQuery("Неизвестное действие").catch(console.error);
+bot.use(conversations<Context, Context>());
+CONVERSATIONS.forEach(([name, conversation]) => {
+  bot.use(
+    createConversation(
+      (myConversation: MyConversation, context: Context) =>
+        conversation.execute.call(conversation, myConversation, context),
+      name,
+    ),
+  );
 });
+
+COMMANDS.forEach((command) => {
+  bot.command(command.name, command);
+});
+
+export const callbackRegistry = new CallbackRegister();
+callbackRegistry.add(
+  ScheduleHandler,
+  MenuHandler,
+  ConfigHandler,
+  GroupsScheduleHandler,
+);
+
+bot.on("callback_query:data", (ctx) => callbackRegistry.dispatch(ctx));
 
 bot.start({
   onStart: (botInfo) => {
     console.log("Bot started as " + botInfo.username);
-
-    listen();
   },
 });
 

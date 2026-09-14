@@ -1,6 +1,6 @@
-import type { GroupInformation } from "../schedule";
-
+import { GroupInformation } from "@/types";
 import { Prisma } from "./prisma";
+import { AparkitApi } from "@/classes";
 
 type TelegramId = number | string;
 
@@ -8,6 +8,8 @@ type TelegramId = number | string;
  * Сервис для работы с пользователями и их конфигурациями групп.
  */
 export class UserService {
+  private readonly syncronizeCount: Record<TelegramId, number> = {};
+
   private readonly includeData = {
     userConfigs: {
       include: {
@@ -42,6 +44,7 @@ export class UserService {
    * Возвращает все конфигурации пользователя (включая неактивные).
    */
   public async getUserConfigs(telegramId: TelegramId) {
+    this.syncronizeConfig(telegramId);
     const user = await this.findOrCreate(telegramId);
     return user.userConfigs.map(({ config, actived, defaulted }) => ({
       ...config,
@@ -54,6 +57,7 @@ export class UserService {
    * Возвращает только активные конфигурации пользователя.
    */
   public async getActiveConfigs(telegramId: TelegramId) {
+    this.syncronizeConfig(telegramId);
     const configs = await this.getUserConfigs(telegramId);
     return configs.filter((config) => config.actived);
   }
@@ -252,5 +256,47 @@ export class UserService {
         actived: true,
       },
     });
+  }
+
+  private async syncronizeConfig(telegramId: TelegramId) {
+    if (
+      this.syncronizeCount[telegramId] !== undefined &&
+      this.syncronizeCount[telegramId] <= 20
+    ) {
+      return;
+    }
+
+    this.syncronizeCount[telegramId] ??= 0;
+
+    const api = new AparkitApi();
+    const user = await this.findOrCreate(telegramId);
+
+    const groups: (GroupInformation & { id: number })[] = [];
+    for (const userConfig of user.userConfigs) {
+      const id = await api.getGroupId(userConfig.config);
+      if (!id || id === userConfig.config.id) {
+        continue;
+      }
+
+      groups.push({
+        ...userConfig.config,
+        groupId: id,
+      });
+    }
+
+    this.syncronizeCount[telegramId] = this.syncronizeCount[telegramId] + 1;
+
+    await this.prisma.$transaction(
+      groups.map((group) => {
+        return this.prisma.config.update({
+          where: {
+            id: group.id,
+          },
+          data: {
+            groupId: group.groupId,
+          },
+        });
+      }),
+    );
   }
 }

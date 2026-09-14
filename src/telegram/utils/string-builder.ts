@@ -1,4 +1,12 @@
-import { escapeHtml } from "./escape-html";
+/**
+ * Экранирует специальные символы HTML.
+ */
+export const escapeHtml = (text: string): string => {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+};
 
 export class StringBuilder {
   private parts: string[] = [];

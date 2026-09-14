@@ -1,4 +1,4 @@
-import type { SessionData } from "../session";
+import type { SessionData } from "@/types";
 
 /**
  * Управляет смещениями недели и дня в сессии пользователя.

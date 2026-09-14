@@ -1,12 +1,8 @@
-import { GrammyError, InlineKeyboard } from "grammy";
-import { Context, MyConversation } from "../bot";
-import { SessionData } from "../session";
-
-const SAME_TEXT_ERROR_DESCRIPTION =
-  "Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message";
+import { Context, MyConversation, SessionData } from "@/types";
+import { InlineKeyboard } from "grammy";
 
 export async function sendOrEditMessage(
-  ctx: Context,
+  context: Context,
   text: string,
   {
     keyboard,
@@ -19,12 +15,13 @@ export async function sendOrEditMessage(
   },
 ) {
   session =
-    (await conversation?.external((context) => context.session)) || ctx.session;
+    (await conversation?.external((context) => context.session)) ||
+    context.session;
   if (!session) {
     throw new Error("Session not found.");
   }
 
-  const chatId = ctx.chat?.id;
+  const chatId = context.chat?.id;
   if (!chatId) {
     throw new Error("Chat ID не найден");
   }
@@ -33,7 +30,7 @@ export async function sendOrEditMessage(
   const lastChatId = session.lastChatId;
 
   const reply = async () => {
-    const msg = await ctx.reply(text, {
+    const msg = await context.reply(text, {
       reply_markup: keyboard,
       parse_mode: "HTML",
     });
@@ -47,14 +44,14 @@ export async function sendOrEditMessage(
       return reply();
     }
 
-    await ctx.api
+    await context.api
       .editMessageText(chatId, lastMessageId, text, {
         reply_markup: keyboard,
         parse_mode: "HTML",
       })
       .catch(reply);
 
-    if (!ctx.message) {
+    if (!context.message) {
       return;
     }
   } catch (error) {

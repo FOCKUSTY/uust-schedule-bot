@@ -1,44 +1,43 @@
-import type { Context } from "../bot";
-
+import type { CallbackHandlerModule, CallbackMatcher, Context } from "@/types";
 import { UserService } from "../../database";
-import { CALLBACK_DATA } from "../constants/callback-data";
+import { CALLBACK_DATA } from "../callback-data";
 import { configSelectionKeyboard, mainMenuKeyboard } from "../keyboards";
-import { sendOrEditMessage } from "../utils/send-or-edit";
+import { sendOrEditMessage } from "../utils";
+import { CallbackRegister } from "./callback.register";
 
-const userService = new UserService();
+export class ConfigHandler implements CallbackMatcher, CallbackHandlerModule {
+  private readonly _user_service = new UserService();
 
-export class ConfigHandler {
-  public constructor() {}
+  public constructor(private readonly registry: CallbackRegister) {}
 
-  public verify(data: string): boolean;
-  public verify(ctx: Context): boolean;
-  public verify(ctx: Context | string): boolean {
-    const callbackData =
-      typeof ctx === "string" ? ctx : ctx.callbackQuery?.data!;
-    const [data] = callbackData.split(":");
-    if (data !== CALLBACK_DATA.SELECT_CONFIG) {
-      return false;
-    }
+  public execute() {
+    this.registry.matcher(this);
+  }
 
-    return true;
+  public verify(data: string): boolean {
+    const [prefix] = data.split(":");
+    return prefix === CALLBACK_DATA.SELECT_CONFIG;
   }
 
   public async handle(ctx: Context) {
-    const data = ctx.callbackQuery?.data!;
-    const telegramId = ctx.from?.id!;
-
-    const [callbackData, dataConfigId, type] = data.split(":");
-    if (!this.verify(callbackData)) {
-      return "NON";
+    const data = ctx.callbackQuery?.data;
+    if (!data) {
+      return;
     }
 
+    const telegramId = ctx.from?.id;
+    if (!telegramId) {
+      return;
+    }
+
+    const [, dataConfigId, type] = data.split(":");
     const configId = parseInt(dataConfigId);
 
     try {
       if (type === "default") {
-        await userService.toggleDefaultConfig(telegramId, configId);
+        await this._user_service.toggleDefaultConfig(telegramId, configId);
       } else {
-        await userService.toggleConfigActive(telegramId, configId);
+        await this._user_service.toggleConfigActive(telegramId, configId);
       }
 
       await ctx.answerCallbackQuery("✅ Группа выбрана");
@@ -48,7 +47,7 @@ export class ConfigHandler {
     } catch {
       await ctx.answerCallbackQuery("❌ Эта группа недоступна");
 
-      const configs = await userService.getUserConfigs(telegramId);
+      const configs = await this._user_service.getUserConfigs(telegramId);
       const keyboard = configSelectionKeyboard(configs);
 
       return sendOrEditMessage(ctx, "Пожалуйста, выберите группу из списка:", {

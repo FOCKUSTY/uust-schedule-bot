@@ -9,6 +9,7 @@ export const env = Env.create(process.env)({
     "TELEGRAM_BOT_TOKEN",
     "REDIS_URL",
     "PRISMA_CONNECTION_TYPE",
+    "APARKIT_API_KEY",
   ],
   unique: {
     START_DATE: (value?: string) => {

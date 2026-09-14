@@ -1,3 +1,0 @@
-export const CACHE_FILE_NAME = "schedule";
-
-export const TWO_HOURS_MS = 1000 * 60 * 60 * 2;

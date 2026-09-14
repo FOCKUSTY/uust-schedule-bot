@@ -23,6 +23,7 @@
   "scripts": {
     "build": "prisma generate && tsc",
     "start": "node ./dist/telegram/start.js",
+    "test": "ts-node ./src/test.ts",
     "dev": "ts-node ./src/telegram/start.ts"
   },
   "dependencies": {
@@ -53,6 +54,7 @@
     "dotenv": "^17.4.2",
     "prisma": "^7.9.0",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3"
   }
 }

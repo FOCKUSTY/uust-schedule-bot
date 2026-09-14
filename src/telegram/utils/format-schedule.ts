@@ -1,24 +1,16 @@
-import type { ScheduleDay, ScheduleWeek } from "../../schedule";
-import type { WeekCalculator } from "../../schedule";
-
+import { DaySchedule, GroupInformation, Pair, WeekSchedule } from "@/types";
 import { StringBuilder } from "./string-builder";
+import { DateCalculator } from "./date-calculator";
 import {
+  DEFAULT_PAIR_TIMES,
   MAX_PAIRS,
-  REGULAR_PAIR_TIMES,
+  SATURDAY,
   SATURDAY_PAIR_TIMES,
-} from "../constants/pairs";
+  WEEKDAY_NAMES,
+  WEEKEND,
+} from "@/constants";
 
-const DAY_NAMES_RU = [
-  "Понедельник",
-  "Вторник",
-  "Среда",
-  "Четверг",
-  "Пятница",
-  "Суббота",
-  "Воскресенье",
-];
-
-const toRussianDate = (date: Date) => {
+export const toRussianDate = (date: Date) => {
   return date.toLocaleDateString("ru-RU", {
     weekday: "long",
     year: "numeric",
@@ -27,124 +19,110 @@ const toRussianDate = (date: Date) => {
   });
 };
 
-const normalizeDays = (days: ScheduleWeek["days"]): ScheduleWeek["days"] => {
-  const normalized: ScheduleWeek["days"] = {};
-
-  for (const [key, value] of Object.entries(days)) {
-    const trimmed = key.trim();
-    const correctKey = DAY_NAMES_RU.find((day) => day === trimmed) ?? trimmed;
-    normalized[correctKey] = value;
-  }
-
-  return normalized;
+export type WeekendParameters = {
+  weekNumber: number;
+  dayNumber: number;
+  group: GroupInformation;
 };
 
-const getPairTimes = (dayName: string, pairNumber: number): string | null => {
-  const times =
-    dayName === "Суббота" ? SATURDAY_PAIR_TIMES : REGULAR_PAIR_TIMES;
-  const pair = times[pairNumber - 1];
-  if (!pair) return null;
-  return `${pair.start}-${pair.end}`;
-};
-
-export const getWeekendText = (
-  dayName: string,
-  weekNumber: number,
-  weekCalculator: WeekCalculator,
-  groupName?: string,
-): string => {
-  const date = weekCalculator.getDateFromWeekNumber(
-    weekNumber,
-    DAY_NAMES_RU.indexOf(dayName),
-  );
-
+export const getWeekendText = ({
+  weekNumber,
+  dayNumber,
+  group,
+}: WeekendParameters) => {
   const builder = new StringBuilder();
-  if (groupName) {
-    builder.append(`${groupName} `);
-  }
 
+  const date = new DateCalculator().getDateFromWeekNumberAndDayNumber(
+    weekNumber,
+    dayNumber,
+  );
   builder
-    .appendLine(`🎩 на ${toRussianDate(date)}:`)
+    .append(`${group.group} `)
+    .appendLine(`🎩 на ${toRussianDate(date)}`)
     .appendLine(`Выходной день (неделя ${weekNumber})`)
-    .quote("🎉 Пар нет");
+    .quote("💕 Пар нет");
 
   return builder.toString();
 };
 
-export const formatDay = (
-  day: ScheduleDay,
-  weekNumber: number,
-  weekCalculator: WeekCalculator,
-  groupName?: string,
-): string => {
-  const date = weekCalculator.getDateFromWeekNumber(
+export type DayParameters = WeekendParameters & {
+  day: DaySchedule;
+};
+
+export const getDayText = ({
+  day,
+  dayNumber,
+  weekNumber,
+  group,
+}: DayParameters) => {
+  const date = new DateCalculator().getDateFromWeekNumberAndDayNumber(
     weekNumber,
-    DAY_NAMES_RU.indexOf(day.dayName),
+    dayNumber,
   );
-
   const builder = new StringBuilder();
-  if (groupName) {
-    builder.append(`${groupName} `);
-  }
-
+  builder.append(`${group.group} `);
   builder.append(`🎩 на ${toRussianDate(date)}:`).appendLine();
 
-  const pairs = day.pairs;
-  const pairKeys = Object.keys(pairs)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  const isWeekend =
-    pairKeys.map((key) => pairs[key]).filter(Boolean).length === 0;
-  if (pairKeys.length === 0 || isWeekend) {
-    return getWeekendText(day.dayName, weekNumber, weekCalculator, groupName);
+  const pairs = Object.keys(day).map(Number).sort();
+  if (pairs.length === 0) {
+    return getWeekendText({ weekNumber, dayNumber, group });
   }
 
   for (let number = 1; number <= MAX_PAIRS; number++) {
-    const timeRange = getPairTimes(day.dayName, number);
-    const pairInfo = pairs[number] || null;
+    const pair: Pair | undefined = day[number];
+    const time =
+      dayNumber === SATURDAY
+        ? SATURDAY_PAIR_TIMES[number]
+        : DEFAULT_PAIR_TIMES[number];
 
-    builder.append(`⏰ ${timeRange} (${number} пара)`).appendLine();
-
-    const isPairInfo = pairInfo && pairInfo !== "Выходной";
-    if (isPairInfo) {
-      builder.quote(`📝 ${pairInfo}`).appendLine();
+    builder.append(`⏰ ${time} (${number} пара)`).appendLine();
+    if (pair) {
+      builder
+        .quote(`📝 ${pair.title}: ${pair.teacher.name}, ${pair.location}`)
+        .appendLine();
     } else {
-      builder.quote(`❌ Нет пары`).appendLine();
+      builder.quote("❌ Нет пары").appendLine();
     }
   }
 
   return builder.toString();
 };
 
-export const formatWeek = (
-  week: ScheduleWeek,
-  weekCalculator: WeekCalculator,
-  groupName?: string,
-): string => {
+export type WeekParameters = Omit<WeekendParameters, "dayNumber"> & {
+  week: WeekSchedule;
+};
+
+export const getWeekText = ({ week, group, weekNumber }: WeekParameters) => {
   const builder = new StringBuilder();
 
-  const firstDate = weekCalculator.getDateFromWeekNumber(week.weekNumber, 0);
-  const lastDate = weekCalculator.getDateFromWeekNumber(week.weekNumber, 5);
+  const calculator = new DateCalculator();
+  const firstDate = calculator.getDateFromWeekNumberAndDayNumber(weekNumber, 1);
+  const lastDate = calculator.getDateFromWeekNumberAndDayNumber(weekNumber, 6);
+
   builder
     .bold(
-      `📆 Неделя ${week.weekNumber} (${toRussianDate(firstDate)} – ${toRussianDate(lastDate)})`,
+      `📆 Неделя ${weekNumber} (${toRussianDate(firstDate)} – ${toRussianDate(lastDate)})`,
     )
     .appendLine()
     .appendLine();
 
-  const days = normalizeDays(week.days);
-
-  for (let i = 0; i < DAY_NAMES_RU.length; i++) {
-    const dayName = DAY_NAMES_RU[i];
-    const day = days[dayName];
-    if (!day || dayName === "Воскресенье") continue;
+  const daysLength = Object.keys(WEEKDAY_NAMES).length;
+  for (let dayNumber = 1; dayNumber <= daysLength; dayNumber++) {
+    const day = week[dayNumber];
+    if (!day || dayNumber === WEEKEND) {
+      continue;
+    }
 
     builder.appendRaw(
-      formatDay(day, week.weekNumber, weekCalculator, groupName),
+      getDayText({
+        day,
+        dayNumber,
+        group,
+        weekNumber,
+      }),
     );
 
-    if (i < DAY_NAMES_RU.length - 2) {
+    if (dayNumber <= daysLength - 2) {
       builder.appendRawLine().appendRawLine();
     }
   }

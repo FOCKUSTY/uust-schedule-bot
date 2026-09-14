@@ -1,5 +1,5 @@
 import { InlineKeyboard } from "grammy";
-import { CALLBACK_DATA } from "../constants/callback-data";
+import { CALLBACK_DATA } from "../callback-data";
 
 export const mainMenuKeyboard = () => {
   return new InlineKeyboard()
