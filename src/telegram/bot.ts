@@ -16,6 +16,7 @@ import {
 } from "./handlers";
 import { COMMANDS } from "./commands";
 import { CallbackRegister } from "./handlers/callback.register";
+import { listen } from "@/app";
 
 export const bot = new Bot<Context>(env.TELEGRAM_BOT_TOKEN);
 
@@ -49,6 +50,8 @@ bot.on("callback_query:data", (ctx) => callbackRegistry.dispatch(ctx));
 bot.start({
   onStart: (botInfo) => {
     console.log("Bot started as " + botInfo.username);
+
+    listen();
   },
 });
 

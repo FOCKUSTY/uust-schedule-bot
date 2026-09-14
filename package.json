@@ -22,9 +22,9 @@
   },
   "scripts": {
     "build": "prisma generate && tsc",
-    "start": "node ./dist/telegram/start.js",
+    "start": "node ./dist/app.js",
     "test": "ts-node ./src/test.ts",
-    "dev": "ts-node ./src/telegram/start.ts"
+    "dev": "ts-node ./src/app.ts"
   },
   "dependencies": {
     "@grammyjs/conversations": "^2.1.1",
