@@ -3,6 +3,7 @@ import { Cache, CacheStorage, CacheUseSettings } from "@/interfaces";
 
 export abstract class BaseCache implements Cache {
   private readonly _operations: Record<string, number> = {};
+  private readonly _in_flight: Map<string, Promise<unknown>> = new Map();
 
   public constructor(private readonly storage: CacheStorage) {}
 
@@ -21,34 +22,20 @@ export abstract class BaseCache implements Cache {
       return fallback();
     }
 
-    this._operations[key] ??= 0;
+    const inFlight = this._in_flight.get(key) as Promise<Value> | undefined;
+    if (inFlight) {
+      return inFlight;
+    }
 
-    return new Promise<Value>(async (resolve, reject) => {
-      let resolved: boolean = false;
-
-      const cached = (await this.storage.get(key)) as Value | undefined;
-      if (cached !== undefined) {
-        this._operations[key] = this._operations[key] + 1;
-        resolved = true;
-        resolve(cached);
-
-        if (maxOperations > this._operations[key]) {
-          return;
-        }
-      }
-
-      try {
-        const value = await fallback();
-        await this.storage.set(key, value, timeToLiveMs);
-
-        if (!resolved) {
-          this._operations[key] = 0;
-          return resolve(value);
-        }
-      } catch (error) {
-        reject(error);
-      }
+    const promise = this.execute(key, fallback, {
+      maxOperations,
+      timeToLiveMs,
+    }).finally(() => {
+      this._in_flight.delete(key);
     });
+
+    this._in_flight.set(key, promise);
+    return promise;
   }
 
   public get<Value>(key: string): Promise<Value | undefined> {
@@ -89,5 +76,29 @@ export abstract class BaseCache implements Cache {
 
   public stopAutoSave(): Promise<void> {
     return this.storage.stopAutoSave();
+  }
+
+  private async execute<Value>(
+    key: string,
+    fallback: () => Promise<Value>,
+    settings: { maxOperations: number; timeToLiveMs?: number },
+  ): Promise<Value> {
+    this._operations[key] ??= 0;
+
+    const cached = (await this.storage.get(key)) as Value | undefined;
+    if (cached !== undefined) {
+      this._operations[key] = this._operations[key] + 1;
+
+      if (settings.maxOperations > this._operations[key]) {
+        return cached;
+      }
+    }
+
+    const value = await fallback();
+    await this.storage.set(key, value, settings.timeToLiveMs);
+
+    this._operations[key] = 0;
+
+    return value;
   }
 }
