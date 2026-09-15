@@ -23,8 +23,8 @@ export class AparkitApi {
   public constructor() {}
 
   public async getCurrentDay() {
-    const date = new Date();
-    const day = date.getDay() === 0 ? 7 : date.getDay();
+    const now = new Date();
+    const day = now.getUTCDay() === 0 ? 7 : now.getUTCDay();
     return day;
   }
 
