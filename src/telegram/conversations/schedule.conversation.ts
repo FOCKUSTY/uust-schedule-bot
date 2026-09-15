@@ -4,6 +4,7 @@ import { Conversation } from "@/interfaces";
 import { MyConversation, Context } from "@/types";
 import {
   getDayText,
+  getNoDataText,
   getWeekendText,
   getWeekText,
   ScheduleResolver,
@@ -61,6 +62,14 @@ export class ScheduleConversation implements Conversation {
     const dayName = WEEKDAY_NAMES[dayNumber];
 
     const text = (() => {
+      if (!week) {
+        return getNoDataText({
+          dayNumber,
+          weekNumber,
+          group: defaultConfig,
+        });
+      }
+
       if (session.watchType === "day") {
         if (dayNumber === WEEKEND) {
           return getWeekendText({

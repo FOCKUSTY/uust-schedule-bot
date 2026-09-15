@@ -19,6 +19,26 @@ export const toRussianDate = (date: Date) => {
   });
 };
 
+export const getNoDataText = ({
+  weekNumber,
+  dayNumber,
+  group,
+}: WeekendParameters) => {
+  const builder = new StringBuilder();
+  const date = new DateCalculator().getDateFromWeekNumberAndDayNumber(
+    weekNumber,
+    dayNumber,
+  );
+
+  builder
+    .append(`${group.group} `)
+    .appendLine(`🎩 на ${toRussianDate(date)}`)
+    .appendLine(`(неделя ${weekNumber})`)
+    .quote("⚠️ Не удалось получить расписание. Попробуйте позже.");
+
+  return builder.toString();
+};
+
 export type WeekendParameters = {
   weekNumber: number;
   dayNumber: number;

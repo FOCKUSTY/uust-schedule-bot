@@ -9,6 +9,7 @@ import type {
 import { AparkitApi } from "../api";
 import { MemoryCache } from "../cache";
 import {
+  APARKIT_WEEKS_SCHEDULE_TTL_MS,
   LESSON_NUMBERS,
   UNKNOWN_LOCATION,
   UNKNOWN_TEACHER,
@@ -31,23 +32,33 @@ export class AparkitSchedule {
 
     const week = await this.getWeekSchedule(weekInfo);
     const day = week?.[dayNumber];
-    return day;
+    return day ?? null;
   }
 
   public async getWeekSchedule({ groupId, weekNumber }: WeekScheduleInfo) {
     const weeks = await this.getWeeksSchedule(groupId);
-    const week = weeks[weekNumber];
-    return week;
+    if (Object.keys(weeks).length === 0) {
+      return undefined;
+    }
+
+    return weeks[weekNumber];
   }
 
   public async getWeeksSchedule(groupId: number): Promise<WeeksSchedule> {
-    return this._memory.use(
-      `WEEKS_${groupId}`,
-      async () => this.getRawWeeksSchedule(groupId),
-      {
-        timeToLiveMs: 12 * 60 * 60 * 1000,
-      },
-    );
+    const cacheKey = `WEEKS_${groupId}`;
+
+    const cached = await this._memory.get<WeeksSchedule>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const weeks = await this.getRawWeeksSchedule(groupId);
+
+    if (Object.keys(weeks).length > 0) {
+      await this._memory.set(cacheKey, weeks, APARKIT_WEEKS_SCHEDULE_TTL_MS);
+    }
+
+    return weeks;
   }
 
   private async getRawWeeksSchedule(groupId: number) {
@@ -60,9 +71,7 @@ export class AparkitSchedule {
         title: lesson.title,
         type: lesson.type,
         location: lesson.location ?? UNKNOWN_LOCATION,
-        teacher: {
-          name: teacherName,
-        },
+        teacher: { name: teacherName },
       };
 
       for (const lessonWeek of lesson.weeks) {

@@ -10,6 +10,7 @@ import { DateCalculator } from "@/telegram/utils/date-calculator";
 import {
   APARKIT_BASE_URL,
   APARKIT_INFO_TTL_MS,
+  APARKIT_LESSONS_TTL_MS,
   SPECIALIZATION_REGEX,
   UNKNOWN_FACULTY,
   UNKNOWN_SPECIALIZATION,
@@ -46,9 +47,13 @@ export class AparkitApi {
   }
 
   public async getGroupLessons(groupId: number): Promise<GroupLessonSo[]> {
-    return this.request("/api/v1/get_group_lessons", {
-      filter_group_id: groupId,
-    });
+    return this.request(
+      "/api/v1/get_group_lessons",
+      {
+        filter_group_id: groupId,
+      },
+      APARKIT_LESSONS_TTL_MS,
+    );
   }
 
   public getFaculty(group: GroupSo) {

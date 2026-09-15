@@ -11,6 +11,7 @@ import { configSelectionKeyboard } from "../keyboards";
 import {
   ScheduleResolver,
   getDayText,
+  getNoDataText,
   getWeekText,
   getWeekendText,
   sendOrEditMessage,
@@ -71,6 +72,14 @@ export class GroupsScheduleConversation implements Conversation {
     const dayName = WEEKDAY_NAMES[dayNumber];
 
     const text = (() => {
+      if (!week) {
+        return getNoDataText({
+          dayNumber,
+          weekNumber,
+          group: currentConfig,
+        });
+      }
+
       if (session.watchType === WATCH_TYPE.DAY) {
         if (dayNumber === WEEKEND) {
           return getWeekendText({
