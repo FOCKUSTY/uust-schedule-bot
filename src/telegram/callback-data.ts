@@ -5,6 +5,7 @@ export const CALLBACK_DATA = {
   MENU_SWITCH_GROUP: "menu:switch_group",
   MENU_ADD_GROUP: "menu:add_group",
   MENU_BACK: "menu:back",
+  MENU_SETTINGS: "menu:settings",
 
   SCHEDULE_SWITCH_GROUP: "schedule:group:switch",
 
@@ -31,6 +32,7 @@ export const CALLBACK_DATA = {
   REG_CANCEL: "reg:cancel",
 
   SELECT_CONFIG: "select_config",
+  DELETE_CONFIG_PREFIX: "delete_config",
 
   GROUPS_SCHEDULE: "groups-schedule",
 } as const;

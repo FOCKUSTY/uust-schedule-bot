@@ -4,6 +4,11 @@ import type { SerializedCache } from "@/types";
 import { access, mkdir, readFile, writeFile } from "fs/promises";
 import { lock } from "proper-lockfile";
 import { dirname } from "path";
+import {
+  CACHE_DEFAULT_DEBOUNCE_MS,
+  CACHE_FILE_EMPTY_CONTENT,
+  CACHE_LOCK_RETRIES,
+} from "@/constants";
 
 export class FileCacheStorage implements CacheStorage {
   private readonly _memory: Map<string, SerializedCache<unknown>> = new Map();
@@ -14,7 +19,7 @@ export class FileCacheStorage implements CacheStorage {
 
   public constructor(
     private readonly filePath: string,
-    private readonly debounceMs: number = 5000, // TODO: перенести в constants/
+    private readonly debounceMs: number = CACHE_DEFAULT_DEBOUNCE_MS,
   ) {
     this._dir = dirname(filePath);
   }
@@ -103,7 +108,7 @@ export class FileCacheStorage implements CacheStorage {
       cache[key] = value;
     });
 
-    const release = await lock(this.filePath, { retries: 5 });
+    const release = await lock(this.filePath, { retries: CACHE_LOCK_RETRIES });
     try {
       await writeFile(this.filePath, JSON.stringify(cache, null, 0), "utf-8");
     } finally {
@@ -168,7 +173,7 @@ export class FileCacheStorage implements CacheStorage {
       this._initialized = true;
     } catch {
       await mkdir(this._dir, { recursive: true });
-      await writeFile(this.filePath, "{}", "utf-8");
+      await writeFile(this.filePath, CACHE_FILE_EMPTY_CONTENT, "utf-8");
     }
   }
 }

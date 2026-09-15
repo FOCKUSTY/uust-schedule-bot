@@ -1,3 +1,4 @@
+import { DAYS_PER_WEEK, MS_PER_DAY, SUNDAY_INDEX } from "@/constants";
 import { env } from "@/env";
 
 export type DateLike = Date | string | number;
@@ -12,8 +13,8 @@ export class DateCalculator {
   public getCurrentWeek() {
     const now = this.normalizeToUTCMidnight(new Date());
     const time = now.getTime() - this.startDateUtc.getTime();
-    const days = Math.floor(time / (1000 * 60 * 60 * 24));
-    return Math.floor(days / 7);
+    const days = Math.floor(time / MS_PER_DAY);
+    return Math.floor(days / DAYS_PER_WEEK);
   }
 
   public getDateFromWeekNumberAndDayNumber(
@@ -24,7 +25,8 @@ export class DateCalculator {
     baseUtc.setUTCDate(baseUtc.getUTCDate() + weekNumber * 7);
 
     const baseDayOfWeek = baseUtc.getUTCDay();
-    const baseMondayIndex = baseDayOfWeek === 0 ? 6 : baseDayOfWeek - 1;
+    const baseMondayIndex =
+      baseDayOfWeek === SUNDAY_INDEX ? DAYS_PER_WEEK - 1 : baseDayOfWeek - 1;
 
     const offset = dayNumber - 1 - baseMondayIndex;
     baseUtc.setUTCDate(baseUtc.getUTCDate() + offset);

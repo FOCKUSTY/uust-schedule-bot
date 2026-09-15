@@ -7,14 +7,16 @@ import type {
 import { MemoryCache } from "../cache";
 import { env } from "@/env";
 import { DateCalculator } from "@/telegram/utils/date-calculator";
-
-const UNKNOWN_FACULTY = "Без факультета";
-const UNKNOWN_SPECIALIZATION = "Прочее";
-
-const INFO_TIME_TO_LIVE_MS = 24 * 60 * 60 * 1000;
+import {
+  APARKIT_BASE_URL,
+  APARKIT_INFO_TTL_MS,
+  SPECIALIZATION_REGEX,
+  UNKNOWN_FACULTY,
+  UNKNOWN_SPECIALIZATION,
+} from "@/constants";
 
 export class AparkitApi {
-  private readonly _url = "https://api.schedule-uust.arpakit.com";
+  private readonly _url = APARKIT_BASE_URL;
   private readonly _memory: MemoryCache = new MemoryCache("aparkit-api");
 
   public constructor() {}
@@ -30,7 +32,7 @@ export class AparkitApi {
     // const response = await this.request<CurrentWeekSo>(
     //   "/api/v1/get_current_week",
     //   undefined,
-    //   60 * 60 * 1000,
+    //   APARKIT_CURRENT_WEEK_TTL_MS,
     // );
     // return response.value;
   }
@@ -56,7 +58,7 @@ export class AparkitApi {
   }
 
   public getSpecialization(group: GroupSo) {
-    const match = group.title.match(/^([А-ЯЁ]+)/u);
+    const match = group.title.match(SPECIALIZATION_REGEX);
     return match ? match[1] : UNKNOWN_SPECIALIZATION;
   }
 
@@ -76,7 +78,7 @@ export class AparkitApi {
         return faculties;
       },
       {
-        timeToLiveMs: INFO_TIME_TO_LIVE_MS,
+        timeToLiveMs: APARKIT_INFO_TTL_MS,
       },
     );
   }
@@ -103,7 +105,7 @@ export class AparkitApi {
         return Array.from(set).sort((a, b) => Number(a) - Number(b));
       },
       {
-        timeToLiveMs: INFO_TIME_TO_LIVE_MS,
+        timeToLiveMs: APARKIT_INFO_TTL_MS,
       },
     );
   }
@@ -127,7 +129,7 @@ export class AparkitApi {
         return Array.from(set).sort((a, b) => a.localeCompare(b, "ru"));
       },
       {
-        timeToLiveMs: INFO_TIME_TO_LIVE_MS,
+        timeToLiveMs: APARKIT_INFO_TTL_MS,
       },
     );
   }
@@ -152,7 +154,7 @@ export class AparkitApi {
           .sort((a, b) => a.title.localeCompare(b.title, "ru"));
       },
       {
-        timeToLiveMs: INFO_TIME_TO_LIVE_MS,
+        timeToLiveMs: APARKIT_INFO_TTL_MS,
       },
     );
   }
@@ -161,7 +163,7 @@ export class AparkitApi {
     const groups = await this.request<GroupSo[]>(
       "/api/v1/get_groups",
       undefined,
-      INFO_TIME_TO_LIVE_MS,
+      APARKIT_INFO_TTL_MS,
     );
     return groups;
   }

@@ -8,6 +8,7 @@ import {
   ScheduleConversation,
 } from "../conversations";
 import { CallbackRegister } from "./callback.register";
+import { WATCH_TYPE } from "@/constants";
 
 const REGISTRATION_ACTIONS = [
   CALLBACK_DATA.MENU_SWITCH_GROUP,
@@ -25,7 +26,7 @@ export class MenuHandler implements CallbackHandlerModule {
 
   private registerScheduleActions() {
     this.registry.exact(CALLBACK_DATA.MENU_WEEK, async (ctx) => {
-      ctx.session.watchType = "week";
+      ctx.session.watchType = WATCH_TYPE.WEEK;
       return ctx.conversation.enter(ScheduleConversation.name);
     });
 

@@ -1,4 +1,7 @@
 import type { SessionData } from "@/types";
+import { NAVIGATION_TYPE } from "@/constants";
+
+type NavigationType = (typeof NAVIGATION_TYPE)[keyof typeof NAVIGATION_TYPE];
 
 /**
  * Управляет смещениями недели и дня в сессии пользователя.
@@ -6,18 +9,18 @@ import type { SessionData } from "@/types";
 export class NavigationService {
   public changeOrResetOffset(
     session: SessionData,
-    type: "week" | "day",
+    type: NavigationType,
     delta?: number,
   ) {
     if (!delta) {
-      if (type === "week") {
+      if (type === NAVIGATION_TYPE.WEEK) {
         return this.resetWeekOffset(session);
       }
 
       return this.resetDayOffset(session);
     }
 
-    if (type === "week") {
+    if (type === NAVIGATION_TYPE.WEEK) {
       return this.changeWeekOffset(session, delta);
     }
 
@@ -55,7 +58,7 @@ export class NavigationService {
   /**
    * Устанавливает режим просмотра (день / неделя).
    */
-  public setWatchType(session: SessionData, type: "day" | "week"): void {
+  public setWatchType(session: SessionData, type: NavigationType): void {
     session.watchType = type;
   }
 }

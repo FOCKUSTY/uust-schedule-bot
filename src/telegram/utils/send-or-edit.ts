@@ -1,3 +1,4 @@
+import { PARSE_MODE } from "@/constants";
 import { Context, MyConversation, SessionData } from "@/types";
 import { InlineKeyboard } from "grammy";
 
@@ -32,7 +33,7 @@ export async function sendOrEditMessage(
   const reply = async () => {
     const msg = await context.reply(text, {
       reply_markup: keyboard,
-      parse_mode: "HTML",
+      parse_mode: PARSE_MODE,
     });
 
     session.lastBotMessageId = msg.message_id;
@@ -47,7 +48,7 @@ export async function sendOrEditMessage(
     await context.api
       .editMessageText(chatId, lastMessageId, text, {
         reply_markup: keyboard,
-        parse_mode: "HTML",
+        parse_mode: PARSE_MODE,
       })
       .catch(reply);
 

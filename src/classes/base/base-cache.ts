@@ -1,3 +1,4 @@
+import { CACHE_DEFAULT_MAX_OPERATIONS } from "@/constants";
 import { Cache, CacheStorage, CacheUseSettings } from "@/interfaces";
 
 export abstract class BaseCache implements Cache {
@@ -10,7 +11,11 @@ export abstract class BaseCache implements Cache {
     fallback: () => Promise<Value>,
     settings?: Partial<CacheUseSettings>,
   ): Promise<Value> {
-    const { maxOperations = 5, skip, timeToLiveMs } = settings || {};
+    const {
+      maxOperations = CACHE_DEFAULT_MAX_OPERATIONS,
+      skip,
+      timeToLiveMs,
+    } = settings || {};
 
     if (skip) {
       return fallback();

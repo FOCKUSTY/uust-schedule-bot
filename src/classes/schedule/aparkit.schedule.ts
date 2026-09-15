@@ -8,16 +8,12 @@ import type {
 
 import { AparkitApi } from "../api";
 import { MemoryCache } from "../cache";
-
-export const LESSON_NUMBERS: Record<string, number> = {
-  "08:00-09:30": 1,
-  "09:40-11:10": 2,
-  "12:00-13:30": 3,
-  "13:40-15:10": 4,
-  "15:50-17:20": 5,
-  "17:30-19:00": 6,
-  "19:10-20:40": 7,
-};
+import {
+  LESSON_NUMBERS,
+  UNKNOWN_LOCATION,
+  UNKNOWN_TEACHER,
+  WEEKEND,
+} from "@/constants";
 
 export class AparkitSchedule {
   private readonly _memory: MemoryCache = new MemoryCache("aparkit-schedule");
@@ -29,7 +25,7 @@ export class AparkitSchedule {
     dayNumber,
     ...weekInfo
   }: DayScheduleInfo): Promise<DaySchedule | null> {
-    if (dayNumber === 7) {
+    if (dayNumber === WEEKEND) {
       return null;
     }
 
@@ -59,11 +55,11 @@ export class AparkitSchedule {
 
     const weeks: WeeksSchedule = {};
     for (const lesson of lessons) {
-      const teacherName = lesson.teacher?.fullname || "TEACHER SERVER ERROR";
+      const teacherName = lesson.teacher?.fullname || UNKNOWN_TEACHER;
       const pair: Pair = {
         title: lesson.title,
         type: lesson.type,
-        location: lesson.location ?? "LOCATION SERVER ERROR",
+        location: lesson.location ?? UNKNOWN_LOCATION,
         teacher: {
           name: teacherName,
         },

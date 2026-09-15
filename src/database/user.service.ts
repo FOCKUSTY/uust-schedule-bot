@@ -1,6 +1,7 @@
 import { GroupInformation } from "@/types";
 import { Prisma } from "./prisma";
 import { AparkitApi } from "@/classes";
+import { CONFIG_SYNC_LIMIT } from "@/constants";
 
 type TelegramId = number | string;
 
@@ -261,7 +262,7 @@ export class UserService {
   private async syncronizeConfig(telegramId: TelegramId) {
     if (
       this.syncronizeCount[telegramId] !== undefined &&
-      this.syncronizeCount[telegramId] <= 20
+      this.syncronizeCount[telegramId] <= CONFIG_SYNC_LIMIT
     ) {
       return;
     }

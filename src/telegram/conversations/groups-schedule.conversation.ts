@@ -1,11 +1,11 @@
 import type { Conversation } from "@/interfaces";
-import type { Context, MyConversation, SessionData } from "@/types";
+import type { Context, MyConversation } from "@/types";
 
 import { InlineKeyboard } from "grammy";
 
 import { AparkitSchedule } from "@/classes";
 import { UserService } from "@/database";
-import { WEEKDAY_NAMES, WEEKEND } from "@/constants";
+import { QUICK_DATE, WATCH_TYPE, WEEKDAY_NAMES, WEEKEND } from "@/constants";
 import { CALLBACK_DATA } from "../callback-data";
 import { configSelectionKeyboard } from "../keyboards";
 import {
@@ -71,7 +71,7 @@ export class GroupsScheduleConversation implements Conversation {
     const dayName = WEEKDAY_NAMES[dayNumber];
 
     const text = (() => {
-      if (session.watchType === "day") {
+      if (session.watchType === WATCH_TYPE.DAY) {
         if (dayNumber === WEEKEND) {
           return getWeekendText({
             dayNumber,
@@ -98,7 +98,7 @@ export class GroupsScheduleConversation implements Conversation {
     const keyboard = (() => {
       const inlineKeyboard = new InlineKeyboard();
 
-      if (session.watchType === "day") {
+      if (session.watchType === WATCH_TYPE.DAY) {
         inlineKeyboard
           .text("⬅️", CALLBACK_DATA.SCHEDULE_DAY_PREV)
           .text(`📅 ${dayName}`, CALLBACK_DATA.SCHEDULE_DAY_RESET)
@@ -142,7 +142,7 @@ export class GroupsScheduleConversation implements Conversation {
 
     await conversation.external(({ session }) => {
       if (
-        session.quickDate !== "none" &&
+        session.quickDate !== QUICK_DATE.NONE &&
         session.currentDayOffset !== dayOffset
       ) {
         session.currentDayOffset = dayOffset;
@@ -151,7 +151,7 @@ export class GroupsScheduleConversation implements Conversation {
       session.last.conversation = GroupsScheduleConversation.name;
       session.last.quickConfigGroup = currentConfig.group;
       session.quickConfigGroup = null;
-      session.quickDate = "none";
+      session.quickDate = QUICK_DATE.NONE;
     });
 
     await sendOrEditMessage(context, text, {

@@ -13,6 +13,7 @@ import { CALLBACK_DATA } from "@/telegram/callback-data";
 import { Conversation } from "@/interfaces";
 import { sendOrEditMessage } from "../utils";
 import { mainMenuKeyboard } from "../keyboards";
+import { MAX_GROUP_TITLE_LENGTH } from "@/constants";
 
 const FACULTY_PREFIX = "reg:faculty";
 const COURSE_PREFIX = "reg:course";
@@ -229,7 +230,9 @@ export class RegistrationConversation implements Conversation {
   ): Promise<void> {
     const keyboard = new InlineKeyboard();
     items.forEach((item, i) => {
-      keyboard.text(this.truncate(item, 60), `${prefix}:${i}`).row();
+      keyboard
+        .text(this.truncate(item, MAX_GROUP_TITLE_LENGTH), `${prefix}:${i}`)
+        .row();
     });
     keyboard.text("❌ Отмена", CALLBACK_DATA.REG_CANCEL);
 

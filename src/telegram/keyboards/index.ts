@@ -1,5 +1,6 @@
 import { InlineKeyboard } from "grammy";
 import { CALLBACK_DATA } from "../callback-data";
+import { CONFIG_ACTION } from "@/constants";
 
 export const mainMenuKeyboard = () => {
   return new InlineKeyboard()
@@ -13,7 +14,7 @@ export const mainMenuKeyboard = () => {
     .row()
     .text("🔄 Сменить группу", CALLBACK_DATA.SCHEDULE_SWITCH_GROUP)
     .row()
-    .text("⚙️ Настройки", "menu:settings");
+    .text("⚙️ Настройки", CALLBACK_DATA.MENU_SETTINGS);
 };
 
 export const backButton = (text = "🔙 Назад") =>
@@ -35,9 +36,15 @@ export const configSelectionKeyboard = (
     const symbol = config.defaulted ? "💟" : config.actived ? "✅" : "◻️";
 
     keyboard
-      .text(symbol, `${CALLBACK_DATA.SELECT_CONFIG}:${config.id}:active`)
-      .text(config.group, `${CALLBACK_DATA.SELECT_CONFIG}:${config.id}:default`)
-      .text("❌", `delete_config:${config.id}`)
+      .text(
+        symbol,
+        `${CALLBACK_DATA.SELECT_CONFIG}:${config.id}:${CONFIG_ACTION.ACTIVE}`,
+      )
+      .text(
+        config.group,
+        `${CALLBACK_DATA.SELECT_CONFIG}:${config.id}:${CONFIG_ACTION.DEFAULT}`,
+      )
+      .text("❌", `${CALLBACK_DATA.DELETE_CONFIG_PREFIX}:${config.id}`)
       .row();
   });
 

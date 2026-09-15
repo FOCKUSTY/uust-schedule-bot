@@ -9,6 +9,7 @@ import {
   ScheduleConversation,
 } from "../conversations";
 import { CallbackRegister } from "./callback.register";
+import { WATCH_TYPE } from "@/constants";
 
 const OFFSET_CALLBACKS = [
   CALLBACK_DATA.SCHEDULE_WEEK_PREV,
@@ -36,7 +37,7 @@ export class ScheduleHandler implements CallbackHandlerModule {
       this.registry.exact(key, async (ctx) => {
         this._navigation.changeOrResetOffset(
           ctx.session,
-          key.includes(":week:") ? "week" : "day",
+          key.includes(":week:") ? WATCH_TYPE.WEEK : WATCH_TYPE.DAY,
           key.includes("reset") ? undefined : key.includes("next") ? 1 : -1,
         );
         return this.enterConversation(ctx);
@@ -50,12 +51,12 @@ export class ScheduleHandler implements CallbackHandlerModule {
 
   private registerDayWeekSwitchHandlers() {
     this.registry.exact(CALLBACK_DATA.SCHEDULE_SWITCH_TODAY, async (ctx) => {
-      this._navigation.setWatchType(ctx.session, "day");
+      this._navigation.setWatchType(ctx.session, WATCH_TYPE.DAY);
       return this.enterConversation(ctx);
     });
 
     this.registry.exact(CALLBACK_DATA.SCHEDULE_SWITCH_TOWEEK, async (ctx) => {
-      this._navigation.setWatchType(ctx.session, "week");
+      this._navigation.setWatchType(ctx.session, WATCH_TYPE.WEEK);
       return this.enterConversation(ctx);
     });
 

@@ -1,5 +1,5 @@
 import type { SessionData } from "@/types";
-import { WEEKDAY_NAMES } from "@/constants";
+import { DAYS_PER_WEEK, LAST_WEEKDAY_INDEX, WEEKDAY_NAMES } from "@/constants";
 
 export class ScheduleResolver {
   public static resolveQuickDate({
@@ -59,11 +59,11 @@ export class ScheduleResolver {
     weekOffset: number;
   } {
     const week = weekNumber + offsets.weekOffset;
-    const length = Object.keys(WEEKDAY_NAMES).length;
+    const length = DAYS_PER_WEEK;
     const day = (((dayNumber + offsets.dayOffset) % length) + length) % length;
 
     return {
-      dayNumber: day === 0 ? 7 : day,
+      dayNumber: day === 0 ? LAST_WEEKDAY_INDEX : day,
       dayOffset: offsets.dayOffset,
       weekNumber: week,
       weekOffset: offsets.weekOffset + Math.trunc(day / length),
