@@ -8,6 +8,7 @@ import { DateCalculator } from "./telegram/utils/date-calculator";
   // const specializations = await schedule.api.getSpecializations("ИСПО", "2"); // РЭУ
   const groups = await schedule.api.getGroupsByFilter("ИСПО", "2", "РЭУ"); // РЭУ(ц)2225, id:9913658
   await schedule.getWeeksSchedule(9913658);
+  console.log({ groups });
   // console.log(groups);
 
   const weekNumber = await schedule.api.getCurrentWeek();
@@ -15,7 +16,7 @@ import { DateCalculator } from "./telegram/utils/date-calculator";
 
   const weeks = await schedule.getWeeksSchedule(9913658);
   const day = await schedule.getDaySchedule({
-    groupId: 9913658,
+    group: 9913658,
     weekNumber,
     dayNumber,
   });

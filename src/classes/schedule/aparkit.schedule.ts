@@ -1,6 +1,7 @@
 import type {
   DaySchedule,
   DayScheduleInfo,
+  GroupInformation,
   Pair,
   WeekScheduleInfo,
   WeeksSchedule,
@@ -35,7 +36,8 @@ export class AparkitSchedule {
     return day ?? null;
   }
 
-  public async getWeekSchedule({ groupId, weekNumber }: WeekScheduleInfo) {
+  public async getWeekSchedule({ group, weekNumber }: WeekScheduleInfo) {
+    const groupId = await this.getGroupId(group);
     const weeks = await this.getWeeksSchedule(groupId);
     if (Object.keys(weeks).length === 0) {
       return undefined;
@@ -44,7 +46,10 @@ export class AparkitSchedule {
     return weeks[weekNumber];
   }
 
-  public async getWeeksSchedule(groupId: number): Promise<WeeksSchedule> {
+  public async getWeeksSchedule(
+    group: number | GroupInformation,
+  ): Promise<WeeksSchedule> {
+    const groupId = await this.getGroupId(group);
     const cacheKey = `WEEKS_${groupId}`;
 
     const cached = await this._memory.get<WeeksSchedule>(cacheKey);
@@ -61,7 +66,8 @@ export class AparkitSchedule {
     return weeks;
   }
 
-  private async getRawWeeksSchedule(groupId: number) {
+  private async getRawWeeksSchedule(group: number | GroupInformation) {
+    const groupId = await this.getGroupId(group);
     const lessons = await this.api.getGroupLessons(groupId);
 
     const weeks: WeeksSchedule = {};
@@ -86,5 +92,18 @@ export class AparkitSchedule {
     }
 
     return weeks;
+  }
+
+  private async getGroupId(group: number | GroupInformation) {
+    if (typeof group === "number") {
+      return group;
+    }
+
+    const groupId = await this.api.getGroupId(group);
+    if (!groupId) {
+      throw new Error("Can not get group id");
+    }
+
+    return groupId;
   }
 }

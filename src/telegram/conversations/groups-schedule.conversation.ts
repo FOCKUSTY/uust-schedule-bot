@@ -65,7 +65,7 @@ export class GroupsScheduleConversation implements Conversation {
       });
 
     const week = await this._schedule.getWeekSchedule({
-      groupId: currentConfig.groupId,
+      group: currentConfig,
       weekNumber,
     });
     const day = week?.[dayNumber] ?? {};

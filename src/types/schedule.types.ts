@@ -24,7 +24,7 @@ export type WeekSchedule = Record<number, DaySchedule>;
 export type WeeksSchedule = Record<string, WeekSchedule>;
 
 export type WeekScheduleInfo = {
-  groupId: number;
+  group: number | GroupInformation;
   weekNumber: number;
 };
 
