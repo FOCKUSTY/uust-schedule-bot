@@ -1,10 +1,15 @@
 import type { CacheStorage } from "./cache-storage.interface";
 
-export type CacheUseSettings = {
+export type CacheSettingsParameter = Partial<{
+  memory: Partial<CacheUseSettings>;
+  fallback: Partial<CacheUseSettings>;
+}>;
+
+export type CacheUseSettings = Partial<{
   timeToLiveMs: number;
   maxOperations: number;
   skip: boolean;
-};
+}>;
 
 export type Cache = CacheStorage & {
   use(

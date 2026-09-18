@@ -12,6 +12,7 @@ import { MemoryCache } from "../cache";
 import {
   APARKIT_WEEKS_SCHEDULE_TTL_MS,
   LESSON_NUMBERS,
+  MS_PER_HOUR,
   UNKNOWN_LOCATION,
   UNKNOWN_TEACHER,
   WEEKEND,
@@ -99,7 +100,17 @@ export class AparkitSchedule {
       return group;
     }
 
-    const groupId = await this.api.getGroupId(group);
+    const groupId = await this._memory.use(
+      `GROUP_ID_${group.groupId}`,
+      () => {
+        return this.api.getGroupId(group, { skip: true });
+      },
+      {
+        timeToLiveMs: MS_PER_HOUR,
+        maxOperations: 50,
+      },
+    );
+
     if (!groupId) {
       throw new Error("Can not get group id");
     }

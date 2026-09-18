@@ -15,6 +15,7 @@ import {
   UNKNOWN_FACULTY,
   UNKNOWN_SPECIALIZATION,
 } from "@/constants";
+import { CacheSettingsParameter, CacheUseSettings } from "@/interfaces";
 
 export class AparkitApi {
   private readonly _url = APARKIT_BASE_URL;
@@ -40,8 +41,9 @@ export class AparkitApi {
 
   public async getGroupId(
     group: GroupInformation,
+    cacheSettings?: CacheUseSettings,
   ): Promise<number | undefined> {
-    const groups = await this.getAllGroups();
+    const groups = await this.getAllGroups(cacheSettings);
     const groupSo = groups.find((groupSo) => groupSo.title === group.group);
     return groupSo?.id;
   }
@@ -52,7 +54,7 @@ export class AparkitApi {
       {
         filter_group_id: groupId,
       },
-      APARKIT_LESSONS_TTL_MS,
+      { timeToLiveMs: APARKIT_LESSONS_TTL_MS },
     );
   }
 
@@ -67,11 +69,13 @@ export class AparkitApi {
     return match ? match[1] : UNKNOWN_SPECIALIZATION;
   }
 
-  public async getFaculties(): Promise<string[]> {
+  public async getFaculties(
+    cacheSettings?: CacheSettingsParameter,
+  ): Promise<string[]> {
     return this._memory.use(
       "FACULTIES",
       async () => {
-        const groups = await this.getAllGroups();
+        const groups = await this.getAllGroups(cacheSettings?.fallback);
         const set = new Set<string>();
         for (const group of groups) {
           set.add(this.getFaculty(group));
@@ -84,15 +88,19 @@ export class AparkitApi {
       },
       {
         timeToLiveMs: APARKIT_INFO_TTL_MS,
+        ...cacheSettings?.memory,
       },
     );
   }
 
-  public async getCourses(faculty: string): Promise<string[]> {
+  public async getCourses(
+    faculty: string,
+    cacheSettings?: CacheSettingsParameter,
+  ): Promise<string[]> {
     return this._memory.use(
       `COURSES_${faculty}`,
       async () => {
-        const groups = await this.getAllGroups();
+        const groups = await this.getAllGroups(cacheSettings?.fallback);
         const set = new Set<string>();
 
         for (const group of groups) {
@@ -111,6 +119,7 @@ export class AparkitApi {
       },
       {
         timeToLiveMs: APARKIT_INFO_TTL_MS,
+        ...cacheSettings?.memory,
       },
     );
   }
@@ -118,11 +127,12 @@ export class AparkitApi {
   public async getSpecializations(
     faculty: string,
     course: string,
+    cacheSettings?: CacheSettingsParameter,
   ): Promise<string[]> {
     return this._memory.use(
       `SPECIALIZATIONS_${faculty}_${course}`,
       async () => {
-        const groups = await this.getAllGroups();
+        const groups = await this.getAllGroups(cacheSettings?.fallback);
         const set = new Set<string>();
 
         for (const group of groups) {
@@ -135,6 +145,7 @@ export class AparkitApi {
       },
       {
         timeToLiveMs: APARKIT_INFO_TTL_MS,
+        ...cacheSettings?.memory,
       },
     );
   }
@@ -143,11 +154,12 @@ export class AparkitApi {
     faculty: string,
     course: string,
     specialization: string,
+    cacheSettings?: CacheSettingsParameter,
   ): Promise<GroupSo[]> {
     return this._memory.use(
       `GROUPS_FILTER_${faculty}_${course}_${specialization}`,
       async () => {
-        const groups = await this.getAllGroups();
+        const groups = await this.getAllGroups(cacheSettings?.fallback);
 
         return groups
           .filter(
@@ -160,15 +172,19 @@ export class AparkitApi {
       },
       {
         timeToLiveMs: APARKIT_INFO_TTL_MS,
+        ...cacheSettings?.memory,
       },
     );
   }
 
-  public async getAllGroups() {
+  public async getAllGroups(cacheSettings?: Partial<CacheUseSettings>) {
     const groups = await this.request<GroupSo[]>(
       "/api/v1/get_groups",
       undefined,
-      APARKIT_INFO_TTL_MS,
+      {
+        timeToLiveMs: APARKIT_INFO_TTL_MS,
+        ...cacheSettings,
+      },
     );
     return groups;
   }
@@ -176,7 +192,7 @@ export class AparkitApi {
   private async request<T>(
     path: string,
     parameters: Record<string, unknown> = {},
-    timeToLiveMs?: number,
+    settings?: Partial<CacheUseSettings>,
   ): Promise<T> {
     const url = new URL(path, this._url);
     for (const [key, value] of Object.entries(parameters)) {
@@ -204,7 +220,7 @@ export class AparkitApi {
         const json = await response.json();
         return json;
       },
-      { timeToLiveMs },
+      settings,
     );
   }
 }
