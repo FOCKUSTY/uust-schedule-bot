@@ -11,12 +11,14 @@ import { AparkitApi } from "../api";
 import { MemoryCache } from "../cache";
 import {
   APARKIT_WEEKS_SCHEDULE_TTL_MS,
-  LESSON_NUMBERS,
   MS_PER_HOUR,
   UNKNOWN_LOCATION,
   UNKNOWN_TEACHER,
   WEEKEND,
 } from "@/constants";
+import { parseLessonRange } from "@/utils";
+import { writeFile } from "fs/promises";
+import { readFileSync, writeFileSync } from "fs";
 
 export class AparkitSchedule {
   private readonly _memory: MemoryCache = new MemoryCache("aparkit-schedule");
@@ -59,7 +61,6 @@ export class AparkitSchedule {
     }
 
     const weeks = await this.getRawWeeksSchedule(groupId);
-
     if (Object.keys(weeks).length > 0) {
       await this._memory.set(cacheKey, weeks, APARKIT_WEEKS_SCHEDULE_TTL_MS);
     }
@@ -70,10 +71,10 @@ export class AparkitSchedule {
   private async getRawWeeksSchedule(group: number | GroupInformation) {
     const groupId = await this.getGroupId(group);
     const lessons = await this.api.getGroupLessons(groupId);
-
     const weeks: WeeksSchedule = {};
+
     for (const lesson of lessons) {
-      const teacherName = lesson.teacher?.fullname || UNKNOWN_TEACHER;
+      const teacherName = lesson.teacher?.fullname;
       const pair: Pair = {
         title: lesson.title,
         type: lesson.type,
@@ -81,12 +82,28 @@ export class AparkitSchedule {
         teacher: { name: teacherName },
       };
 
+      const pairNumbers = parseLessonRange(lesson.time_title!);
+
       for (const lessonWeek of lesson.weeks) {
+        const week = (weeks[lessonWeek] ??= {});
+        const day = (week[lesson.weekday] ??= {});
+
+        const pairs = Object.fromEntries(
+          pairNumbers.map((pairNumber) => {
+            if (day?.[pairNumber]) {
+              const p = day[pairNumber];
+              return [pairNumber, [...(Array.isArray(p) ? p : [p]), pair]];
+            }
+
+            return [pairNumber, [pair]];
+          }),
+        );
+
         weeks[lessonWeek] = {
-          ...(weeks?.[lessonWeek] ?? {}),
+          ...week,
           [lesson.weekday]: {
-            ...(weeks?.[lessonWeek]?.[lesson.weekday] ?? {}),
-            [LESSON_NUMBERS[lesson.time_title!]]: pair,
+            ...day,
+            ...pairs,
           },
         };
       }

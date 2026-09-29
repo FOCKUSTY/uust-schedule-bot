@@ -64,7 +64,7 @@ export class FileCacheStorage implements CacheStorage {
   }
 
   public async has(key: string): Promise<boolean> {
-    const value = this.get(key);
+    const value = await this.get(key);
     if (!value) {
       return false;
     }

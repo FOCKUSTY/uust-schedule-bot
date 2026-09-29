@@ -12,7 +12,9 @@ export const WEEKEND = 7;
 export const SATURDAY = 6;
 
 export const LESSON_NUMBERS: Record<string, number> = {
+  "8:00-9:30": 1,
   "08:00-09:30": 1,
+  "9:40-11:10": 2,
   "09:40-11:10": 2,
   "12:00-13:30": 3,
   "13:40-15:10": 4,

@@ -89,7 +89,7 @@ export const getDayText = ({
   }
 
   for (let number = 1; number <= MAX_PAIRS; number++) {
-    const pair: Pair | undefined = day[number];
+    const pair: Pair[] | undefined = day[number];
     const time =
       dayNumber === SATURDAY
         ? SATURDAY_PAIR_TIMES[number]
@@ -97,11 +97,14 @@ export const getDayText = ({
 
     builder.append(`⏰ ${time} (${number} пара)`).appendLine();
     if (pair) {
-      builder
-        .quote(
-          `📝 ${pair.type} ${pair.title}: ${pair.teacher.name}, ${pair.location}`,
-        )
-        .appendLine();
+      pair.forEach((pair) => {
+        const teacherName = pair.teacher.name ? `: ${pair.teacher.name}` : "";
+        builder
+          .quote(
+            `📝 ${pair.type} ${pair.title}${teacherName}, ${pair.location}`,
+          )
+          .appendLine();
+      });
     } else {
       builder.quote("❌ Нет пары").appendLine();
     }

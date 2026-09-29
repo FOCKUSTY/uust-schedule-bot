@@ -7,7 +7,7 @@ export type GroupInformation = {
 };
 
 export type Teacher = {
-  name: string;
+  name: string | undefined;
 };
 
 export type Pair = {
@@ -17,7 +17,7 @@ export type Pair = {
   location: string;
 };
 
-export type DaySchedule = Record<number, Pair>;
+export type DaySchedule = Record<number, Pair[]>;
 
 export type WeekSchedule = Record<number, DaySchedule>;
 
