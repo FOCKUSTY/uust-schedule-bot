@@ -46,6 +46,13 @@ export class ScheduleHandler implements CallbackHandlerModule {
   }
 
   private enterConversation(ctx: Context) {
+    if (
+      ctx.session.last.conversation === GroupsScheduleConversation.name &&
+      ctx.session.last.quickConfigGroup
+    ) {
+      return ctx.conversation.enter(GroupsScheduleConversation.name);
+    }
+
     return ctx.conversation.enter(ScheduleConversation.name);
   }
 
