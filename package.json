@@ -42,6 +42,7 @@
     "prettier": "^3.9.6",
     "proper-lockfile": "^4.1.2",
     "redis": "^5.12.1",
+    "undici": "^8.13.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
