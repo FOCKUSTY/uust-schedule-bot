@@ -10,6 +10,7 @@ export const env = Env.create(process.env)({
     "REDIS_URL",
     "PRISMA_CONNECTION_TYPE",
     "APARKIT_API_KEY",
+    "ISU_URL",
   ],
   unique: {
     START_DATE: (value?: string) => {

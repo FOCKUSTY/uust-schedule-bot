@@ -1,4 +1,4 @@
-import { ProxyAgent, fetch as undiciFetch } from 'undici';
+import { ProxyAgent, fetch as undiciFetch } from "undici";
 
 let proxyAgent: ProxyAgent | null = null;
 
@@ -21,10 +21,12 @@ function getProxyAgent(): ProxyAgent | undefined {
 
   try {
     proxyAgent = new ProxyAgent(proxyUrl);
-    console.log(`[Proxy] Используется прокси: ${proxyUrl.replace(/\/\/.*@/, '//***@')}`);
+    console.log(
+      `[Proxy] Используется прокси: ${proxyUrl.replace(/\/\/.*@/, "//***@")}`,
+    );
     return proxyAgent;
   } catch (error) {
-    console.error('[Proxy] Не удалось создать ProxyAgent:', error);
+    console.error("[Proxy] Не удалось создать ProxyAgent:", error);
     return undefined;
   }
 }

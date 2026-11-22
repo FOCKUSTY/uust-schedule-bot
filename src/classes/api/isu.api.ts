@@ -7,11 +7,10 @@ import { JSDOM } from "jsdom";
 import { MemoryCache } from "../cache";
 import { UNKNOWN_LOCATION } from "@/constants";
 import { BaseApi } from "../base";
-import { writeFile } from "fs";
-import { fetchWithProxy } from "@/utils/fetch-with-proxy";
+import { env } from "@/env";
 
 /** Базовый URL ИСУ */
-const ISU_BASE_URL = "https://isu.uust.ru";
+const ISU_BASE_URL = env.ISU_URL;
 /** Путь к скрипту расписания */
 const ISU_SCHEDULE_PATH = "/module/schedule/schedule_2024_script.php";
 /** TTL для «редких» данных (id группы) */
@@ -121,7 +120,7 @@ export class IsuApi extends BaseApi {
     const url = `${this._url}${ISU_SCHEDULE_PATH}`;
     const body = new URLSearchParams({ funct, ...extra });
 
-    const response = await fetchWithProxy(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
