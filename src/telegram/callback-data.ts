@@ -5,7 +5,11 @@ export const CALLBACK_DATA = {
   MENU_SWITCH_GROUP: "menu:switch_group",
   MENU_ADD_GROUP: "menu:add_group",
   MENU_BACK: "menu:back",
+
   MENU_SETTINGS: "menu:settings",
+  SETTINGS_SUBGROUPS: "settings:subgroups",
+  SETTINGS_SUBGROUP_SELECT: "settings:subgroup_select",
+  SETTINGS_BACK_TO_MENU: "settings:back_to_menu",
 
   SCHEDULE_SWITCH_GROUP: "schedule:group:switch",
 

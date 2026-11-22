@@ -52,3 +52,51 @@ export const configSelectionKeyboard = (
   keyboard.text("🔙 Назад", CALLBACK_DATA.MENU_BACK);
   return keyboard;
 };
+
+/**
+ * Главное меню настроек
+ */
+export const settingsMenuKeyboard = () => {
+  return new InlineKeyboard()
+    .text("👥 Выбрать подгруппы", CALLBACK_DATA.SETTINGS_SUBGROUPS)
+    .text("🔙 Назад", CALLBACK_DATA.MENU_BACK);
+};
+
+/**
+ * Клавиатура выбора подгрупп для каждой группы
+ */
+export const subgroupSettingsKeyboard = (
+  configs: Array<{
+    id: number;
+    group: string;
+    subgroup?: string | null;
+  }>,
+) => {
+  const keyboard = new InlineKeyboard();
+
+  configs.forEach((config) => {
+    keyboard.text(`📚 ${config.group}`, "noop").row();
+
+    const is1 = config.subgroup === "1";
+    const is2 = config.subgroup === "2";
+    const isNone = !config.subgroup;
+
+    keyboard
+      .text(
+        is1 ? "✅ 1 п/п" : "1 п/п",
+        `${CALLBACK_DATA.SETTINGS_SUBGROUP_SELECT}:${config.id}:1`,
+      )
+      .text(
+        is2 ? "✅ 2 п/п" : "2 п/п",
+        `${CALLBACK_DATA.SETTINGS_SUBGROUP_SELECT}:${config.id}:2`,
+      )
+      .text(
+        isNone ? "✅ Без п/п" : "Без п/п",
+        `${CALLBACK_DATA.SETTINGS_SUBGROUP_SELECT}:${config.id}:none`,
+      )
+      .row();
+  });
+
+  keyboard.text("🔙 Назад", CALLBACK_DATA.SETTINGS_BACK_TO_MENU);
+  return keyboard;
+};

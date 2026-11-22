@@ -13,6 +13,7 @@ import {
   GroupsScheduleHandler,
   MenuHandler,
   ScheduleHandler,
+  SettingsHandler,
 } from "./handlers";
 import { COMMANDS } from "./commands";
 import { CallbackRegister } from "./handlers/callback.register";
@@ -43,6 +44,7 @@ callbackRegistry.add(
   MenuHandler,
   ConfigHandler,
   GroupsScheduleHandler,
+  SettingsHandler,
 );
 
 bot.on("callback_query:data", (ctx) => callbackRegistry.dispatch(ctx));

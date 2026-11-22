@@ -50,6 +50,27 @@ export class UserService {
   }
 
   /**
+   * Устанавливает подгруппу для конкретного конфига пользователя.
+   */
+  public async setConfigSubgroup(
+    telegramId: TelegramId,
+    configId: number,
+    subgroup: string | null,
+  ) {
+    const user = await this.findOrCreate(telegramId);
+
+    const existing = await this.prisma.userConfig.findUnique({
+      where: { userId_configId: { userId: user.id, configId } },
+    });
+    if (!existing) throw new Error("Config not found or access denied");
+
+    await this.prisma.userConfig.update({
+      where: { userId_configId: { userId: user.id, configId } },
+      data: { subgroup },
+    });
+  }
+
+  /**
    * Возвращает все конфигурации пользователя (включая неактивные).
    */
   public async getUserConfigs(telegramId: TelegramId) {
