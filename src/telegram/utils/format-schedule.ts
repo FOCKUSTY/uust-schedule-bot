@@ -9,6 +9,11 @@ import {
   WEEKDAY_NAMES,
   WEEKEND,
 } from "@/constants";
+import {
+  shortenLessonType,
+  shortenLocation,
+  shortenTeacher,
+} from "@/utils/text-formatter";
 
 export const toRussianDate = (date: Date) => {
   return date.toLocaleDateString("ru-RU", {
@@ -67,6 +72,8 @@ export const getWeekendText = ({
 
 export type DayParameters = WeekendParameters & {
   day: DaySchedule;
+  preferredSubgroup?: string | null;
+  shorten?: boolean;
 };
 
 export const getDayText = ({
@@ -74,6 +81,8 @@ export const getDayText = ({
   dayNumber,
   weekNumber,
   group,
+  preferredSubgroup,
+  shorten = false,
 }: DayParameters) => {
   const date = new DateCalculator().getDateFromWeekNumberAndDayNumber(
     weekNumber,
@@ -83,31 +92,54 @@ export const getDayText = ({
   builder.append(`${group.group} `);
   builder.append(`🎩 на ${toRussianDate(date)}:`).appendLine();
 
-  const pairs = Object.keys(day).map(Number).sort();
-  if (pairs.length === 0) {
+  const pairsKeys = Object.keys(day).map(Number).sort();
+  if (pairsKeys.length === 0) {
     return getWeekendText({ weekNumber, dayNumber, group });
   }
 
   for (let number = 1; number <= MAX_PAIRS; number++) {
-    const pair: Pair[] | undefined = day[number];
+    const pairs: Pair[] | undefined = day[number];
+
+    if (!pairs || pairs.length === 0) continue;
+
     const time =
       dayNumber === SATURDAY
         ? SATURDAY_PAIR_TIMES[number]
         : DEFAULT_PAIR_TIMES[number];
 
     builder.append(`⏰ ${time} (${number} пара)`).appendLine();
-    if (pair) {
-      pair.forEach((pair) => {
-        const teacherName = pair.teacher.name ? `: ${pair.teacher.name}` : "";
-        builder
-          .quote(
-            `📝 ${pair.type} ${pair.title}${teacherName}, ${pair.location}`,
-          )
-          .appendLine();
-      });
-    } else {
-      builder.quote("❌ Нет пары").appendLine();
-    }
+
+    const prefNum = parseInt(preferredSubgroup || "0", 10);
+    const sortedPairs = [...pairs].sort((a, b) => {
+      const aNum = parseInt(a.subgroup || "0", 10);
+      const bNum = parseInt(b.subgroup || "0", 10);
+      if (aNum === prefNum && bNum !== prefNum) return -1;
+      if (bNum === prefNum && aNum !== prefNum) return 1;
+      return aNum - bNum;
+    });
+
+    sortedPairs.forEach((pair) => {
+      const title = shorten ? shortenLessonType(pair.title) : pair.title;
+      const tName = pair.teacher.name
+        ? shorten
+          ? shortenTeacher(pair.teacher.name)
+          : pair.teacher.name
+        : "";
+      const teacherName = tName ? `: ${tName}` : "";
+      const location =
+        pair.location === "Уточняется"
+          ? "Уточняется"
+          : shorten
+            ? shortenLocation(pair.location)
+            : pair.location;
+      const locationText = location ? `, ${location}` : "";
+
+      const subgroup = pair.subgroup ? `${pair.subgroup} ` : "";
+
+      builder
+        .quote(`📝 ${subgroup}${title}${teacherName}${locationText}`)
+        .appendLine();
+    });
   }
 
   return builder.toString();
@@ -115,9 +147,17 @@ export const getDayText = ({
 
 export type WeekParameters = Omit<WeekendParameters, "dayNumber"> & {
   week: WeekSchedule;
+  preferredSubgroup?: string | null;
+  shorten?: boolean;
 };
 
-export const getWeekText = ({ week, group, weekNumber }: WeekParameters) => {
+export const getWeekText = ({
+  week,
+  group,
+  weekNumber,
+  preferredSubgroup,
+  shorten = true,
+}: WeekParameters) => {
   const builder = new StringBuilder();
 
   const calculator = new DateCalculator();
@@ -144,6 +184,8 @@ export const getWeekText = ({ week, group, weekNumber }: WeekParameters) => {
         dayNumber,
         group,
         weekNumber,
+        preferredSubgroup,
+        shorten,
       }),
     );
 

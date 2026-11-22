@@ -29,12 +29,12 @@ model User {
 model UserConfig {
   userId    Int
   configId  Int
-
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   config    Config @relation(fields: [configId], references: [id], onDelete: Cascade)
 
   actived   Boolean  @default(true)
   defaulted Boolean
+  subgroup  String?
 
   assignedAt DateTime @default(now())
 

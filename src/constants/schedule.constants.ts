@@ -20,7 +20,6 @@ export const LESSON_NUMBERS: Record<string, number> = {
   "13:40-15:10": 4,
   "15:50-17:20": 5,
   "17:30-19:00": 6,
-  "19:10-20:40": 7,
 };
 
 export const DEFAULT_PAIR_TIMES: Record<number, string> = {
@@ -30,7 +29,6 @@ export const DEFAULT_PAIR_TIMES: Record<number, string> = {
   4: "13:40-15:10",
   5: "15:50-17:20",
   6: "17:30-19:00",
-  7: "19:10-20:40",
 };
 
 export const SATURDAY_PAIR_TIMES: Record<number, string> = {
@@ -40,7 +38,6 @@ export const SATURDAY_PAIR_TIMES: Record<number, string> = {
   4: "13:10-14:40",
   5: "14:50-16:20",
   6: "16:30-18:00",
-  7: "18:10-19:40",
 };
 
 export const MAX_PAIRS = Math.max(

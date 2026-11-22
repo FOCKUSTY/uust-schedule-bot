@@ -1,8 +1,8 @@
-import { AparkitSchedule } from "./classes/schedule/aparkit.schedule";
+import { IsuSchedule } from "./classes/schedule";
 import { DateCalculator } from "./telegram/utils/date-calculator";
 
 (async () => {
-  const schedule = new AparkitSchedule();
+  const schedule = new IsuSchedule();
   // const faculties = await schedule.api.getFaculties(); // ИСПО
   // const courses = await schedule.api.getCourses("ИСПО"); // 2
   // const specializations = await schedule.api.getSpecializations("ИСПО", "2"); // РЭУ
@@ -16,13 +16,13 @@ import { DateCalculator } from "./telegram/utils/date-calculator";
 
   console.log({ weekNumber, dayNumber });
 
-  const weeks = await schedule.getWeeksSchedule(10265422);
+  /* const weeks = await schedule.getWeeksSchedule(10265422);
   const day = await schedule.getDaySchedule({
     group: 10265422,
     weekNumber,
     dayNumber,
-  });
+  }); */
 
   // console.dir({ weeks, day }, { depth: Infinity });
-  console.dir({ day }, { depth: Infinity });
+  // console.dir({ day }, { depth: Infinity });
 })();

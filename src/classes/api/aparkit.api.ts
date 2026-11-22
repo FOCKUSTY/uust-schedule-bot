@@ -1,12 +1,6 @@
-import type {
-  CurrentWeekSo,
-  GroupInformation,
-  GroupLessonSo,
-  GroupSo,
-} from "@/types";
+import type { GroupInformation, GroupLessonSo, GroupSo } from "@/types";
 import { MemoryCache } from "../cache";
 import { env } from "@/env";
-import { DateCalculator } from "@/telegram/utils/date-calculator";
 import {
   APARKIT_BASE_URL,
   APARKIT_INFO_TTL_MS,
@@ -16,27 +10,14 @@ import {
   UNKNOWN_SPECIALIZATION,
 } from "@/constants";
 import { CacheSettingsParameter, CacheUseSettings } from "@/interfaces";
+import { BaseApi } from "../base";
 
-export class AparkitApi {
+export class AparkitApi extends BaseApi {
   private readonly _url = APARKIT_BASE_URL;
   private readonly _memory: MemoryCache = new MemoryCache("aparkit-api");
 
-  public constructor() {}
-
-  public async getCurrentDay() {
-    const now = new Date();
-    const day = now.getUTCDay() === 0 ? 7 : now.getUTCDay();
-    return day;
-  }
-
-  public async getCurrentWeek() {
-    return new DateCalculator().getCurrentWeek();
-    // const response = await this.request<CurrentWeekSo>(
-    //   "/api/v1/get_current_week",
-    //   undefined,
-    //   APARKIT_CURRENT_WEEK_TTL_MS,
-    // );
-    // return response.value;
+  public constructor() {
+    super();
   }
 
   public async getGroupId(

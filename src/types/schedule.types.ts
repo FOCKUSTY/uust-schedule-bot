@@ -4,6 +4,7 @@ export type GroupInformation = {
   specialization: string;
   group: string;
   groupId: number;
+  subgroup?: string | null;
 };
 
 export type Teacher = {
@@ -15,6 +16,7 @@ export type Pair = {
   type: string;
   teacher: Teacher;
   location: string;
+  subgroup?: string;
 };
 
 export type DaySchedule = Record<number, Pair[]>;
@@ -24,7 +26,7 @@ export type WeekSchedule = Record<number, DaySchedule>;
 export type WeeksSchedule = Record<string, WeekSchedule>;
 
 export type WeekScheduleInfo = {
-  group: number | GroupInformation;
+  group: GroupInformation;
   weekNumber: number;
 };
 

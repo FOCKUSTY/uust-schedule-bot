@@ -9,22 +9,22 @@ import type {
 
 import { AparkitApi } from "../api";
 import { MemoryCache } from "../cache";
+import { BaseSchedule } from "../base";
 import {
   APARKIT_WEEKS_SCHEDULE_TTL_MS,
   MS_PER_HOUR,
   UNKNOWN_LOCATION,
-  UNKNOWN_TEACHER,
   WEEKEND,
 } from "@/constants";
 import { parseLessonRange } from "@/utils";
-import { writeFile } from "fs/promises";
-import { readFileSync, writeFileSync } from "fs";
 
-export class AparkitSchedule {
+export class AparkitSchedule extends BaseSchedule {
   private readonly _memory: MemoryCache = new MemoryCache("aparkit-schedule");
   public readonly api: AparkitApi = new AparkitApi();
 
-  public constructor() {}
+  public constructor() {
+    super();
+  }
 
   public async getDaySchedule({
     dayNumber,
@@ -43,10 +43,10 @@ export class AparkitSchedule {
     const groupId = await this.getGroupId(group);
     const weeks = await this.getWeeksSchedule(groupId);
     if (Object.keys(weeks).length === 0) {
-      return undefined;
+      return null;
     }
 
-    return weeks[weekNumber];
+    return weeks[weekNumber] || null;
   }
 
   public async getWeeksSchedule(

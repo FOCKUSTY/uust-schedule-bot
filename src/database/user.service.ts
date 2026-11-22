@@ -1,7 +1,7 @@
 import { GroupInformation } from "@/types";
 import { Prisma } from "./prisma";
-import { AparkitApi } from "@/classes";
 import { CONFIG_SYNC_LIMIT } from "@/constants";
+import { IsuApi } from "@/classes";
 
 type TelegramId = number | string;
 
@@ -41,16 +41,25 @@ export class UserService {
     });
   }
 
+  public async setSubgroup(telegramId: TelegramId, subgroup: string | null) {
+    const user = await this.findOrCreate(telegramId);
+    await this.prisma.userConfig.updateMany({
+      where: { userId: user.id, defaulted: true },
+      data: { subgroup },
+    });
+  }
+
   /**
    * Возвращает все конфигурации пользователя (включая неактивные).
    */
   public async getUserConfigs(telegramId: TelegramId) {
-    this.syncronizeConfig(telegramId);
+    await this.syncronizeConfig(telegramId);
     const user = await this.findOrCreate(telegramId);
-    return user.userConfigs.map(({ config, actived, defaulted }) => ({
+    return user.userConfigs.map(({ config, actived, defaulted, subgroup }) => ({
       ...config,
       actived,
       defaulted,
+      subgroup,
     }));
   }
 
@@ -58,7 +67,7 @@ export class UserService {
    * Возвращает только активные конфигурации пользователя.
    */
   public async getActiveConfigs(telegramId: TelegramId) {
-    this.syncronizeConfig(telegramId);
+    await this.syncronizeConfig(telegramId);
     const configs = await this.getUserConfigs(telegramId);
     return configs.filter((config) => config.actived);
   }
@@ -269,13 +278,13 @@ export class UserService {
 
     this.syncronizeCount[telegramId] ??= 0;
 
-    const api = new AparkitApi();
+    const api = new IsuApi();
     const user = await this.findOrCreate(telegramId);
 
     const groups: (GroupInformation & { id: number })[] = [];
     for (const userConfig of user.userConfigs) {
       const id = await api.getGroupId(userConfig.config);
-      if (!id || id === userConfig.config.id) {
+      if (!id || id === userConfig.config.groupId) {
         continue;
       }
 

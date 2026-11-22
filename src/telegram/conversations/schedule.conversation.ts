@@ -1,4 +1,4 @@
-import { AparkitSchedule } from "@/classes";
+import { IsuSchedule } from "@/classes";
 import { UserService } from "@/database";
 import { Conversation } from "@/interfaces";
 import { MyConversation, Context } from "@/types";
@@ -16,7 +16,7 @@ import { InlineKeyboard } from "grammy";
 import { CALLBACK_DATA } from "../callback-data";
 
 export class ScheduleConversation implements Conversation {
-  private readonly _schedule: AparkitSchedule = new AparkitSchedule();
+  private readonly _schedule: IsuSchedule = new IsuSchedule();
   private readonly _user_service: UserService = new UserService();
 
   public constructor() {}
@@ -84,6 +84,7 @@ export class ScheduleConversation implements Conversation {
           dayNumber,
           weekNumber,
           group: defaultConfig,
+          preferredSubgroup: defaultConfig.subgroup,
         });
       }
 
@@ -91,6 +92,7 @@ export class ScheduleConversation implements Conversation {
         group: defaultConfig,
         weekNumber,
         week,
+        preferredSubgroup: defaultConfig.subgroup,
       });
     })();
 

@@ -3,7 +3,7 @@ import type { Context, MyConversation } from "@/types";
 
 import { InlineKeyboard } from "grammy";
 
-import { AparkitSchedule } from "@/classes";
+import { IsuSchedule } from "@/classes";
 import { UserService } from "@/database";
 import { QUICK_DATE, WATCH_TYPE, WEEKDAY_NAMES, WEEKEND } from "@/constants";
 import { CALLBACK_DATA } from "../callback-data";
@@ -18,7 +18,7 @@ import {
 } from "../utils";
 
 export class GroupsScheduleConversation implements Conversation {
-  private readonly _schedule: AparkitSchedule = new AparkitSchedule();
+  private readonly _schedule: IsuSchedule = new IsuSchedule();
   private readonly _user_service: UserService = new UserService();
 
   public constructor() {}

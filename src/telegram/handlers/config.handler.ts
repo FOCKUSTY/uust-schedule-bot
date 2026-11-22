@@ -16,18 +16,25 @@ export class ConfigHandler implements CallbackMatcher, CallbackHandlerModule {
 
   public verify(data: string): boolean {
     const [prefix] = data.split(":");
-    return prefix === CALLBACK_DATA.SELECT_CONFIG;
+    return prefix === CALLBACK_DATA.SELECT_CONFIG || prefix === "set_subgroup";
   }
 
   public async handle(ctx: Context) {
     const data = ctx.callbackQuery?.data;
-    if (!data) {
-      return;
-    }
-
+    if (!data) return;
     const telegramId = ctx.from?.id;
-    if (!telegramId) {
-      return;
+    if (!telegramId) return;
+
+    if (data.startsWith("set_subgroup:")) {
+      const value = data.split(":")[1];
+      const subgroup = value === "none" ? null : value;
+
+      await this._user_service.setSubgroup(telegramId, subgroup);
+      await ctx.answerCallbackQuery("✅ Настройка сохранена");
+
+      return sendOrEditMessage(ctx, "Главное меню", {
+        keyboard: mainMenuKeyboard(),
+      });
     }
 
     const [, dataConfigId, type] = data.split(":");
